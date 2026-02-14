@@ -939,3 +939,436 @@ h3 { font-size: var(--font-size-lg); }
   background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
   color: white;
 }
+
+/* ========== SEARCH BAR ========== */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  transition: border-color 0.2s;
+}
+
+.search-bar:focus-within {
+  border-color: var(--primary-light);
+}
+
+.search-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: var(--font-family);
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  background: transparent;
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-clear {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ========== SIZE FILTER CHIPS ========== */
+.size-filters {
+  display: flex;
+  gap: var(--space-sm);
+  overflow-x: auto;
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.size-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.size-chip {
+  flex-shrink: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.size-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.size-chip:active {
+  transform: scale(0.95);
+}
+
+/* ========== SUB-GROUP HEADERS ========== */
+.items-subgroup-header {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--primary-dark);
+  padding: var(--space-md) var(--space-sm) var(--space-sm);
+  margin-top: var(--space-sm);
+  border-bottom: 2px solid var(--primary-light);
+  margin-bottom: var(--space-sm);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: var(--font-size-sm);
+}
+
+/* ========== SITE INPUT ROW + MIC BUTTON ========== */
+.site-input-row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: stretch;
+}
+
+.site-input-row .project-input-btn {
+  flex: 1;
+}
+
+.mic-btn {
+  width: 56px;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.mic-btn:active {
+  transform: scale(0.95);
+}
+
+.mic-btn.listening {
+  border-color: #E53935;
+  background: rgba(229, 57, 53, 0.08);
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(229, 57, 53, 0); }
+}
+
+/* ========== MODAL SECTION LABEL ========== */
+.modal-section-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--space-sm) var(--space-sm) var(--space-xs);
+}
+
+/* ========== TAPPABLE QUANTITY DISPLAY ========== */
+.qty-display.tappable {
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-sm);
+  transition: background 0.15s;
+  border: 2px dashed transparent;
+}
+
+.qty-display.tappable:active {
+  background: rgba(21, 101, 192, 0.08);
+  border-color: var(--primary-light);
+}
+
+/* ========== NUMBER PAD MODAL ========== */
+.numpad-modal {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  animation: modal-slide-up 0.25s ease;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.numpad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.numpad-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.numpad-display {
+  text-align: center;
+  padding: var(--space-lg) var(--space-md);
+}
+
+.numpad-value {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.numpad-unit {
+  display: block;
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin-top: var(--space-xs);
+}
+
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  padding: 0 var(--space-md) var(--space-md);
+}
+
+.numpad-btn {
+  height: 60px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--bg);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.numpad-btn:active {
+  background: var(--border);
+  transform: scale(0.97);
+}
+
+.numpad-clear {
+  color: var(--danger);
+}
+
+.numpad-backspace {
+  color: var(--text-secondary);
+}
+
+.numpad-done {
+  margin: 0 var(--space-md) var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  border: none;
+  background: linear-gradient(135deg, var(--success) 0%, #43A047 100%);
+  color: white;
+  font-family: var(--font-family);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 56px;
+}
+
+/* ========== REVIEW CATEGORY GROUPS ========== */
+.review-category-group {
+  margin-bottom: var(--space-md);
+}
+
+.review-category-header {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--space-sm) 0;
+  margin-bottom: var(--space-xs);
+  border-bottom: 2px solid var(--primary-light);
+}
+
+/* Review item with delete */
+.review-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.review-item-qty.tappable {
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--border);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.review-item-qty.tappable:active {
+  border-color: var(--primary-light);
+  background: rgba(21, 101, 192, 0.08);
+}
+
+.review-item-delete {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: rgba(229, 57, 53, 0.08);
+  color: var(--danger);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.review-item-delete:active {
+  background: rgba(229, 57, 53, 0.2);
+  transform: scale(0.9);
+}
+
+/* ========== ADD CUSTOM ITEM BUTTON ========== */
+.add-custom-btn {
+  width: 100%;
+  padding: var(--space-md);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: var(--space-md);
+  margin-bottom: 80px;
+  transition: all 0.15s;
+}
+
+.add-custom-btn:active {
+  border-color: var(--primary-light);
+  color: var(--primary);
+  background: rgba(21, 101, 192, 0.04);
+}
+
+/* ========== CUSTOM ITEM FORM ========== */
+.custom-item-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg) !important;
+}
+
+.custom-item-input {
+  width: 100%;
+  padding: var(--space-md);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-family);
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.custom-item-input:focus {
+  border-color: var(--primary-light);
+}
+
+.custom-item-input::placeholder {
+  color: var(--text-muted);
+}
+
+.custom-item-submit {
+  min-height: 52px;
+}
+
+.custom-item-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========== DELETE CONFIRMATION DIALOG ========== */
+.confirm-modal {
+  text-align: center;
+  padding: var(--space-xl) var(--space-lg) !important;
+  max-width: 340px;
+}
+
+.confirm-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+}
+
+.confirm-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-sm);
+}
+
+.confirm-text {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-lg);
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.confirm-buttons .btn {
+  flex: 1;
+  min-height: 48px;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-family);
+  font-weight: 600;
+  cursor: pointer;
+}

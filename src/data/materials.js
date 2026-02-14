@@ -59,60 +59,81 @@ export const materials = [
   { id: 'flex_pipe_1.5inch', category: 'pipes', name: '1.5" Flexible Pipe', nameKannada: '1.5" ಫ್ಲೆಕ್ಸಿಬಲ್ ಪೈಪ್', size: '1.5"', unit: 'Meter', unitType: 'pipes' },
   { id: 'flex_pipe_2inch', category: 'pipes', name: '2" Flexible Pipe', nameKannada: '2" ಫ್ಲೆಕ್ಸಿಬಲ್ ಪೈಪ್', size: '2"', unit: 'Meter', unitType: 'pipes' },
 
-  // ========== FITTINGS ==========
-  // Elbows
-  { id: 'elbow_20mm', category: 'fittings', name: '20mm Elbow', nameKannada: '20mm ಎಲ್ಬೋ', size: '20mm', unit: 'Nos', unitType: 'default' },
-  { id: 'elbow_25mm', category: 'fittings', name: '25mm Elbow', nameKannada: '25mm ಎಲ್ಬೋ', size: '25mm', unit: 'Nos', unitType: 'default' },
-  { id: 'elbow_32mm', category: 'fittings', name: '32mm Elbow', nameKannada: '32mm ಎಲ್ಬೋ', size: '32mm', unit: 'Nos', unitType: 'default' },
-  { id: 'elbow_40mm', category: 'fittings', name: '40mm Elbow', nameKannada: '40mm ಎಲ್ಬೋ', size: '40mm', unit: 'Nos', unitType: 'default' },
-  { id: 'elbow_50mm', category: 'fittings', name: '50mm Elbow', nameKannada: '50mm ಎಲ್ಬೋ', size: '50mm', unit: 'Nos', unitType: 'default' },
-  { id: 'elbow_63mm', category: 'fittings', name: '63mm Elbow', nameKannada: '63mm ಎಲ್ಬೋ', size: '63mm', unit: 'Nos', unitType: 'default' },
-  { id: 'elbow_75mm', category: 'fittings', name: '75mm Elbow', nameKannada: '75mm ಎಲ್ಬೋ', size: '75mm', unit: 'Nos', unitType: 'default' },
-  { id: 'elbow_90mm', category: 'fittings', name: '90mm Elbow', nameKannada: '90mm ಎಲ್ಬೋ', size: '90mm', unit: 'Nos', unitType: 'default' },
-  { id: 'elbow_110mm', category: 'fittings', name: '110mm Elbow', nameKannada: '110mm ಎಲ್ಬೋ', size: '110mm', unit: 'Nos', unitType: 'default' },
+  // ========== FITTINGS ========== (with subGroup for grouping)
+  // 90° Elbows
+  { id: 'elbow_20mm', category: 'fittings', subGroup: 'Elbows 90°', name: '20mm Elbow', nameKannada: '20mm ಎಲ್ಬೋ', size: '20mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow_25mm', category: 'fittings', subGroup: 'Elbows 90°', name: '25mm Elbow', nameKannada: '25mm ಎಲ್ಬೋ', size: '25mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow_32mm', category: 'fittings', subGroup: 'Elbows 90°', name: '32mm Elbow', nameKannada: '32mm ಎಲ್ಬೋ', size: '32mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow_40mm', category: 'fittings', subGroup: 'Elbows 90°', name: '40mm Elbow', nameKannada: '40mm ಎಲ್ಬೋ', size: '40mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow_50mm', category: 'fittings', subGroup: 'Elbows 90°', name: '50mm Elbow', nameKannada: '50mm ಎಲ್ಬೋ', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow_63mm', category: 'fittings', subGroup: 'Elbows 90°', name: '63mm Elbow', nameKannada: '63mm ಎಲ್ಬೋ', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow_75mm', category: 'fittings', subGroup: 'Elbows 90°', name: '75mm Elbow', nameKannada: '75mm ಎಲ್ಬೋ', size: '75mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow_90mm', category: 'fittings', subGroup: 'Elbows 90°', name: '90mm Elbow', nameKannada: '90mm ಎಲ್ಬೋ', size: '90mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow_110mm', category: 'fittings', subGroup: 'Elbows 90°', name: '110mm Elbow', nameKannada: '110mm ಎಲ್ಬೋ', size: '110mm', unit: 'Nos', unitType: 'default' },
+  // 45° Elbows (NEW)
+  { id: 'elbow45_50mm', category: 'fittings', subGroup: 'Elbows 45°', name: '50mm 45° Elbow', nameKannada: '50mm 45° ಎಲ್ಬೋ', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow45_63mm', category: 'fittings', subGroup: 'Elbows 45°', name: '63mm 45° Elbow', nameKannada: '63mm 45° ಎಲ್ಬೋ', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'elbow45_75mm', category: 'fittings', subGroup: 'Elbows 45°', name: '75mm 45° Elbow', nameKannada: '75mm 45° ಎಲ್ಬೋ', size: '75mm', unit: 'Nos', unitType: 'default' },
   // Tees
-  { id: 'tee_20mm', category: 'fittings', name: '20mm T', nameKannada: '20mm ಟೀ', size: '20mm', unit: 'Nos', unitType: 'default' },
-  { id: 'tee_25mm', category: 'fittings', name: '25mm T', nameKannada: '25mm ಟೀ', size: '25mm', unit: 'Nos', unitType: 'default' },
-  { id: 'tee_32mm', category: 'fittings', name: '32mm T', nameKannada: '32mm ಟೀ', size: '32mm', unit: 'Nos', unitType: 'default' },
-  { id: 'tee_40mm', category: 'fittings', name: '40mm T', nameKannada: '40mm ಟೀ', size: '40mm', unit: 'Nos', unitType: 'default' },
-  { id: 'tee_50mm', category: 'fittings', name: '50mm T', nameKannada: '50mm ಟೀ', size: '50mm', unit: 'Nos', unitType: 'default' },
-  { id: 'tee_63mm', category: 'fittings', name: '63mm T', nameKannada: '63mm ಟೀ', size: '63mm', unit: 'Nos', unitType: 'default' },
-  { id: 'tee_75mm', category: 'fittings', name: '75mm T', nameKannada: '75mm ಟೀ', size: '75mm', unit: 'Nos', unitType: 'default' },
-  { id: 'tee_90mm', category: 'fittings', name: '90mm T', nameKannada: '90mm ಟೀ', size: '90mm', unit: 'Nos', unitType: 'default' },
+  { id: 'tee_20mm', category: 'fittings', subGroup: 'Tees', name: '20mm T', nameKannada: '20mm ಟೀ', size: '20mm', unit: 'Nos', unitType: 'default' },
+  { id: 'tee_25mm', category: 'fittings', subGroup: 'Tees', name: '25mm T', nameKannada: '25mm ಟೀ', size: '25mm', unit: 'Nos', unitType: 'default' },
+  { id: 'tee_32mm', category: 'fittings', subGroup: 'Tees', name: '32mm T', nameKannada: '32mm ಟೀ', size: '32mm', unit: 'Nos', unitType: 'default' },
+  { id: 'tee_40mm', category: 'fittings', subGroup: 'Tees', name: '40mm T', nameKannada: '40mm ಟೀ', size: '40mm', unit: 'Nos', unitType: 'default' },
+  { id: 'tee_50mm', category: 'fittings', subGroup: 'Tees', name: '50mm T', nameKannada: '50mm ಟೀ', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'tee_63mm', category: 'fittings', subGroup: 'Tees', name: '63mm T', nameKannada: '63mm ಟೀ', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'tee_75mm', category: 'fittings', subGroup: 'Tees', name: '75mm T', nameKannada: '75mm ಟೀ', size: '75mm', unit: 'Nos', unitType: 'default' },
+  { id: 'tee_90mm', category: 'fittings', subGroup: 'Tees', name: '90mm T', nameKannada: '90mm ಟೀ', size: '90mm', unit: 'Nos', unitType: 'default' },
+  // Reducer Tees (NEW)
+  { id: 'reducer_tee_63x50', category: 'fittings', subGroup: 'Reducer Tees', name: '63x50mm Reducer Tee', nameKannada: '63x50mm ರಿಡ್ಯೂಸರ್ ಟೀ', size: '63x50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'reducer_tee_75x63', category: 'fittings', subGroup: 'Reducer Tees', name: '75x63mm Reducer Tee', nameKannada: '75x63mm ರಿಡ್ಯೂಸರ್ ಟೀ', size: '75x63mm', unit: 'Nos', unitType: 'default' },
   // End Caps
-  { id: 'endcap_20mm', category: 'fittings', name: '20mm End Cap', nameKannada: '20mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '20mm', unit: 'Nos', unitType: 'default' },
-  { id: 'endcap_25mm', category: 'fittings', name: '25mm End Cap', nameKannada: '25mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '25mm', unit: 'Nos', unitType: 'default' },
-  { id: 'endcap_32mm', category: 'fittings', name: '32mm End Cap', nameKannada: '32mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '32mm', unit: 'Nos', unitType: 'default' },
-  { id: 'endcap_50mm', category: 'fittings', name: '50mm End Cap', nameKannada: '50mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '50mm', unit: 'Nos', unitType: 'default' },
-  { id: 'endcap_63mm', category: 'fittings', name: '63mm End Cap', nameKannada: '63mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '63mm', unit: 'Nos', unitType: 'default' },
-  { id: 'endcap_75mm', category: 'fittings', name: '75mm End Cap', nameKannada: '75mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '75mm', unit: 'Nos', unitType: 'default' },
+  { id: 'endcap_20mm', category: 'fittings', subGroup: 'End Caps', name: '20mm End Cap', nameKannada: '20mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '20mm', unit: 'Nos', unitType: 'default' },
+  { id: 'endcap_25mm', category: 'fittings', subGroup: 'End Caps', name: '25mm End Cap', nameKannada: '25mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '25mm', unit: 'Nos', unitType: 'default' },
+  { id: 'endcap_32mm', category: 'fittings', subGroup: 'End Caps', name: '32mm End Cap', nameKannada: '32mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '32mm', unit: 'Nos', unitType: 'default' },
+  { id: 'endcap_50mm', category: 'fittings', subGroup: 'End Caps', name: '50mm End Cap', nameKannada: '50mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'endcap_63mm', category: 'fittings', subGroup: 'End Caps', name: '63mm End Cap', nameKannada: '63mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'endcap_75mm', category: 'fittings', subGroup: 'End Caps', name: '75mm End Cap', nameKannada: '75mm ಎಂಡ್ ಕ್ಯಾಪ್', size: '75mm', unit: 'Nos', unitType: 'default' },
   // Reducers (RB)
-  { id: 'rb_63x50', category: 'fittings', name: '63x50mm RB', nameKannada: '63x50mm ಆರ್‌ಬಿ', size: '63x50mm', unit: 'Nos', unitType: 'default' },
-  { id: 'rb_75x63', category: 'fittings', name: '75x63mm RB', nameKannada: '75x63mm ಆರ್‌ಬಿ', size: '75x63mm', unit: 'Nos', unitType: 'default' },
-  { id: 'rb_90x75', category: 'fittings', name: '90x75mm RB', nameKannada: '90x75mm ಆರ್‌ಬಿ', size: '90x75mm', unit: 'Nos', unitType: 'default' },
-  { id: 'rb_110x90', category: 'fittings', name: '110x90mm RB', nameKannada: '110x90mm ಆರ್‌ಬಿ', size: '110x90mm', unit: 'Nos', unitType: 'default' },
-  { id: 'rb_50x40', category: 'fittings', name: '50x40mm RB', nameKannada: '50x40mm ಆರ್‌ಬಿ', size: '50x40mm', unit: 'Nos', unitType: 'default' },
-  { id: 'rb_40x32', category: 'fittings', name: '40x32mm RB', nameKannada: '40x32mm ಆರ್‌ಬಿ', size: '40x32mm', unit: 'Nos', unitType: 'default' },
+  { id: 'rb_63x50', category: 'fittings', subGroup: 'Reducers', name: '63x50mm RB', nameKannada: '63x50mm ಆರ್‌ಬಿ', size: '63x50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'rb_75x63', category: 'fittings', subGroup: 'Reducers', name: '75x63mm RB', nameKannada: '75x63mm ಆರ್‌ಬಿ', size: '75x63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'rb_90x75', category: 'fittings', subGroup: 'Reducers', name: '90x75mm RB', nameKannada: '90x75mm ಆರ್‌ಬಿ', size: '90x75mm', unit: 'Nos', unitType: 'default' },
+  { id: 'rb_110x90', category: 'fittings', subGroup: 'Reducers', name: '110x90mm RB', nameKannada: '110x90mm ಆರ್‌ಬಿ', size: '110x90mm', unit: 'Nos', unitType: 'default' },
+  { id: 'rb_50x40', category: 'fittings', subGroup: 'Reducers', name: '50x40mm RB', nameKannada: '50x40mm ಆರ್‌ಬಿ', size: '50x40mm', unit: 'Nos', unitType: 'default' },
+  { id: 'rb_40x32', category: 'fittings', subGroup: 'Reducers', name: '40x32mm RB', nameKannada: '40x32mm ಆರ್‌ಬಿ', size: '40x32mm', unit: 'Nos', unitType: 'default' },
+  // Reducing Bush (NEW)
+  { id: 'bush_50x25', category: 'fittings', subGroup: 'Bushes', name: '50x25mm Bush', nameKannada: '50x25mm ಬುಶ್', size: '50x25mm', unit: 'Nos', unitType: 'default' },
+  { id: 'bush_63x50', category: 'fittings', subGroup: 'Bushes', name: '63x50mm Bush', nameKannada: '63x50mm ಬುಶ್', size: '63x50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'bush_75x63', category: 'fittings', subGroup: 'Bushes', name: '75x63mm Bush', nameKannada: '75x63mm ಬುಶ್', size: '75x63mm', unit: 'Nos', unitType: 'default' },
   // MTA
-  { id: 'mta_20mm', category: 'fittings', name: '20mm MTA', nameKannada: '20mm MTA', size: '20mm', unit: 'Nos', unitType: 'default' },
-  { id: 'mta_25mm', category: 'fittings', name: '25mm MTA', nameKannada: '25mm MTA', size: '25mm', unit: 'Nos', unitType: 'default' },
-  { id: 'mta_32mm', category: 'fittings', name: '32mm MTA', nameKannada: '32mm MTA', size: '32mm', unit: 'Nos', unitType: 'default' },
-  { id: 'mta_50mm', category: 'fittings', name: '50mm MTA', nameKannada: '50mm MTA', size: '50mm', unit: 'Nos', unitType: 'default' },
-  { id: 'mta_63mm', category: 'fittings', name: '63mm MTA', nameKannada: '63mm MTA', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'mta_20mm', category: 'fittings', subGroup: 'MTA', name: '20mm MTA', nameKannada: '20mm MTA', size: '20mm', unit: 'Nos', unitType: 'default' },
+  { id: 'mta_25mm', category: 'fittings', subGroup: 'MTA', name: '25mm MTA', nameKannada: '25mm MTA', size: '25mm', unit: 'Nos', unitType: 'default' },
+  { id: 'mta_32mm', category: 'fittings', subGroup: 'MTA', name: '32mm MTA', nameKannada: '32mm MTA', size: '32mm', unit: 'Nos', unitType: 'default' },
+  { id: 'mta_50mm', category: 'fittings', subGroup: 'MTA', name: '50mm MTA', nameKannada: '50mm MTA', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'mta_63mm', category: 'fittings', subGroup: 'MTA', name: '63mm MTA', nameKannada: '63mm MTA', size: '63mm', unit: 'Nos', unitType: 'default' },
   // FTA
-  { id: 'fta_20mm', category: 'fittings', name: '20mm FTA', nameKannada: '20mm FTA', size: '20mm', unit: 'Nos', unitType: 'default' },
-  { id: 'fta_25mm', category: 'fittings', name: '25mm FTA', nameKannada: '25mm FTA', size: '25mm', unit: 'Nos', unitType: 'default' },
-  { id: 'fta_32mm', category: 'fittings', name: '32mm FTA', nameKannada: '32mm FTA', size: '32mm', unit: 'Nos', unitType: 'default' },
-  { id: 'fta_50mm', category: 'fittings', name: '50mm FTA', nameKannada: '50mm FTA', size: '50mm', unit: 'Nos', unitType: 'default' },
-  { id: 'fta_63mm', category: 'fittings', name: '63mm FTA', nameKannada: '63mm FTA', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'fta_20mm', category: 'fittings', subGroup: 'FTA', name: '20mm FTA', nameKannada: '20mm FTA', size: '20mm', unit: 'Nos', unitType: 'default' },
+  { id: 'fta_25mm', category: 'fittings', subGroup: 'FTA', name: '25mm FTA', nameKannada: '25mm FTA', size: '25mm', unit: 'Nos', unitType: 'default' },
+  { id: 'fta_32mm', category: 'fittings', subGroup: 'FTA', name: '32mm FTA', nameKannada: '32mm FTA', size: '32mm', unit: 'Nos', unitType: 'default' },
+  { id: 'fta_50mm', category: 'fittings', subGroup: 'FTA', name: '50mm FTA', nameKannada: '50mm FTA', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'fta_63mm', category: 'fittings', subGroup: 'FTA', name: '63mm FTA', nameKannada: '63mm FTA', size: '63mm', unit: 'Nos', unitType: 'default' },
   // Sockets
-  { id: 'socket_50mm', category: 'fittings', name: '50mm Socket', nameKannada: '50mm ಸಾಕೆಟ್', size: '50mm', unit: 'Nos', unitType: 'default' },
-  { id: 'socket_63mm', category: 'fittings', name: '63mm Socket', nameKannada: '63mm ಸಾಕೆಟ್', size: '63mm', unit: 'Nos', unitType: 'default' },
-  { id: 'socket_75mm', category: 'fittings', name: '75mm Socket', nameKannada: '75mm ಸಾಕೆಟ್', size: '75mm', unit: 'Nos', unitType: 'default' },
+  { id: 'socket_50mm', category: 'fittings', subGroup: 'Sockets', name: '50mm Socket', nameKannada: '50mm ಸಾಕೆಟ್', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'socket_63mm', category: 'fittings', subGroup: 'Sockets', name: '63mm Socket', nameKannada: '63mm ಸಾಕೆಟ್', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'socket_75mm', category: 'fittings', subGroup: 'Sockets', name: '75mm Socket', nameKannada: '75mm ಸಾಕೆಟ್', size: '75mm', unit: 'Nos', unitType: 'default' },
   // Union
-  { id: 'union_50mm', category: 'fittings', name: '50mm Union', nameKannada: '50mm ಯೂನಿಯನ್', size: '50mm', unit: 'Nos', unitType: 'default' },
-  { id: 'union_63mm', category: 'fittings', name: '63mm Union', nameKannada: '63mm ಯೂನಿಯನ್', size: '63mm', unit: 'Nos', unitType: 'default' },
-  { id: 'union_75mm', category: 'fittings', name: '75mm Union', nameKannada: '75mm ಯೂನಿಯನ್', size: '75mm', unit: 'Nos', unitType: 'default' },
+  { id: 'union_50mm', category: 'fittings', subGroup: 'Unions', name: '50mm Union', nameKannada: '50mm ಯೂನಿಯನ್', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'union_63mm', category: 'fittings', subGroup: 'Unions', name: '63mm Union', nameKannada: '63mm ಯೂನಿಯನ್', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'union_75mm', category: 'fittings', subGroup: 'Unions', name: '75mm Union', nameKannada: '75mm ಯೂನಿಯನ್', size: '75mm', unit: 'Nos', unitType: 'default' },
+  // Couplers (NEW)
+  { id: 'coupler_50mm', category: 'fittings', subGroup: 'Couplers', name: '50mm Coupler', nameKannada: '50mm ಕಪ್ಲರ್', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'coupler_63mm', category: 'fittings', subGroup: 'Couplers', name: '63mm Coupler', nameKannada: '63mm ಕಪ್ಲರ್', size: '63mm', unit: 'Nos', unitType: 'default' },
+  { id: 'coupler_75mm', category: 'fittings', subGroup: 'Couplers', name: '75mm Coupler', nameKannada: '75mm ಕಪ್ಲರ್', size: '75mm', unit: 'Nos', unitType: 'default' },
+  // Barrel Nipple (NEW)
+  { id: 'barrel_nipple_50mm', category: 'fittings', subGroup: 'Others', name: '50mm Barrel Nipple', nameKannada: '50mm ಬ್ಯಾರಲ್ ನಿಪ್ಪಲ್', size: '50mm', unit: 'Nos', unitType: 'default' },
+  { id: 'barrel_nipple_63mm', category: 'fittings', subGroup: 'Others', name: '63mm Barrel Nipple', nameKannada: '63mm ಬ್ಯಾರಲ್ ನಿಪ್ಪಲ್', size: '63mm', unit: 'Nos', unitType: 'default' },
+  // Flange Set (NEW)
+  { id: 'flange_50mm', category: 'fittings', subGroup: 'Others', name: '50mm Flange Set', nameKannada: '50mm ಫ್ಲೇಂಜ್ ಸೆಟ್', size: '50mm', unit: 'Set', unitType: 'default' },
+  { id: 'flange_63mm', category: 'fittings', subGroup: 'Others', name: '63mm Flange Set', nameKannada: '63mm ಫ್ಲೇಂಜ್ ಸೆಟ್', size: '63mm', unit: 'Set', unitType: 'default' },
 
   // ========== VALVES & NRV ==========
   { id: 'ball_valve_50mm', category: 'valves', name: '50mm Ball Valve', nameKannada: '50mm ಬಾಲ್ ವಾಲ್ವ್', size: '50mm', unit: 'Nos', unitType: 'default' },
@@ -125,6 +146,9 @@ export const materials = [
   { id: 'gate_valve_50mm', category: 'valves', name: '50mm Gate Valve', nameKannada: '50mm ಗೇಟ್ ವಾಲ್ವ್', size: '50mm', unit: 'Nos', unitType: 'default' },
   { id: 'gate_valve_63mm', category: 'valves', name: '63mm Gate Valve', nameKannada: '63mm ಗೇಟ್ ವಾಲ್ವ್', size: '63mm', unit: 'Nos', unitType: 'default' },
   { id: 'butterfly_valve', category: 'valves', name: 'Butterfly Valve', nameKannada: 'ಬಟರ್‌ಫ್ಲೈ ವಾಲ್ವ್', size: '', unit: 'Nos', unitType: 'default' },
+  // NEW valves
+  { id: 'float_valve', category: 'valves', name: 'Float Valve', nameKannada: 'ಫ್ಲೋಟ್ ವಾಲ್ವ್', size: '', unit: 'Nos', unitType: 'default' },
+  { id: 'air_release_valve', category: 'valves', name: 'Air Release Valve', nameKannada: 'ಏರ್ ರಿಲೀಸ್ ವಾಲ್ವ್', size: '', unit: 'Nos', unitType: 'default' },
 
   // ========== DRAINS, INLETS, NOZZLES ==========
   { id: 'main_drain_abs', category: 'drains', name: 'ABS Main Drain Plate with Screw', nameKannada: 'ABS ಮೈನ್ ಡ್ರೈನ್ ಪ್ಲೇಟ್', size: '', unit: 'Nos', unitType: 'default' },
@@ -154,11 +178,18 @@ export const materials = [
   { id: 'duck_box', category: 'lights', name: 'Duck Box (Junction Box)', nameKannada: 'ಡಕ್ ಬಾಕ್ಸ್', size: '', unit: 'Nos', unitType: 'default' },
   { id: 'mcb_box', category: 'lights', name: 'MCB Box', nameKannada: 'MCB ಬಾಕ್ಸ್', size: '', unit: 'Nos', unitType: 'default' },
   { id: 'mcb', category: 'lights', name: 'MCB', nameKannada: 'MCB', size: '', unit: 'Nos', unitType: 'default' },
+  // NEW electrical items
+  { id: 'elcb_rccb', category: 'lights', name: 'ELCB / RCCB', nameKannada: 'ELCB / RCCB', size: '', unit: 'Nos', unitType: 'default' },
+  { id: 'timer_switch', category: 'lights', name: 'Timer Switch', nameKannada: 'ಟೈಮರ್ ಸ್ವಿಚ್', size: '', unit: 'Nos', unitType: 'default' },
+  { id: 'conduit_pipe_20mm', category: 'lights', name: '20mm Conduit Pipe', nameKannada: '20mm ಕಂಡ್ಯೂಟ್ ಪೈಪ್', size: '20mm', unit: 'Length', unitType: 'pipes' },
+  { id: 'conduit_pipe_25mm', category: 'lights', name: '25mm Conduit Pipe', nameKannada: '25mm ಕಂಡ್ಯೂಟ್ ಪೈಪ್', size: '25mm', unit: 'Length', unitType: 'pipes' },
 
   // ========== CHEMICALS & SOLVENTS ==========
   { id: 'pvc_solvent_small', category: 'chemicals', name: 'PVC Solvent (Small)', nameKannada: 'PVC ಸಾಲ್ವೆಂಟ್ (ಸಣ್ಣ)', size: '100ml', unit: 'Nos', unitType: 'solvents' },
   { id: 'pvc_solvent_large', category: 'chemicals', name: 'PVC Solvent (Large)', nameKannada: 'PVC ಸಾಲ್ವೆಂಟ್ (ದೊಡ್ಡ)', size: '500ml', unit: 'Nos', unitType: 'solvents' },
   { id: 'upvc_solvent', category: 'chemicals', name: 'UPVC Solvent', nameKannada: 'UPVC ಸಾಲ್ವೆಂಟ್', size: '', unit: 'Liter', unitType: 'solvents' },
+  // NEW
+  { id: 'pvc_primer', category: 'chemicals', name: 'PVC Primer', nameKannada: 'PVC ಪ್ರೈಮರ್', size: '', unit: 'Nos', unitType: 'solvents' },
   { id: 'holdtite', category: 'chemicals', name: 'Holdtite', nameKannada: 'ಹೋಲ್ಡ್‌ಟೈಟ್', size: '', unit: 'Nos', unitType: 'default' },
   { id: 'mseal', category: 'chemicals', name: 'M-Seal', nameKannada: 'M-ಸೀಲ್', size: '', unit: 'Nos', unitType: 'default' },
   { id: 'thread_ball', category: 'chemicals', name: 'Thread Ball (Teflon)', nameKannada: 'ಥ್ರೆಡ್ ಬಾಲ್ (ಟೆಫ್ಲಾನ್)', size: '', unit: 'Nos', unitType: 'default' },
@@ -190,19 +221,13 @@ export const materials = [
   { id: 'vacuum_hose', category: 'accessories', name: 'Vacuum Hose', nameKannada: 'ವ್ಯಾಕ್ಯೂಮ್ ಹೋಸ್', size: '', unit: 'Meter', unitType: 'pipes' },
   { id: 'pool_ladder', category: 'accessories', name: 'Pool Ladder', nameKannada: 'ಪೂಲ್ ಲ್ಯಾಡರ್', size: '', unit: 'Nos', unitType: 'default' },
   { id: 'grab_rail', category: 'accessories', name: 'Grab Rail', nameKannada: 'ಗ್ರ್ಯಾಬ್ ರೇಲ್', size: '', unit: 'Nos', unitType: 'default' },
+  // NEW accessories
+  { id: 'foot_valve', category: 'accessories', name: 'Foot Valve', nameKannada: 'ಫುಟ್ ವಾಲ್ವ್', size: '', unit: 'Nos', unitType: 'default' },
+  { id: 'test_plug', category: 'accessories', name: 'Test Plug', nameKannada: 'ಟೆಸ್ಟ್ ಪ್ಲಗ್', size: '', unit: 'Nos', unitType: 'default' },
 ];
 
-// Predefined site names for quick selection
-export const siteNames = [
-  'Adarsha Farm',
-  'Hotel Project',
-  'Apartment Complex',
-  'Villa Project',
-  'Resort',
-  'Club House',
-  'School',
-  'Hospital',
-];
+// Predefined site names for quick selection (empty – sites come from saved list history)
+export const siteNames = [];
 
 // Get materials by category
 export const getMaterialsByCategory = (categoryId) => {

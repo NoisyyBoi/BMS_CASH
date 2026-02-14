@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 
 const STORAGE_KEY = 'pool_material_lists';
-const MAX_LISTS = 5;
+const MAX_LISTS = 20;
 
 // Get all saved lists
 export const getSavedLists = () => {
@@ -52,6 +52,15 @@ export const deleteList = (listId) => {
 export const getListById = (listId) => {
   const lists = getSavedLists();
   return lists.find(l => l.id === listId);
+};
+
+// Get unique site names from saved list history
+export const getUsedSiteNames = () => {
+  const lists = getSavedLists();
+  const names = lists
+    .map(l => l.siteName)
+    .filter(name => name && name !== 'Untitled Site');
+  return [...new Set(names)];
 };
 
 // Format list items for sharing
