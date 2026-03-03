@@ -5,6 +5,10 @@ import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSha
 // View constants
 const VIEWS = {
   HOME: 'home',
+  CREATE_USER: 'create_user',
+  GIVE_MONEY: 'give_money',
+  USER_TOTAL: 'user_total',
+  USER_HISTORY: 'user_history',
   PROJECT: 'project',
   CATEGORIES: 'categories',
   ITEMS: 'items',
@@ -34,6 +38,26 @@ function App() {
   const [customItemName, setCustomItemName] = useState('');
   const [customItemQty, setCustomItemQty] = useState('');
 
+  // User creation states
+  const [userName, setUserName] = useState('');
+  const [userPhone, setUserPhone] = useState('');
+  const [userReferral, setUserReferral] = useState('');
+
+  // Give money states
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [moneyAmount, setMoneyAmount] = useState('');
+  const [moneyPurpose, setMoneyPurpose] = useState('');
+  const [customPurpose, setCustomPurpose] = useState('');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [expandedDates, setExpandedDates] = useState({});
+
+  // User total states
+  const [selectedUserForHistory, setSelectedUserForHistory] = useState(null);
+  const [userHistorySearchQuery, setUserHistorySearchQuery] = useState('');
+  const [showUserHistoryDropdown, setShowUserHistoryDropdown] = useState(false);
+  const [totalSalary, setTotalSalary] = useState('');
+
   useEffect(() => {
     setSavedLists(getSavedLists());
   }, []);
@@ -48,6 +72,172 @@ function App() {
     setSiteName('');
     setProjectDate(getTodayFormatted());
     setView(VIEWS.PROJECT);
+  };
+
+  const startCreateUser = () => {
+    setUserName('');
+    setUserPhone('');
+    setUserReferral('');
+    setView(VIEWS.CREATE_USER);
+  };
+
+  const startGiveMoney = () => {
+    setSelectedUser(null);
+    setUserSearchQuery('');
+    setMoneyAmount('');
+    setMoneyPurpose('');
+    setCustomPurpose('');
+    setShowUserDropdown(false);
+    setView(VIEWS.GIVE_MONEY);
+  };
+
+  const startUserTotal = () => {
+    setSelectedUserForHistory(null);
+    setUserHistorySearchQuery('');
+    setShowUserHistoryDropdown(false);
+    setView(VIEWS.USER_TOTAL);
+  };
+
+  const selectUserForHistory = (user) => {
+    setSelectedUserForHistory(user);
+    setUserHistorySearchQuery(user.name);
+    setShowUserHistoryDropdown(false);
+    setTotalSalary('');
+    setView(VIEWS.USER_HISTORY);
+  };
+
+  const getFilteredUsersForHistory = () => {
+    const users = getUsers();
+    if (!userHistorySearchQuery.trim()) return users;
+    
+    const query = userHistorySearchQuery.toLowerCase();
+    return users.filter(user => 
+      user.name.toLowerCase().includes(query) || 
+      user.phone.includes(query)
+    );
+  };
+
+  const getUserTransactions = (userId) => {
+    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    return transactions.filter(t => t.userId === userId);
+  };
+
+  const getMonthlyTotal = (userId) => {
+    const transactions = getUserTransactions(userId);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    return transactions
+      .filter(t => {
+        const transDate = new Date(t.createdAt);
+        return transDate.getMonth() === currentMonth && transDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+  };
+
+  const getUsers = () => {
+    return JSON.parse(localStorage.getItem('users') || '[]');
+  };
+
+  const getFilteredUsers = () => {
+    const users = getUsers();
+    if (!userSearchQuery.trim()) return users;
+    
+    const query = userSearchQuery.toLowerCase();
+    return users.filter(user => 
+      user.name.toLowerCase().includes(query) || 
+      user.phone.includes(query)
+    );
+  };
+
+  const selectUser = (user) => {
+    setSelectedUser(user);
+    setUserSearchQuery(user.name);
+    setShowUserDropdown(false);
+  };
+
+  const handleSaveTransaction = () => {
+    if (!selectedUser) {
+      showToast('⚠️ Please select a user');
+      return;
+    }
+    if (!moneyAmount.trim() || parseFloat(moneyAmount) <= 0) {
+      showToast('⚠️ Please enter a valid amount');
+      return;
+    }
+    if (!moneyPurpose) {
+      showToast('⚠️ Please select a purpose');
+      return;
+    }
+    if (moneyPurpose === 'others' && !customPurpose.trim()) {
+      showToast('⚠️ Please specify the purpose');
+      return;
+    }
+
+    const transaction = {
+      id: Date.now(),
+      userId: selectedUser.id,
+      userName: selectedUser.name,
+      userPhone: selectedUser.phone,
+      amount: parseFloat(moneyAmount),
+      purpose: moneyPurpose === 'others' ? customPurpose.trim() : moneyPurpose,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save to localStorage
+    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    transactions.push(transaction);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+
+    showToast('✓ Transaction saved successfully');
+    setView(VIEWS.HOME);
+  };
+
+  const toggleDateExpansion = (date) => {
+    setExpandedDates(prev => ({
+      ...prev,
+      [date]: !prev[date]
+    }));
+  };
+
+  const handleSaveUser = () => {
+    if (!userName.trim() || !userPhone.trim()) {
+      showToast('⚠️ Name and Phone are required');
+      return;
+    }
+
+    const user = {
+      id: Date.now(),
+      name: userName.trim(),
+      phone: userPhone.trim(),
+      referral: userReferral.trim() || null,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save to localStorage
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    users.push(user);
+    localStorage.setItem('users', JSON.stringify(users));
+
+    showToast('✓ User created successfully');
+    setView(VIEWS.HOME);
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('⚠️ Image size should be less than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUserImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const continueToCategories = () => {
@@ -247,8 +437,10 @@ function App() {
       setView(VIEWS.CATEGORIES);
     } else if (view === VIEWS.CATEGORIES) {
       setView(VIEWS.PROJECT);
-    } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY) {
+    } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL) {
       setView(VIEWS.HOME);
+    } else if (view === VIEWS.USER_HISTORY) {
+      setView(VIEWS.USER_TOTAL);
     } else if (view === VIEWS.REVIEW) {
       setView(VIEWS.CATEGORIES);
     }
@@ -442,6 +634,10 @@ function App() {
             <div>
               <h1>
                 {view === VIEWS.PROJECT && 'New Project'}
+                {view === VIEWS.CREATE_USER && 'Create User'}
+                {view === VIEWS.GIVE_MONEY && 'Give Money'}
+                {view === VIEWS.USER_TOTAL && 'User Total'}
+                {view === VIEWS.USER_HISTORY && 'User History'}
                 {view === VIEWS.CATEGORIES && 'Select Category'}
                 {view === VIEWS.ITEMS && categories.find(c => c.id === currentCategory)?.name}
                 {view === VIEWS.REVIEW && 'Review List'}
@@ -449,6 +645,18 @@ function App() {
               </h1>
               {view === VIEWS.PROJECT && (
                 <p className="header-subtitle">ಹೊಸ ಪ್ರಾಜೆಕ್ಟ್</p>
+              )}
+              {view === VIEWS.CREATE_USER && (
+                <p className="header-subtitle">ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ</p>
+              )}
+              {view === VIEWS.GIVE_MONEY && (
+                <p className="header-subtitle">ಹಣ ನೀಡಿ</p>
+              )}
+              {view === VIEWS.USER_TOTAL && (
+                <p className="header-subtitle">ಬಳಕೆದಾರರ ಒಟ್ಟು</p>
+              )}
+              {view === VIEWS.USER_HISTORY && selectedUserForHistory && (
+                <p className="header-subtitle">{selectedUserForHistory.name}</p>
               )}
               {view === VIEWS.ITEMS && (
                 <p className="header-subtitle">
@@ -465,17 +673,33 @@ function App() {
         {view === VIEWS.HOME && (
           <div className="home-screen">
             <div className="home-hero">
-              <div className="home-hero-icon">🔧</div>
-              <h2>Pool Material List</h2>
-              <p>ಪೂಲ್ ಮೆಟೀರಿಯಲ್ ಲಿಸ್ಟ್</p>
+              <div className="home-hero-icon">
+                <img src="/logo.png" alt="BMS Diesel Systems" className="company-logo" />
+              </div>
             </div>
             
             <div className="home-actions">
-              <button className="btn btn-primary" onClick={startNewList}>
-                <span className="btn-icon">➕</span>
+              <button className="btn btn-primary" onClick={startCreateUser}>
+                <span className="btn-icon">👤</span>
                 <span className="btn-content">
-                  <span>New Project</span>
-                  <span className="btn-kannada">ಹೊಸ ಪ್ರಾಜೆಕ್ಟ್</span>
+                  <span>Create a User</span>
+                  <span className="btn-kannada">ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ</span>
+                </span>
+              </button>
+              
+              <button className="btn btn-success" onClick={startGiveMoney}>
+                <span className="btn-icon">💰</span>
+                <span className="btn-content">
+                  <span>Give Money</span>
+                  <span className="btn-kannada">ಹಣ ನೀಡಿ</span>
+                </span>
+              </button>
+              
+              <button className="btn btn-warning" onClick={startUserTotal}>
+                <span className="btn-icon">📊</span>
+                <span className="btn-content">
+                  <span>User Total</span>
+                  <span className="btn-kannada">ಬಳಕೆದಾರರ ಒಟ್ಟು</span>
                 </span>
               </button>
               
@@ -487,6 +711,378 @@ function App() {
                 </span>
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Create User Screen */}
+        {view === VIEWS.CREATE_USER && (
+          <div className="project-screen">
+            <div className="project-section">
+              <label className="project-label">
+                <span>Name</span>
+                <span className="project-label-kannada">ಹೆಸರು</span>
+                <span className="required-mark">*</span>
+              </label>
+              <input
+                type="text"
+                className="project-input"
+                placeholder="Enter full name"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="project-section">
+              <label className="project-label">
+                <span>Phone Number</span>
+                <span className="project-label-kannada">ಫೋನ್ ಸಂಖ್ಯೆ</span>
+                <span className="required-mark">*</span>
+              </label>
+              <input
+                type="tel"
+                className="project-input"
+                placeholder="Enter phone number"
+                value={userPhone}
+                onChange={(e) => setUserPhone(e.target.value)}
+                maxLength="10"
+              />
+            </div>
+
+            <div className="project-section">
+              <label className="project-label">
+                <span>Referral (Optional)</span>
+                <span className="project-label-kannada">ಉಲ್ಲೇಖ</span>
+              </label>
+              <input
+                type="text"
+                className="project-input"
+                placeholder="Enter referral code or name"
+                value={userReferral}
+                onChange={(e) => setUserReferral(e.target.value)}
+              />
+            </div>
+
+            <button 
+              className="btn btn-success project-continue" 
+              onClick={handleSaveUser}
+              disabled={!userName.trim() || !userPhone.trim()}
+            >
+              Save User →
+              <span className="btn-kannada">ಉಳಿಸಿ</span>
+            </button>
+          </div>
+        )}
+
+        {/* Give Money Screen */}
+        {view === VIEWS.GIVE_MONEY && (
+          <div className="project-screen">
+            {/* User Selection */}
+            <div className="project-section">
+              <label className="project-label">
+                <span>Select User</span>
+                <span className="project-label-kannada">ಬಳಕೆದಾರರನ್ನು ಆಯ್ಕೆಮಾಡಿ</span>
+                <span className="required-mark">*</span>
+              </label>
+              <div className="user-search-container">
+                <input
+                  type="text"
+                  className="project-input"
+                  placeholder="Type user name or phone..."
+                  value={userSearchQuery}
+                  onChange={(e) => {
+                    setUserSearchQuery(e.target.value);
+                    setShowUserDropdown(true);
+                    if (!e.target.value.trim()) {
+                      setSelectedUser(null);
+                    }
+                  }}
+                  onFocus={() => setShowUserDropdown(true)}
+                  autoFocus
+                />
+                
+                {showUserDropdown && (
+                  <div className="user-dropdown">
+                    {getFilteredUsers().length > 0 ? (
+                      getFilteredUsers().map(user => (
+                        <div
+                          key={user.id}
+                          className="user-dropdown-item"
+                          onClick={() => selectUser(user)}
+                        >
+                          <div className="user-dropdown-name">{user.name}</div>
+                          <div className="user-dropdown-phone">{user.phone}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="user-dropdown-empty">
+                        <p>No users found</p>
+                        <button 
+                          className="btn-link"
+                          onClick={() => {
+                            setView(VIEWS.CREATE_USER);
+                          }}
+                        >
+                          Create a new user →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Amount Input */}
+            <div className="project-section">
+              <label className="project-label">
+                <span>Amount (₹)</span>
+                <span className="project-label-kannada">ಮೊತ್ತ</span>
+                <span className="required-mark">*</span>
+              </label>
+              <input
+                type="number"
+                className="project-input"
+                placeholder="Enter amount"
+                value={moneyAmount}
+                onChange={(e) => setMoneyAmount(e.target.value)}
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+            {/* Purpose Dropdown */}
+            <div className="project-section">
+              <label className="project-label">
+                <span>Purpose</span>
+                <span className="project-label-kannada">ಉದ್ದೇಶ</span>
+                <span className="required-mark">*</span>
+              </label>
+              <select
+                className="project-input project-select"
+                value={moneyPurpose}
+                onChange={(e) => {
+                  setMoneyPurpose(e.target.value);
+                  if (e.target.value !== 'others') {
+                    setCustomPurpose('');
+                  }
+                }}
+              >
+                <option value="">Select purpose...</option>
+                <option value="fuel">Fuel</option>
+                <option value="food">Food</option>
+                <option value="advance">Advance</option>
+                <option value="others">Others</option>
+              </select>
+            </div>
+
+            {/* Custom Purpose Input (shown when "Others" is selected) */}
+            {moneyPurpose === 'others' && (
+              <div className="project-section">
+                <label className="project-label">
+                  <span>Specify Purpose</span>
+                  <span className="project-label-kannada">ಉದ್ದೇಶವನ್ನು ನಮೂದಿಸಿ</span>
+                  <span className="required-mark">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="project-input"
+                  placeholder="Enter purpose"
+                  value={customPurpose}
+                  onChange={(e) => setCustomPurpose(e.target.value)}
+                />
+              </div>
+            )}
+
+            <button 
+              className="btn btn-success project-continue" 
+              onClick={handleSaveTransaction}
+              disabled={
+                !selectedUser || 
+                !moneyAmount.trim() || 
+                parseFloat(moneyAmount) <= 0 || 
+                !moneyPurpose ||
+                (moneyPurpose === 'others' && !customPurpose.trim())
+              }
+            >
+              Save Transaction →
+              <span className="btn-kannada">ಉಳಿಸಿ</span>
+            </button>
+          </div>
+        )}
+
+        {/* User Total Screen - Select User */}
+        {view === VIEWS.USER_TOTAL && (
+          <div className="project-screen">
+            <div className="project-section">
+              <label className="project-label">
+                <span>Select User</span>
+                <span className="project-label-kannada">ಬಳಕೆದಾರರನ್ನು ಆಯ್ಕೆಮಾಡಿ</span>
+              </label>
+              <div className="user-search-container">
+                <input
+                  type="text"
+                  className="project-input"
+                  placeholder="Type user name or phone..."
+                  value={userHistorySearchQuery}
+                  onChange={(e) => {
+                    setUserHistorySearchQuery(e.target.value);
+                    setShowUserHistoryDropdown(true);
+                  }}
+                  onFocus={() => setShowUserHistoryDropdown(true)}
+                  autoFocus
+                />
+                
+                {showUserHistoryDropdown && (
+                  <div className="user-dropdown">
+                    {getFilteredUsersForHistory().length > 0 ? (
+                      getFilteredUsersForHistory().map(user => (
+                        <div
+                          key={user.id}
+                          className="user-dropdown-item"
+                          onClick={() => selectUserForHistory(user)}
+                        >
+                          <div className="user-dropdown-name">{user.name}</div>
+                          <div className="user-dropdown-phone">{user.phone}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="user-dropdown-empty">
+                        <p>No users found</p>
+                        <button 
+                          className="btn-link"
+                          onClick={() => {
+                            setView(VIEWS.CREATE_USER);
+                          }}
+                        >
+                          Create a new user →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* User History Screen */}
+        {view === VIEWS.USER_HISTORY && selectedUserForHistory && (
+          <div className="user-history-screen">
+            {(() => {
+              const userTransactions = getUserTransactions(selectedUserForHistory.id);
+              const monthlyTotal = getMonthlyTotal(selectedUserForHistory.id);
+              const now = new Date();
+              const monthName = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+              
+              if (userTransactions.length === 0) {
+                return (
+                  <div className="empty-state">
+                    <div className="empty-icon">💰</div>
+                    <p>No transactions for this user</p>
+                    <p>ಈ ಬಳಕೆದಾರರಿಗೆ ಯಾವುದೇ ವಹಿವಾಟುಗಳಿಲ್ಲ</p>
+                  </div>
+                );
+              }
+              
+              // Sort by date (newest first)
+              const sortedTransactions = [...userTransactions].sort((a, b) => 
+                new Date(b.createdAt) - new Date(a.createdAt)
+              );
+              
+              return (
+                <>
+                  <div className="user-info-card">
+                    <div className="user-info-header">
+                      <div className="user-info-icon">
+                        {selectedUserForHistory.image ? (
+                          <img src={selectedUserForHistory.image} alt={selectedUserForHistory.name} className="user-info-photo" />
+                        ) : (
+                          '👤'
+                        )}
+                      </div>
+                      <div>
+                        <div className="user-info-name">{selectedUserForHistory.name}</div>
+                        <div className="user-info-phone">{selectedUserForHistory.phone}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="transactions-list">
+                    {sortedTransactions.map(transaction => (
+                      <div key={transaction.id} className="history-card transaction-card">
+                        <div className="transaction-header">
+                          <div className="transaction-info">
+                            <div className="transaction-purpose-main">{transaction.purpose}</div>
+                            <div className="transaction-date">
+                              {new Date(transaction.createdAt).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                          <div className="transaction-amount">₹{transaction.amount.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="monthly-total-card">
+                    <div className="monthly-total-header">
+                      <span className="monthly-total-icon">📅</span>
+                      <span className="monthly-total-month">{monthName}</span>
+                    </div>
+                    <div className="monthly-total-amount">
+                      <span className="monthly-total-label">Total Amount Given:</span>
+                      <span className="monthly-total-value">₹{monthlyTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="salary-calculator-card">
+                    <div className="calculator-header">
+                      <span className="calculator-icon">🧮</span>
+                      <span className="calculator-title">Salary Calculator</span>
+                    </div>
+                    
+                    <div className="calculator-input-group">
+                      <label className="calculator-label">Total Salary (₹)</label>
+                      <input
+                        type="number"
+                        className="calculator-input"
+                        placeholder="Enter total salary"
+                        value={totalSalary}
+                        onChange={(e) => setTotalSalary(e.target.value)}
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    
+                    {totalSalary && parseFloat(totalSalary) > 0 && (
+                      <div className="calculator-result">
+                        <div className="calculator-breakdown">
+                          <div className="calculator-row">
+                            <span className="calculator-row-label">Total Salary:</span>
+                            <span className="calculator-row-value">₹{parseFloat(totalSalary).toFixed(2)}</span>
+                          </div>
+                          <div className="calculator-row subtract">
+                            <span className="calculator-row-label">Amount Given:</span>
+                            <span className="calculator-row-value">- ₹{monthlyTotal.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <div className="calculator-final">
+                          <span className="calculator-final-label">Remaining Balance:</span>
+                          <span className="calculator-final-value">
+                            ₹{(parseFloat(totalSalary) - monthlyTotal).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
@@ -796,46 +1392,100 @@ function App() {
         {/* History Screen */}
         {view === VIEWS.HISTORY && (
           <div className="history-list">
-            {savedLists.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">📋</div>
-                <p>No saved lists yet</p>
-                <p>ಯಾವುದೇ ಸೇವ್ ಮಾಡಿದ ಪಟ್ಟಿಗಳಿಲ್ಲ</p>
-              </div>
-            ) : (
-              savedLists.map(list => (
-                <div key={list.id} className="history-card">
-                  <div className="history-date">
-                    {new Date(list.createdAt).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+            {(() => {
+              const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+              
+              if (transactions.length === 0) {
+                return (
+                  <div className="empty-state">
+                    <div className="empty-icon">�</div>
+                    <p>No transactions yet</p>
+                    <p>ಯಾವುದೇ ವಹಿವಾಟುಗಳಿಲ್ಲ</p>
                   </div>
-                  <div className="history-project">{list.siteName || list.projectName}</div>
-                  <div className="history-summary">
-                    {list.items.length} items • {list.items.slice(0, 3).map(i => i.name).join(', ')}
-                    {list.items.length > 3 && '...'}
+                );
+              }
+              
+              // Sort by date (newest first)
+              const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(b.createdAt) - new Date(a.createdAt)
+              );
+              
+              // Group transactions by date and calculate daily totals
+              const groupedByDate = {};
+              sortedTransactions.forEach(transaction => {
+                const date = new Date(transaction.createdAt).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                });
+                
+                if (!groupedByDate[date]) {
+                  groupedByDate[date] = {
+                    transactions: [],
+                    total: 0
+                  };
+                }
+                
+                groupedByDate[date].transactions.push(transaction);
+                groupedByDate[date].total += transaction.amount;
+              });
+              
+              return Object.entries(groupedByDate).map(([date, data]) => (
+                <div key={date} className="history-date-group">
+                  <div 
+                    className="daily-summary"
+                    onClick={() => toggleDateExpansion(date)}
+                  >
+                    <div className="daily-summary-date">
+                      <span className="daily-summary-icon">📅</span>
+                      {date}
+                      <span className="daily-summary-count">({data.transactions.length})</span>
+                    </div>
+                    <div className="daily-summary-right">
+                      <div className="daily-summary-total">
+                        <span className="daily-summary-label">Total:</span>
+                        <span className="daily-summary-amount">₹{data.total.toFixed(2)}</span>
+                      </div>
+                      <span className={`expand-icon ${expandedDates[date] ? 'expanded' : ''}`}>
+                        ▼
+                      </span>
+                    </div>
                   </div>
-                  <div className="history-actions">
-                    <button 
-                      className="history-action-btn duplicate"
-                      onClick={() => handleDuplicateList(list)}
-                    >
-                      📋 Duplicate
-                    </button>
-                    <button 
-                      className="history-action-btn delete"
-                      onClick={() => handleDeleteList(list.id)}
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
+                  
+                  {expandedDates[date] && (
+                    <div className="transactions-container">
+                      {data.transactions.map(transaction => (
+                        <div key={transaction.id} className="history-card transaction-card">
+                          <div className="transaction-header">
+                            <div className="transaction-user">
+                              <div className="transaction-user-icon">👤</div>
+                              <div>
+                                <div className="transaction-user-name">{transaction.userName}</div>
+                                <div className="transaction-user-phone">{transaction.userPhone}</div>
+                              </div>
+                            </div>
+                            <div className="transaction-amount">₹{transaction.amount.toFixed(2)}</div>
+                          </div>
+                          
+                          <div className="transaction-details">
+                            <div className="transaction-purpose">
+                              <span className="transaction-label">Purpose:</span>
+                              <span className="transaction-value">{transaction.purpose}</span>
+                            </div>
+                            <div className="transaction-date">
+                              {new Date(transaction.createdAt).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))
-            )}
+              ));
+            })()}
           </div>
         )}
       </main>

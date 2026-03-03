@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png'],
       manifest: {
-        name: 'Pool Material List',
-        short_name: 'Pool List',
-        description: 'Swimming pool plumbing material list builder',
+        name: 'BMS Cash Entry',
+        short_name: 'BMS Cash',
+        description: 'Employee cash transaction management system for BMS Diesel Systems',
         theme_color: '#1565C0',
         background_color: '#ffffff',
         display: 'standalone',
