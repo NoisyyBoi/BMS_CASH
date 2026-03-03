@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted } from './utils/storage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase } from './utils/supabaseStorage';
 
 // View constants
 const VIEWS = {
@@ -51,16 +52,37 @@ function App() {
   const [customPurpose, setCustomPurpose] = useState('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [expandedDates, setExpandedDates] = useState({});
+  const [allUsers, setAllUsers] = useState([]);
+  const [allTransactions, setAllTransactions] = useState([]);
 
   // User total states
   const [selectedUserForHistory, setSelectedUserForHistory] = useState(null);
   const [userHistorySearchQuery, setUserHistorySearchQuery] = useState('');
   const [showUserHistoryDropdown, setShowUserHistoryDropdown] = useState(false);
   const [totalSalary, setTotalSalary] = useState('');
+  const [userTransactionsData, setUserTransactionsData] = useState([]);
+  const [userMonthlyTotal, setUserMonthlyTotal] = useState(0);
 
   useEffect(() => {
     setSavedLists(getSavedLists());
+    loadUsers();
+    loadTransactions();
   }, []);
+
+  const loadUsers = async () => {
+    const users = await getUsers();
+    setAllUsers(users);
+  };
+
+  const loadTransactions = async () => {
+    try {
+      const transactions = await getTransactionsFromSupabase();
+      setAllTransactions(transactions);
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      setAllTransactions([]);
+    }
+  };
 
   const showToast = (message) => {
     setToast(message);
@@ -98,11 +120,19 @@ function App() {
     setView(VIEWS.USER_TOTAL);
   };
 
-  const selectUserForHistory = (user) => {
+  const selectUserForHistory = async (user) => {
     setSelectedUserForHistory(user);
     setUserHistorySearchQuery(user.name);
     setShowUserHistoryDropdown(false);
     setTotalSalary('');
+    
+    // Load user transactions
+    const transactions = await getUserTransactions(user.id);
+    setUserTransactionsData(transactions);
+    
+    const monthlyTotal = await getMonthlyTotal(user.id);
+    setUserMonthlyTotal(monthlyTotal);
+    
     setView(VIEWS.USER_HISTORY);
   };
 
@@ -117,13 +147,18 @@ function App() {
     );
   };
 
-  const getUserTransactions = (userId) => {
-    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    return transactions.filter(t => t.userId === userId);
+  const getUserTransactions = async (userId) => {
+    try {
+      const { getUserTransactionsFromSupabase } = await import('./utils/supabaseStorage');
+      return await getUserTransactionsFromSupabase(userId);
+    } catch (error) {
+      console.error('Error fetching user transactions:', error);
+      return [];
+    }
   };
 
-  const getMonthlyTotal = (userId) => {
-    const transactions = getUserTransactions(userId);
+  const getMonthlyTotal = async (userId) => {
+    const transactions = await getUserTransactions(userId);
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -136,16 +171,21 @@ function App() {
       .reduce((sum, t) => sum + t.amount, 0);
   };
 
-  const getUsers = () => {
-    return JSON.parse(localStorage.getItem('users') || '[]');
+  const getUsers = async () => {
+    try {
+      return await getUsersFromSupabase();
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      showToast('⚠️ Error loading users');
+      return [];
+    }
   };
 
   const getFilteredUsers = () => {
-    const users = getUsers();
-    if (!userSearchQuery.trim()) return users;
+    if (!userSearchQuery.trim()) return allUsers;
     
     const query = userSearchQuery.toLowerCase();
-    return users.filter(user => 
+    return allUsers.filter(user => 
       user.name.toLowerCase().includes(query) || 
       user.phone.includes(query)
     );
@@ -157,7 +197,7 @@ function App() {
     setShowUserDropdown(false);
   };
 
-  const handleSaveTransaction = () => {
+  const handleSaveTransaction = async () => {
     if (!selectedUser) {
       showToast('⚠️ Please select a user');
       return;
@@ -185,13 +225,14 @@ function App() {
       createdAt: new Date().toISOString(),
     };
 
-    // Save to localStorage
-    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    transactions.push(transaction);
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-
-    showToast('✓ Transaction saved successfully');
-    setView(VIEWS.HOME);
+    try {
+      await saveTransactionToSupabase(transaction);
+      showToast('✓ Transaction saved successfully');
+      setView(VIEWS.HOME);
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      showToast('⚠️ Error saving transaction');
+    }
   };
 
   const toggleDateExpansion = (date) => {
@@ -201,7 +242,7 @@ function App() {
     }));
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     if (!userName.trim() || !userPhone.trim()) {
       showToast('⚠️ Name and Phone are required');
       return;
@@ -215,13 +256,15 @@ function App() {
       createdAt: new Date().toISOString(),
     };
 
-    // Save to localStorage
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    users.push(user);
-    localStorage.setItem('users', JSON.stringify(users));
-
-    showToast('✓ User created successfully');
-    setView(VIEWS.HOME);
+    try {
+      await saveUserToSupabase(user);
+      await loadUsers(); // Reload users list
+      showToast('✓ User created successfully');
+      setView(VIEWS.HOME);
+    } catch (error) {
+      console.error('Error saving user:', error);
+      showToast('⚠️ Error saving user');
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -969,8 +1012,8 @@ function App() {
         {view === VIEWS.USER_HISTORY && selectedUserForHistory && (
           <div className="user-history-screen">
             {(() => {
-              const userTransactions = getUserTransactions(selectedUserForHistory.id);
-              const monthlyTotal = getMonthlyTotal(selectedUserForHistory.id);
+              const userTransactions = userTransactionsData;
+              const monthlyTotal = userMonthlyTotal;
               const now = new Date();
               const monthName = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
               
@@ -1393,7 +1436,7 @@ function App() {
         {view === VIEWS.HISTORY && (
           <div className="history-list">
             {(() => {
-              const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+              const transactions = allTransactions;
               
               if (transactions.length === 0) {
                 return (
