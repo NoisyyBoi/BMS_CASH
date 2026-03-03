@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Status Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status-card {
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border-left: 5px solid #ccc;
+        }
+        .status-card.success { background: #d4edda; border-color: #28a745; }
+        .status-card.error { background: #f8d7da; border-color: #dc3545; }
+        .status-card.warning { background: #fff3cd; border-color: #ffc107; }
+        h1 { color: #1565C0; }
+        h3 { margin-top: 0; }
+        button {
+            background: #1565C0;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover { background: #0D47A1; }
+        .code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>📱 PWA Status Check</h1>
+    <p>This page checks if your app is properly configured as a PWA.</p>
+    
+    <button onclick="checkPWA()">🔍 Check PWA Status</button>
+    <button onclick="testInstall()">📲 Test Install</button>
+    <button onclick="testOffline()">🔌 Test Offline</button>
+    
+    <div id="results"></div>
+
+    <script>
+        let deferredPrompt;
+
+        // Capture install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('Install prompt captured');
+        });
+
+        function addStatus(title, message, type = 'success') {
+            const resultsDiv = document.getElementById('results');
+            const card = document.createElement('div');
+            card.className = `status-card ${type}`;
+            card.innerHTML = `<h3>${title}</h3><p>${message}</p>`;
+            resultsDiv.appendChild(card);
+        }
+
+        function checkPWA() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            // Check 1: HTTPS
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                addStatus('✅ HTTPS Enabled', 'App is served over HTTPS (required for PWA)', 'success');
+            } else {
+                addStatus('❌ HTTPS Required', 'PWA requires HTTPS. Deploy to enable.', 'error');
+            }
+
+            // Check 2: Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    if (registrations.length > 0) {
+                        addStatus('✅ Service Worker Registered', 
+                            `Found ${registrations.length} service worker(s). Offline support enabled!`, 
+                            'success');
+                        
+                        registrations.forEach((reg, i) => {
+                            console.log(`Service Worker ${i + 1}:`, reg);
+                        });
+                    } else {
+                        addStatus('⚠️ Service Worker Not Found', 
+                            'Service worker not registered yet. Try building the app first.', 
+                            'warning');
+                    }
+                });
+            } else {
+                addStatus('❌ Service Worker Not Supported', 
+                    'Your browser does not support service workers.', 
+                    'error');
+            }
+
+            // Check 3: Manifest
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+            if (manifestLink) {
+                fetch(manifestLink.href)
+                    .then(response => response.json())
+                    .then(manifest => {
+                        addStatus('✅ Web App Manifest Found', 
+                            `App Name: ${manifest.name || manifest.short_name}<br>
+                             Theme Color: ${manifest.theme_color}<br>
+                             Display: ${manifest.display}`, 
+                            'success');
+                    })
+                    .catch(() => {
+                        addStatus('⚠️ Manifest Error', 
+                            'Manifest file found but could not be loaded.', 
+                            'warning');
+                    });
+            } else {
+                addStatus('⚠️ Manifest Not Found', 
+                    'Web app manifest not detected. Build the app to generate it.', 
+                    'warning');
+            }
+
+            // Check 4: Install Prompt
+            if (deferredPrompt) {
+                addStatus('✅ Install Prompt Available', 
+                    'App can be installed! Click "Test Install" button.', 
+                    'success');
+            } else {
+                addStatus('ℹ️ Install Prompt', 
+                    'Install prompt not captured yet. This is normal if app is already installed or on iOS.', 
+                    'warning');
+            }
+
+            // Check 5: Standalone Mode
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                addStatus('✅ Running as Installed App', 
+                    'App is currently running in standalone mode (installed).', 
+                    'success');
+            } else {
+                addStatus('ℹ️ Running in Browser', 
+                    'App is running in browser. Install it to run in standalone mode.', 
+                    'warning');
+            }
+
+            // Check 6: Cache Storage
+            if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                    if (cacheNames.length > 0) {
+                        addStatus('✅ Cache Storage Active', 
+                            `Found ${cacheNames.length} cache(s): ${cacheNames.join(', ')}`, 
+                            'success');
+                    } else {
+                        addStatus('ℹ️ No Caches Yet', 
+                            'Cache storage is available but empty. Visit the app to populate cache.', 
+                            'warning');
+                    }
+                });
+            }
+        }
+
+        function testInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        addStatus('✅ Install Accepted', 'User accepted the install prompt!', 'success');
+                    } else {
+                        addStatus('ℹ️ Install Dismissed', 'User dismissed the install prompt.', 'warning');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                addStatus('ℹ️ Install Not Available', 
+                    'Install prompt not available. Possible reasons:<br>• App is already installed<br>• Running on iOS (use Safari Share → Add to Home Screen)<br>• Not served over HTTPS', 
+                    'warning');
+            }
+        }
+
+        function testOffline() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            addStatus('🔌 Testing Offline Support', 
+                'Checking if app works offline...', 
+                'warning');
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    if (registrations.length > 0) {
+                        addStatus('✅ Offline Support Ready', 
+                            'Service worker is registered. App should work offline!<br><br>' +
+                            '<strong>To test:</strong><br>' +
+                            '1. Open DevTools (F12)<br>' +
+                            '2. Go to Network tab<br>' +
+                            '3. Check "Offline" checkbox<br>' +
+                            '4. Reload the page<br>' +
+                            '5. App should still load!', 
+                            'success');
+                    } else {
+                        addStatus('❌ Offline Not Ready', 
+                            'Service worker not registered. Build and deploy the app first.', 
+                            'error');
+                    }
+                });
+            } else {
+                addStatus('❌ Offline Not Supported', 
+                    'Your browser does not support offline functionality.', 
+                    'error');
+            }
+        }
+
+        // Auto-run check on load
+        window.addEventListener('load', () => {
+            setTimeout(checkPWA, 500);
+        });
+    </script>
+</body>
+</html>
