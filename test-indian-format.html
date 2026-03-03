@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Currency Format Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-case {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .amount { font-weight: bold; color: #1565C0; }
+        h2 { color: #1565C0; }
+    </style>
+</head>
+<body>
+    <h1>Indian Currency Format Examples</h1>
+    <p>All amounts in your app will now display in Indian numbering system:</p>
+    
+    <div id="examples"></div>
+
+    <script type="module">
+        // Same function as in the app
+        const formatIndianCurrency = (amount) => {
+            if (!amount && amount !== 0) return '₹0';
+            
+            const num = parseFloat(amount);
+            if (isNaN(num)) return '₹0';
+            
+            const [integerPart, decimalPart] = num.toFixed(2).split('.');
+            
+            let lastThree = integerPart.substring(integerPart.length - 3);
+            const otherNumbers = integerPart.substring(0, integerPart.length - 3);
+            
+            if (otherNumbers !== '') {
+                lastThree = ',' + lastThree;
+            }
+            
+            const formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+            
+            if (decimalPart && decimalPart !== '00') {
+                return `₹${formatted}.${decimalPart}`;
+            }
+            
+            return `₹${formatted}`;
+        };
+
+        const testCases = [
+            { input: 100, description: 'One hundred' },
+            { input: 1000, description: 'One thousand' },
+            { input: 10000, description: 'Ten thousand' },
+            { input: 100000, description: 'One lakh' },
+            { input: 1000000, description: 'Ten lakhs' },
+            { input: 10000000, description: 'One crore' },
+            { input: 50000, description: 'Fifty thousand' },
+            { input: 250000, description: 'Two lakh fifty thousand' },
+            { input: 1500000, description: 'Fifteen lakhs' },
+            { input: 5000.50, description: 'Five thousand with paise' },
+            { input: 123456.78, description: 'Complex amount with decimals' },
+        ];
+
+        const examplesDiv = document.getElementById('examples');
+        
+        testCases.forEach(test => {
+            const div = document.createElement('div');
+            div.className = 'test-case';
+            div.innerHTML = `
+                <span>${test.description}:</span>
+                <span class="amount">${formatIndianCurrency(test.input)}</span>
+            `;
+            examplesDiv.appendChild(div);
+        });
+    </script>
+</body>
+</html>

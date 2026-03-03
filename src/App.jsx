@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted } from './utils/storage';
 import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase } from './utils/supabaseStorage';
+import { formatIndianCurrency } from './utils/formatCurrency';
 
 // View constants
 const VIEWS = {
@@ -113,11 +114,21 @@ function App() {
     setView(VIEWS.GIVE_MONEY);
   };
 
-  const startUserTotal = () => {
+  const startUserTotal = async () => {
     setSelectedUserForHistory(null);
     setUserHistorySearchQuery('');
     setShowUserHistoryDropdown(false);
+    
+    // Reload users to ensure fresh data
+    await loadUsers();
+    
     setView(VIEWS.USER_TOTAL);
+  };
+
+  const openHistory = async () => {
+    // Reload transactions to ensure fresh data
+    await loadTransactions();
+    setView(VIEWS.HISTORY);
   };
 
   const selectUserForHistory = async (user) => {
@@ -137,11 +148,10 @@ function App() {
   };
 
   const getFilteredUsersForHistory = () => {
-    const users = getUsers();
-    if (!userHistorySearchQuery.trim()) return users;
+    if (!userHistorySearchQuery.trim()) return allUsers;
     
     const query = userHistorySearchQuery.toLowerCase();
-    return users.filter(user => 
+    return allUsers.filter(user => 
       user.name.toLowerCase().includes(query) || 
       user.phone.includes(query)
     );
@@ -227,6 +237,7 @@ function App() {
 
     try {
       await saveTransactionToSupabase(transaction);
+      await loadTransactions(); // Reload transactions list
       showToast('✓ Transaction saved successfully');
       setView(VIEWS.HOME);
     } catch (error) {
@@ -746,7 +757,7 @@ function App() {
                 </span>
               </button>
               
-              <button className="btn btn-secondary" onClick={() => setView(VIEWS.HISTORY)}>
+              <button className="btn btn-secondary" onClick={openHistory}>
                 <span className="btn-icon">📋</span>
                 <span className="btn-content">
                   <span>History</span>
@@ -977,7 +988,11 @@ function App() {
                 
                 {showUserHistoryDropdown && (
                   <div className="user-dropdown">
-                    {getFilteredUsersForHistory().length > 0 ? (
+                    {allUsers.length === 0 ? (
+                      <div className="user-dropdown-empty">
+                        <p>Loading users...</p>
+                      </div>
+                    ) : getFilteredUsersForHistory().length > 0 ? (
                       getFilteredUsersForHistory().map(user => (
                         <div
                           key={user.id}
@@ -1066,7 +1081,7 @@ function App() {
                               })}
                             </div>
                           </div>
-                          <div className="transaction-amount">₹{transaction.amount.toFixed(2)}</div>
+                          <div className="transaction-amount">{formatIndianCurrency(transaction.amount)}</div>
                         </div>
                       </div>
                     ))}
@@ -1079,7 +1094,7 @@ function App() {
                     </div>
                     <div className="monthly-total-amount">
                       <span className="monthly-total-label">Total Amount Given:</span>
-                      <span className="monthly-total-value">₹{monthlyTotal.toFixed(2)}</span>
+                      <span className="monthly-total-value">{formatIndianCurrency(monthlyTotal)}</span>
                     </div>
                   </div>
                   
@@ -1107,17 +1122,17 @@ function App() {
                         <div className="calculator-breakdown">
                           <div className="calculator-row">
                             <span className="calculator-row-label">Total Salary:</span>
-                            <span className="calculator-row-value">₹{parseFloat(totalSalary).toFixed(2)}</span>
+                            <span className="calculator-row-value">{formatIndianCurrency(parseFloat(totalSalary))}</span>
                           </div>
                           <div className="calculator-row subtract">
                             <span className="calculator-row-label">Amount Given:</span>
-                            <span className="calculator-row-value">- ₹{monthlyTotal.toFixed(2)}</span>
+                            <span className="calculator-row-value">- {formatIndianCurrency(monthlyTotal)}</span>
                           </div>
                         </div>
                         <div className="calculator-final">
                           <span className="calculator-final-label">Remaining Balance:</span>
                           <span className="calculator-final-value">
-                            ₹{(parseFloat(totalSalary) - monthlyTotal).toFixed(2)}
+                            {formatIndianCurrency(parseFloat(totalSalary) - monthlyTotal)}
                           </span>
                         </div>
                       </div>
@@ -1487,7 +1502,7 @@ function App() {
                     <div className="daily-summary-right">
                       <div className="daily-summary-total">
                         <span className="daily-summary-label">Total:</span>
-                        <span className="daily-summary-amount">₹{data.total.toFixed(2)}</span>
+                        <span className="daily-summary-amount">{formatIndianCurrency(data.total)}</span>
                       </div>
                       <span className={`expand-icon ${expandedDates[date] ? 'expanded' : ''}`}>
                         ▼
@@ -1507,7 +1522,7 @@ function App() {
                                 <div className="transaction-user-phone">{transaction.userPhone}</div>
                               </div>
                             </div>
-                            <div className="transaction-amount">₹{transaction.amount.toFixed(2)}</div>
+                            <div className="transaction-amount">{formatIndianCurrency(transaction.amount)}</div>
                           </div>
                           
                           <div className="transaction-details">

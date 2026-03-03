@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS Cash Entry - Status Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #1565C0; margin-bottom: 10px; }
+        .status-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ccc;
+        }
+        .status-item.checking { background: #fff3cd; border-color: #ffc107; }
+        .status-item.success { background: #d4edda; border-color: #28a745; }
+        .status-item.error { background: #f8d7da; border-color: #dc3545; }
+        .status-item h3 { margin: 0 0 10px 0; }
+        .status-item p { margin: 5px 0; }
+        button {
+            background: #1565C0;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover { background: #0D47A1; }
+        .code { 
+            background: #f5f5f5; 
+            padding: 2px 6px; 
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 BMS Cash Entry - System Status</h1>
+        <p>This tool checks if everything is set up correctly.</p>
+        
+        <button onclick="runAllChecks()">🚀 Run All Checks</button>
+        <button onclick="location.reload()">🔄 Refresh</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const supabaseUrl = 'https://prjezxbbkqoieockoymh.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByamV6eGJia3FvaWVvY2tveW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1MjIzOTgsImV4cCI6MjA4ODA5ODM5OH0.06egx5ok0Z7kAjv9NMP0xTqbunSR8CzrnyLe-YnYMBs';
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        function addStatus(title, message, status = 'checking', details = '') {
+            const resultsDiv = document.getElementById('results');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-item ${status}`;
+            statusDiv.innerHTML = `
+                <h3>${title}</h3>
+                <p>${message}</p>
+                ${details ? `<pre>${details}</pre>` : ''}
+            `;
+            resultsDiv.appendChild(statusDiv);
+            return statusDiv;
+        }
+
+        window.runAllChecks = async function() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            // Check 1: Supabase Connection
+            const connDiv = addStatus('1️⃣ Supabase Connection', 'Testing connection...', 'checking');
+            try {
+                const { error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+                if (error) {
+                    connDiv.className = 'status-item error';
+                    connDiv.innerHTML = `
+                        <h3>1️⃣ Supabase Connection</h3>
+                        <p>❌ Connection failed! Tables might not exist.</p>
+                        <p><strong>Action needed:</strong> Create database tables</p>
+                        <p>1. Go to <a href="https://supabase.com/dashboard/project/prjezxbbkqoieockoymh/sql" target="_blank">Supabase SQL Editor</a></p>
+                        <p>2. Run the SQL from <span class="code">supabase-schema.sql</span></p>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    `;
+                } else {
+                    connDiv.className = 'status-item success';
+                    connDiv.innerHTML = `
+                        <h3>1️⃣ Supabase Connection</h3>
+                        <p>✅ Connected successfully!</p>
+                    `;
+                }
+            } catch (error) {
+                connDiv.className = 'status-item error';
+                connDiv.innerHTML = `
+                    <h3>1️⃣ Supabase Connection</h3>
+                    <p>❌ Error: ${error.message}</p>
+                `;
+            }
+
+            // Check 2: Users Table
+            const usersDiv = addStatus('2️⃣ Users Table', 'Checking users...', 'checking');
+            try {
+                const { data, error } = await supabase.from('users').select('*');
+                if (error) {
+                    usersDiv.className = 'status-item error';
+                    usersDiv.innerHTML = `
+                        <h3>2️⃣ Users Table</h3>
+                        <p>❌ Error accessing users table</p>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    `;
+                } else {
+                    usersDiv.className = 'status-item success';
+                    usersDiv.innerHTML = `
+                        <h3>2️⃣ Users Table</h3>
+                        <p>✅ Found ${data.length} user(s)</p>
+                        ${data.length === 0 ? '<p><strong>Tip:</strong> Create a user in the app or use test-supabase.html</p>' : ''}
+                        ${data.length > 0 ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+                    `;
+                }
+            } catch (error) {
+                usersDiv.className = 'status-item error';
+                usersDiv.innerHTML = `
+                    <h3>2️⃣ Users Table</h3>
+                    <p>❌ Error: ${error.message}</p>
+                `;
+            }
+
+            // Check 3: Transactions Table
+            const transDiv = addStatus('3️⃣ Transactions Table', 'Checking transactions...', 'checking');
+            try {
+                const { data, error } = await supabase.from('transactions').select('*');
+                if (error) {
+                    transDiv.className = 'status-item error';
+                    transDiv.innerHTML = `
+                        <h3>3️⃣ Transactions Table</h3>
+                        <p>❌ Error accessing transactions table</p>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    `;
+                } else {
+                    transDiv.className = 'status-item success';
+                    transDiv.innerHTML = `
+                        <h3>3️⃣ Transactions Table</h3>
+                        <p>✅ Found ${data.length} transaction(s)</p>
+                        ${data.length === 0 ? '<p><strong>Tip:</strong> Create a transaction using "Give Money" in the app</p>' : ''}
+                        ${data.length > 0 ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+                    `;
+                }
+            } catch (error) {
+                transDiv.className = 'status-item error';
+                transDiv.innerHTML = `
+                    <h3>3️⃣ Transactions Table</h3>
+                    <p>❌ Error: ${error.message}</p>
+                `;
+            }
+
+            // Check 4: LocalStorage (old data)
+            const localDiv = addStatus('4️⃣ LocalStorage Check', 'Checking for old data...', 'checking');
+            const oldUsers = JSON.parse(localStorage.getItem('users') || '[]');
+            const oldTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+            
+            if (oldUsers.length > 0 || oldTransactions.length > 0) {
+                localDiv.className = 'status-item success';
+                localDiv.innerHTML = `
+                    <h3>4️⃣ LocalStorage Check</h3>
+                    <p>⚠️ Found old data in localStorage:</p>
+                    <p>Users: ${oldUsers.length}, Transactions: ${oldTransactions.length}</p>
+                    <p><strong>Action:</strong> Use <span class="code">migrate-to-supabase.html</span> to migrate this data</p>
+                `;
+            } else {
+                localDiv.className = 'status-item success';
+                localDiv.innerHTML = `
+                    <h3>4️⃣ LocalStorage Check</h3>
+                    <p>✅ No old data found (clean start)</p>
+                `;
+            }
+
+            // Final Summary
+            const summaryDiv = addStatus('📊 Summary', 'Generating summary...', 'checking');
+            setTimeout(() => {
+                const allSuccess = document.querySelectorAll('.status-item.success').length;
+                const allErrors = document.querySelectorAll('.status-item.error').length;
+                
+                if (allErrors === 0) {
+                    summaryDiv.className = 'status-item success';
+                    summaryDiv.innerHTML = `
+                        <h3>📊 Summary</h3>
+                        <p>✅ All checks passed! Your app is ready to use.</p>
+                        <p><strong>Next step:</strong> Open your app and start using it!</p>
+                    `;
+                } else {
+                    summaryDiv.className = 'status-item error';
+                    summaryDiv.innerHTML = `
+                        <h3>📊 Summary</h3>
+                        <p>❌ ${allErrors} issue(s) found. Please fix them above.</p>
+                        <p><strong>Most common fix:</strong> Create database tables in Supabase</p>
+                    `;
+                }
+            }, 500);
+        };
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(() => runAllChecks(), 500);
+        });
+    </script>
+</body>
+</html>

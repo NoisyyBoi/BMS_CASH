@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background: #1565C0;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0D47A1;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f5f5f5;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Supabase Connection</h1>
+    <p>This will test if your Supabase database is set up correctly.</p>
+    
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="testUsers()">Test Users Table</button>
+    <button onclick="testTransactions()">Test Transactions Table</button>
+    <button onclick="createTestData()">Create Test Data</button>
+    
+    <div id="status" class="status"></div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const supabaseUrl = 'https://prjezxbbkqoieockoymh.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByamV6eGJia3FvaWVvY2tveW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1MjIzOTgsImV4cCI6MjA4ODA5ODM5OH0.06egx5ok0Z7kAjv9NMP0xTqbunSR8CzrnyLe-YnYMBs';
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        window.testConnection = async function() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>Testing connection...</p>';
+
+            try {
+                const { data, error } = await supabase.from('users').select('count');
+                
+                if (error) {
+                    statusDiv.innerHTML = `<p class="error">❌ Connection failed!</p><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                    statusDiv.innerHTML += '<p><strong>This usually means the tables haven\'t been created yet.</strong></p>';
+                    statusDiv.innerHTML += '<p>Go to Supabase SQL Editor and run the schema from supabase-schema.sql</p>';
+                } else {
+                    statusDiv.innerHTML = '<p class="success">✅ Connection successful!</p>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        };
+
+        window.testUsers = async function() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>Fetching users...</p>';
+
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*');
+                
+                if (error) {
+                    statusDiv.innerHTML = `<p class="error">❌ Error fetching users!</p><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                } else {
+                    statusDiv.innerHTML = `<p class="success">✅ Found ${data.length} users</p>`;
+                    statusDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        };
+
+        window.testTransactions = async function() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>Fetching transactions...</p>';
+
+            try {
+                const { data, error } = await supabase
+                    .from('transactions')
+                    .select('*');
+                
+                if (error) {
+                    statusDiv.innerHTML = `<p class="error">❌ Error fetching transactions!</p><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                } else {
+                    statusDiv.innerHTML = `<p class="success">✅ Found ${data.length} transactions</p>`;
+                    statusDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        };
+
+        window.createTestData = async function() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>Creating test data...</p>';
+
+            try {
+                // Create test user
+                const testUser = {
+                    id: Date.now(),
+                    name: 'Test User',
+                    phone: '9876543210',
+                    referral: 'Test Referral',
+                    created_at: new Date().toISOString()
+                };
+
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .insert([testUser])
+                    .select();
+                
+                if (userError) {
+                    statusDiv.innerHTML = `<p class="error">❌ Error creating user!</p><pre>${JSON.stringify(userError, null, 2)}</pre>`;
+                    return;
+                }
+
+                statusDiv.innerHTML = '<p class="success">✅ Test user created!</p>';
+
+                // Create test transaction
+                const testTransaction = {
+                    id: Date.now() + 1,
+                    user_id: testUser.id,
+                    user_name: testUser.name,
+                    user_phone: testUser.phone,
+                    amount: 1000.00,
+                    purpose: 'fuel',
+                    created_at: new Date().toISOString()
+                };
+
+                const { data: transData, error: transError } = await supabase
+                    .from('transactions')
+                    .insert([testTransaction])
+                    .select();
+                
+                if (transError) {
+                    statusDiv.innerHTML += `<p class="error">❌ Error creating transaction!</p><pre>${JSON.stringify(transError, null, 2)}</pre>`;
+                    return;
+                }
+
+                statusDiv.innerHTML += '<p class="success">✅ Test transaction created!</p>';
+                statusDiv.innerHTML += '<p>Now try using the app!</p>';
+
+            } catch (error) {
+                statusDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>
