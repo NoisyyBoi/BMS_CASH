@@ -2598,3 +2598,53 @@ h3 { font-size: var(--font-size-lg); }
   color: var(--text-muted);
   font-style: italic;
 }
+
+
+/* Delete Button Small */
+.delete-btn-small {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: rgba(198, 40, 40, 0.1);
+  color: var(--danger);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.delete-btn-small:hover {
+  background: rgba(198, 40, 40, 0.2);
+  transform: scale(1.1);
+}
+
+.delete-btn-small:active {
+  transform: scale(0.95);
+}
+
+.delete-btn-white {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.delete-btn-white:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Transaction Amount Container */
+.transaction-amount-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Payment Header Right */
+.payment-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}

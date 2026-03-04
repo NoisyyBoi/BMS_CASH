@@ -148,3 +148,38 @@ export const deleteUserTransactionsFromSupabase = async (userId) => {
     throw error;
   }
 };
+
+
+// ===== DELETE SALARY PAYMENT =====
+
+export const deleteSalaryPaymentFromSupabase = async (paymentId) => {
+  try {
+    const { error } = await supabase
+      .from('salary_payments')
+      .delete()
+      .eq('id', paymentId);
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting salary payment:', error);
+    throw error;
+  }
+};
+
+// ===== DELETE SINGLE TRANSACTION =====
+
+export const deleteTransactionFromSupabase = async (transactionId) => {
+  try {
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', transactionId);
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    throw error;
+  }
+};

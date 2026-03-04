@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp } from './utils/storage';
-import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase } from './utils/supabaseStorage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 
 // View constants
@@ -421,6 +421,53 @@ function App() {
       setLoadingSalaryPayments(false);
     }
     setView(VIEWS.SALARY_PAYMENTS);
+  };
+
+  const handleDeleteSalaryPayment = async (paymentId) => {
+    if (!isAdmin()) {
+      showToast('⚠️ Only admins can delete payments');
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to delete this salary payment record?')) {
+      return;
+    }
+    
+    try {
+      await deleteSalaryPaymentFromSupabase(paymentId);
+      showToast('✓ Salary payment deleted');
+      // Reload payments
+      const payments = await getSalaryPaymentsFromSupabase();
+      setSalaryPayments(payments);
+    } catch (error) {
+      console.error('Error deleting salary payment:', error);
+      showToast('⚠️ Error deleting payment');
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionId) => {
+    if (!isAdmin()) {
+      showToast('⚠️ Only admins can delete transactions');
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to delete this transaction?')) {
+      return;
+    }
+    
+    try {
+      await deleteTransactionFromSupabase(transactionId);
+      showToast('✓ Transaction deleted');
+      // Reload transactions
+      const transactions = await getUserTransactionsFromSupabase(selectedUserForHistory.id);
+      setUserTransactionsData(transactions);
+      const monthlyTotal = getMonthlyTotal(transactions);
+      setUserMonthlyTotal(monthlyTotal);
+      await loadTransactions(); // Reload global transactions too
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      showToast('⚠️ Error deleting transaction');
+    }
   };
 
   const toggleDateExpansion = (date) => {
@@ -1394,8 +1441,19 @@ function App() {
                               })}
                             </div>
                           </div>
-                          <div className={`transaction-amount ${transaction.amount < 0 ? 'negative' : ''}`}>
-                            {transaction.amount < 0 ? '-' : ''}{formatIndianCurrency(Math.abs(transaction.amount))}
+                          <div className="transaction-amount-container">
+                            <div className={`transaction-amount ${transaction.amount < 0 ? 'negative' : ''}`}>
+                              {transaction.amount < 0 ? '-' : ''}{formatIndianCurrency(Math.abs(transaction.amount))}
+                            </div>
+                            {isAdmin() && (
+                              <button 
+                                className="delete-btn-small"
+                                onClick={() => handleDeleteTransaction(transaction.id)}
+                                title="Delete transaction"
+                              >
+                                🗑️
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1777,7 +1835,18 @@ function App() {
                           <div className="payment-user-phone">{payment.userPhone}</div>
                         </div>
                       </div>
-                      <div className="payment-month">{payment.month}</div>
+                      <div className="payment-header-right">
+                        <div className="payment-month">{payment.month}</div>
+                        {isAdmin() && (
+                          <button 
+                            className="delete-btn-small delete-btn-white"
+                            onClick={() => handleDeleteSalaryPayment(payment.id)}
+                            title="Delete payment record"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="payment-card-body">
