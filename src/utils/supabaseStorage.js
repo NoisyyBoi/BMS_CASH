@@ -130,3 +130,21 @@ export const getUserSalaryPaymentsFromSupabase = async (userId) => {
     throw error;
   }
 };
+
+
+// ===== DELETE USER TRANSACTIONS =====
+
+export const deleteUserTransactionsFromSupabase = async (userId) => {
+  try {
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('userId', userId);
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting user transactions:', error);
+    throw error;
+  }
+};

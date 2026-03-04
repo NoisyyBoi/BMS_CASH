@@ -824,6 +824,10 @@ h3 { font-size: var(--font-size-lg); }
   color: var(--success);
 }
 
+.transaction-amount.negative {
+  color: var(--danger);
+}
+
 .transaction-details {
   display: flex;
   justify-content: space-between;
@@ -2205,6 +2209,20 @@ h3 { font-size: var(--font-size-lg); }
 .deduction-row.paid {
   color: var(--success);
   font-weight: 600;
+}
+
+.deduction-row.positive {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.salary-row.remaining {
+  color: var(--accent);
+  font-weight: 600;
+  background: #fff3e0;
+  padding: var(--space-sm);
+  margin: var(--space-sm) calc(-1 * var(--space-md));
+  border-radius: var(--radius-sm);
 }
 
 /* Payment Breakdown */
