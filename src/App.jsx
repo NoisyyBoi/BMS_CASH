@@ -367,8 +367,26 @@ function App() {
       // Delete all old transactions for this user
       await deleteUserTransactionsFromSupabase(selectedUserForHistory.id);
       
-      // DO NOT create a new transaction - just clear everything
-      // The remaining balance is stored in the salary payment record only
+      // If there's a remaining balance (debt or credit), create a transaction
+      if (remainingBalance > 0) {
+        const difference = payAmount - balance;
+        const isDebt = difference > 0; // Employee owes money (overpayment)
+        
+        const balanceTransaction = {
+          id: Date.now() + 1,
+          userId: selectedUserForHistory.id,
+          userName: selectedUserForHistory.name,
+          userPhone: selectedUserForHistory.phone,
+          amount: -remainingBalance, // Negative amount (shows in red)
+          purpose: isDebt 
+            ? `Owes from Overpayment (${monthName})` 
+            : isNegative 
+              ? `Balance Carried Forward - Advance (${monthName})`
+              : `Balance Carried Forward - Credit (${monthName})`,
+          createdAt: new Date().toISOString(),
+        };
+        await saveTransactionToSupabase(balanceTransaction);
+      }
       
       showToast('✓ Salary payment saved successfully');
       
