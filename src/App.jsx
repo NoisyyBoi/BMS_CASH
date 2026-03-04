@@ -1455,15 +1455,83 @@ function App() {
                               )}
                               
                               {!isNegative && balance > 0 && (
-                                <div className="balance-info positive-info">
-                                  <div className="info-icon">✅</div>
-                                  <div className="info-content">
-                                    <div className="info-title">Can Give More</div>
-                                    <div className="info-text">
-                                      Can give up to {formatIndianCurrency(balance)} more this month.
+                                <>
+                                  <div className="balance-info positive-info">
+                                    <div className="info-icon">✅</div>
+                                    <div className="info-content">
+                                      <div className="info-title">Salary Remaining</div>
+                                      <div className="info-text">
+                                        Employee has {formatIndianCurrency(balance)} remaining from salary after advances.
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
+                                  
+                                  <div className="calculator-input-group">
+                                    <label className="calculator-label">💰 Deduct from Salary (₹)</label>
+                                    <input
+                                      type="number"
+                                      className="calculator-input"
+                                      placeholder="Amount to deduct (if any)"
+                                      value={deductFromSalary}
+                                      onChange={(e) => setDeductFromSalary(e.target.value)}
+                                      min="0"
+                                      max={balance}
+                                      step="100"
+                                    />
+                                    <div className="input-helper-text">
+                                      Deduct any additional amount from remaining salary
+                                    </div>
+                                  </div>
+                                  
+                                  {(() => {
+                                    const deductAmt = parseFloat(deductFromSalary) || 0;
+                                    const remainingAfterDeduction = balance - deductAmt;
+                                    
+                                    return (
+                                      <>
+                                        {deductAmt > 0 && (
+                                          <div className="payment-breakdown">
+                                            <div className="payment-row">
+                                              <span>Salary Remaining:</span>
+                                              <span>{formatIndianCurrency(balance)}</span>
+                                            </div>
+                                            <div className="payment-row subtract">
+                                              <span>Deducting:</span>
+                                              <span>- {formatIndianCurrency(deductAmt)}</span>
+                                            </div>
+                                            <div className="payment-row remaining">
+                                              <span>Balance After Deduction:</span>
+                                              <span>{formatIndianCurrency(remainingAfterDeduction)}</span>
+                                            </div>
+                                          </div>
+                                        )}
+                                        
+                                        <div className="salary-after-deduction">
+                                          <div className="salary-header">
+                                            <span className="salary-icon">💵</span>
+                                            <span className="salary-title">How Much Are You Paying Him</span>
+                                          </div>
+                                          <div className="salary-content">
+                                            <div className="salary-row">
+                                              <span>Salary Remaining:</span>
+                                              <span>{formatIndianCurrency(balance)}</span>
+                                            </div>
+                                            {deductAmt > 0 && (
+                                              <div className="salary-row subtract">
+                                                <span>Deduction:</span>
+                                                <span>- {formatIndianCurrency(deductAmt)}</span>
+                                              </div>
+                                            )}
+                                            <div className="salary-row total">
+                                              <span>Paying to Employee:</span>
+                                              <span>{formatIndianCurrency(remainingAfterDeduction)}</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
+                                </>
                               )}
                               
                               {!isNegative && balance === 0 && (
