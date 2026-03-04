@@ -272,12 +272,11 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .others-heading {
-  margin-left: auto;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
 }
 
 /* Logout Button at Bottom */
@@ -2188,6 +2187,42 @@ h3 { font-size: var(--font-size-lg); }
   font-weight: 700;
   font-size: var(--font-size-lg);
   color: var(--primary);
+}
+
+.deduction-row.paid {
+  color: var(--success);
+  font-weight: 600;
+}
+
+/* Payment Breakdown */
+.payment-breakdown {
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  font-size: var(--font-size-base);
+}
+
+.payment-row.paid {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.payment-row.remaining {
+  border-top: 2px solid var(--border);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-md);
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+  color: var(--danger);
 }
 
 

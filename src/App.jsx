@@ -72,6 +72,7 @@ function App() {
   const [userHistorySearchQuery, setUserHistorySearchQuery] = useState('');
   const [showUserHistoryDropdown, setShowUserHistoryDropdown] = useState(false);
   const [totalSalary, setTotalSalary] = useState('');
+  const [canPayNow, setCanPayNow] = useState('');
   const [userTransactionsData, setUserTransactionsData] = useState([]);
   const [userMonthlyTotal, setUserMonthlyTotal] = useState(0);
 
@@ -884,10 +885,6 @@ function App() {
                 <img src="/logo.png" alt="BMS Diesel Systems" className="company-logo" />
               </div>
               <div className="user-role-badge">
-                <span className="role-icon">{isAdmin() ? '👑' : '👁️'}</span>
-                <span className="role-text">
-                  {userRole === 'admin' ? 'Admin' : userRole === 'secondadmin' ? 'Second Admin' : 'Viewer'}
-                </span>
                 <span className="others-heading">OTHERS</span>
               </div>
             </div>
@@ -1324,6 +1321,8 @@ function App() {
                           const balance = parseFloat(totalSalary) - monthlyTotal;
                           const isNegative = balance < 0;
                           const absBalance = Math.abs(balance);
+                          const payNowAmount = parseFloat(canPayNow) || 0;
+                          const remainingBalance = isNegative ? absBalance - payNowAmount : 0;
                           
                           return (
                             <>
@@ -1337,15 +1336,48 @@ function App() {
                               </div>
                               
                               {isNegative && (
-                                <div className="balance-info negative-info">
-                                  <div className="info-icon">⚠️</div>
-                                  <div className="info-content">
-                                    <div className="info-title">Amount to Return</div>
-                                    <div className="info-text">
-                                      Employee should return {formatIndianCurrency(absBalance)} or it will be deducted from next month's salary.
+                                <>
+                                  <div className="balance-info negative-info">
+                                    <div className="info-icon">⚠️</div>
+                                    <div className="info-content">
+                                      <div className="info-title">Amount to Return</div>
+                                      <div className="info-text">
+                                        Employee should return {formatIndianCurrency(absBalance)} or it will be deducted from next month's salary.
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
+                                  
+                                  <div className="calculator-input-group">
+                                    <label className="calculator-label">💵 Can Pay Now (₹)</label>
+                                    <input
+                                      type="number"
+                                      className="calculator-input"
+                                      placeholder="Enter amount employee can pay now"
+                                      value={canPayNow}
+                                      onChange={(e) => setCanPayNow(e.target.value)}
+                                      min="0"
+                                      max={absBalance}
+                                      step="100"
+                                    />
+                                  </div>
+                                  
+                                  {payNowAmount > 0 && (
+                                    <div className="payment-breakdown">
+                                      <div className="payment-row">
+                                        <span>Total to Return:</span>
+                                        <span>{formatIndianCurrency(absBalance)}</span>
+                                      </div>
+                                      <div className="payment-row paid">
+                                        <span>Paying Now:</span>
+                                        <span>- {formatIndianCurrency(payNowAmount)}</span>
+                                      </div>
+                                      <div className="payment-row remaining">
+                                        <span>Remaining Balance:</span>
+                                        <span>{formatIndianCurrency(remainingBalance)}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
                               )}
                               
                               {!isNegative && balance > 0 && (
@@ -1384,13 +1416,19 @@ function App() {
                                         <span>Next Month Salary:</span>
                                         <span>{formatIndianCurrency(parseFloat(totalSalary))}</span>
                                       </div>
+                                      {payNowAmount > 0 && (
+                                        <div className="deduction-row paid">
+                                          <span>Paid Now:</span>
+                                          <span>+ {formatIndianCurrency(payNowAmount)}</span>
+                                        </div>
+                                      )}
                                       <div className="deduction-row subtract">
-                                        <span>Deduction (Balance):</span>
-                                        <span>- {formatIndianCurrency(absBalance)}</span>
+                                        <span>Deduction (Remaining Balance):</span>
+                                        <span>- {formatIndianCurrency(remainingBalance)}</span>
                                       </div>
                                       <div className="deduction-row total">
                                         <span>Available Next Month:</span>
-                                        <span>{formatIndianCurrency(parseFloat(totalSalary) - absBalance)}</span>
+                                        <span>{formatIndianCurrency(parseFloat(totalSalary) - remainingBalance)}</span>
                                       </div>
                                     </>
                                   ) : (
