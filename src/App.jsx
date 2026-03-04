@@ -76,6 +76,7 @@ function App() {
   const [payingNow, setPayingNow] = useState('');
   const [userTransactionsData, setUserTransactionsData] = useState([]);
   const [userMonthlyTotal, setUserMonthlyTotal] = useState(0);
+  const [transactionFilter, setTransactionFilter] = useState('all');
   const [salaryPayments, setSalaryPayments] = useState([]);
   const [loadingSalaryPayments, setLoadingSalaryPayments] = useState(false);
 
@@ -1403,9 +1404,25 @@ function App() {
               }
               
               // Sort by date (newest first)
-              const sortedTransactions = [...userTransactions].sort((a, b) => 
+              const allTransactions = [...userTransactions].sort((a, b) => 
                 new Date(b.createdAt) - new Date(a.createdAt)
               );
+              
+              // Filter transactions by purpose
+              const sortedTransactions = transactionFilter === 'all' 
+                ? allTransactions
+                : allTransactions.filter(t => {
+                    const purpose = t.purpose.toLowerCase();
+                    if (transactionFilter === 'food') return purpose.includes('food');
+                    if (transactionFilter === 'fuel') return purpose.includes('fuel');
+                    if (transactionFilter === 'advance') return purpose.includes('advance');
+                    if (transactionFilter === 'others') {
+                      return !purpose.includes('food') && 
+                             !purpose.includes('fuel') && 
+                             !purpose.includes('advance');
+                    }
+                    return true;
+                  });
               
               return (
                 <>
@@ -1425,8 +1442,33 @@ function App() {
                     </div>
                   </div>
                   
-                  <div className="transactions-list">
-                    {sortedTransactions.map(transaction => (
+                  {/* Transaction Filter Dropdown */}
+                  <div className="filter-section">
+                    <label className="filter-label">
+                      <span className="filter-icon">🔍</span>
+                      Filter by Purpose:
+                    </label>
+                    <select 
+                      className="filter-dropdown"
+                      value={transactionFilter}
+                      onChange={(e) => setTransactionFilter(e.target.value)}
+                    >
+                      <option value="all">All Transactions</option>
+                      <option value="food">Food</option>
+                      <option value="fuel">Fuel</option>
+                      <option value="advance">Advance</option>
+                      <option value="others">Others</option>
+                    </select>
+                  </div>
+                  
+                  {sortedTransactions.length === 0 ? (
+                    <div className="empty-state">
+                      <div className="empty-icon">🔍</div>
+                      <p>No transactions found for "{transactionFilter}"</p>
+                    </div>
+                  ) : (
+                    <div className="transactions-list">
+                      {sortedTransactions.map(transaction => (
                       <div key={transaction.id} className="history-card transaction-card">
                         <div className="transaction-header">
                           <div className="transaction-info">
@@ -1459,6 +1501,7 @@ function App() {
                       </div>
                     ))}
                   </div>
+                  )}
                   
                   <div className="monthly-total-card">
                     <div className="monthly-total-header">
