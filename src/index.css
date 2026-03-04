@@ -2247,20 +2247,6 @@ h3 { font-size: var(--font-size-lg); }
   font-weight: 600;
 }
 
-.payment-row.positive {
-  color: var(--success);
-  font-weight: 600;
-  background: #e8f5e9;
-  padding: var(--space-sm);
-  margin: var(--space-xs) calc(-1 * var(--space-md));
-  border-radius: var(--radius-sm);
-}
-
-.salary-row.positive {
-  color: var(--success);
-  font-weight: 600;
-}
-
 .payment-row.remaining {
   border-top: 2px solid var(--border);
   margin-top: var(--space-sm);
