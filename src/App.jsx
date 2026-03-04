@@ -1508,14 +1508,22 @@ function App() {
                             <span className="calculator-row-value">{formatIndianCurrency(parseFloat(totalSalary))}</span>
                           </div>
                           <div className="calculator-row subtract">
-                            <span className="calculator-row-label">💸 Money Given This Month:</span>
-                            <span className="calculator-row-value">- {formatIndianCurrency(monthlyTotal)}</span>
+                            <span className="calculator-row-label">
+                              {monthlyTotal < 0 ? '⚠️ Employee Owes (From Last Month):' : '💸 Money Given This Month:'}
+                            </span>
+                            <span className="calculator-row-value">
+                              {monthlyTotal < 0 ? '' : '- '}{formatIndianCurrency(Math.abs(monthlyTotal))}
+                            </span>
                           </div>
                         </div>
                         
                         {(() => {
                           const salary = parseFloat(totalSalary);
-                          const balance = salary - monthlyTotal;
+                          // If monthlyTotal is negative, employee owes money, so subtract it from salary
+                          // If monthlyTotal is positive, money was given, so subtract it from salary
+                          const balance = monthlyTotal < 0 
+                            ? salary + monthlyTotal  // monthlyTotal is already negative, so this subtracts
+                            : salary - monthlyTotal;
                           const isNegative = balance < 0;
                           const absBalance = Math.abs(balance);
                           
