@@ -2225,6 +2225,20 @@ h3 { font-size: var(--font-size-lg); }
   border-radius: var(--radius-sm);
 }
 
+.salary-row.negative {
+  color: var(--danger);
+  font-weight: 600;
+  background: #ffebee;
+  padding: var(--space-sm);
+  margin: var(--space-sm) calc(-1 * var(--space-md));
+  border-radius: var(--radius-sm);
+}
+
+.text-danger {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 /* Payment Breakdown */
 .payment-breakdown {
   background: var(--bg);

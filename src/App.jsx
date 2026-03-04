@@ -316,24 +316,30 @@ function App() {
     const balance = salary - userMonthlyTotal;
     const isNegative = balance < 0;
     const absBalance = Math.abs(balance);
-    const cashPayback = parseFloat(payingNow) || 0;
+    const payAmount = parseFloat(payingNow) || (isNegative ? 0 : balance);
     
     let paidToEmployee, remainingBalance, deductedAmount;
     
     if (isNegative) {
       // Employee owes money
-      // Cash payback reduces the debt
-      const remainingDebt = absBalance - cashPayback;
-      // Deduct remaining debt from salary
-      deductedAmount = Math.min(remainingDebt, salary);
+      deductedAmount = Math.min(payAmount, salary);
       paidToEmployee = salary - deductedAmount;
-      // What's still owed after salary deduction
-      remainingBalance = remainingDebt - deductedAmount;
+      remainingBalance = absBalance - deductedAmount;
     } else {
       // Employee has salary remaining
-      paidToEmployee = cashPayback > 0 ? cashPayback : balance;
-      remainingBalance = balance - paidToEmployee;
-      deductedAmount = null;
+      const difference = payAmount - balance;
+      
+      if (difference > 0) {
+        // Overpayment - employee owes money back
+        paidToEmployee = payAmount;
+        remainingBalance = difference; // This is what employee owes
+        deductedAmount = null;
+      } else {
+        // Normal payment or underpayment
+        paidToEmployee = payAmount;
+        remainingBalance = Math.abs(difference); // Carry forward credit
+        deductedAmount = null;
+      }
     }
     
     const now = new Date();
@@ -1591,21 +1597,21 @@ function App() {
                                     <input
                                       type="number"
                                       className="calculator-input"
-                                      placeholder="Amount to pay employee this month"
+                                      placeholder="Enter amount to pay this month"
                                       value={payingNow}
                                       onChange={(e) => setPayingNow(e.target.value)}
                                       min="0"
-                                      max={balance}
                                       step="100"
                                     />
                                     <div className="input-helper-text">
-                                      Enter how much to pay now. Remaining will carry forward to next month.
+                                      Enter how much to pay. If more than available, employee owes you the difference.
                                     </div>
                                   </div>
                                   
                                   {(() => {
                                     const payAmount = parseFloat(payingNow) || balance;
-                                    const remainingBalance = balance - payAmount;
+                                    const difference = payAmount - balance;
+                                    const isOverpayment = difference > 0;
                                     
                                     return (
                                       <>
@@ -1623,37 +1629,70 @@ function App() {
                                               <span>Paying to Employee:</span>
                                               <span>{formatIndianCurrency(payAmount)}</span>
                                             </div>
-                                            {remainingBalance > 0 && (
+                                            {isOverpayment ? (
+                                              <div className="salary-row negative">
+                                                <span>⚠️ Overpayment (Employee Owes):</span>
+                                                <span className="text-danger">{formatIndianCurrency(difference)}</span>
+                                              </div>
+                                            ) : difference < 0 && (
                                               <div className="salary-row remaining">
                                                 <span>Carry Forward to Next Month:</span>
-                                                <span>{formatIndianCurrency(remainingBalance)}</span>
+                                                <span>{formatIndianCurrency(Math.abs(difference))}</span>
                                               </div>
                                             )}
                                           </div>
                                         </div>
                                         
-                                        {remainingBalance > 0 && (
-                                          <div className="next-month-deduction">
-                                            <div className="deduction-header">
-                                              <span className="deduction-icon">📅</span>
-                                              <span className="deduction-title">Next Month Calculation</span>
-                                            </div>
-                                            <div className="deduction-content">
+                                        <div className="next-month-deduction">
+                                          <div className="deduction-header">
+                                            <span className="deduction-icon">📅</span>
+                                            <span className="deduction-title">Next Month Calculation</span>
+                                          </div>
+                                          <div className="deduction-content">
+                                            {isOverpayment ? (
+                                              <>
+                                                <div className="deduction-row">
+                                                  <span>Next Month Salary:</span>
+                                                  <span>{formatIndianCurrency(salary)}</span>
+                                                </div>
+                                                <div className="deduction-row subtract">
+                                                  <span>Employee Must Return:</span>
+                                                  <span>- {formatIndianCurrency(difference)}</span>
+                                                </div>
+                                                <div className="deduction-row total">
+                                                  <span>Available After Return:</span>
+                                                  <span>{formatIndianCurrency(salary - difference)}</span>
+                                                </div>
+                                                <div className="deduction-note">
+                                                  <span className="note-icon">⚠️</span>
+                                                  <span className="note-text">
+                                                    Employee owes {formatIndianCurrency(difference)} and must return it next month.
+                                                  </span>
+                                                </div>
+                                              </>
+                                            ) : difference < 0 ? (
+                                              <>
+                                                <div className="deduction-row">
+                                                  <span>Next Month Salary:</span>
+                                                  <span>{formatIndianCurrency(salary)}</span>
+                                                </div>
+                                                <div className="deduction-row positive">
+                                                  <span>Carried Forward Balance:</span>
+                                                  <span>+ {formatIndianCurrency(Math.abs(difference))}</span>
+                                                </div>
+                                                <div className="deduction-row total">
+                                                  <span>Total Available Next Month:</span>
+                                                  <span>{formatIndianCurrency(salary + Math.abs(difference))}</span>
+                                                </div>
+                                              </>
+                                            ) : (
                                               <div className="deduction-row">
-                                                <span>Next Month Salary:</span>
+                                                <span>Full Salary Available:</span>
                                                 <span>{formatIndianCurrency(salary)}</span>
                                               </div>
-                                              <div className="deduction-row positive">
-                                                <span>Carried Forward Balance:</span>
-                                                <span>+ {formatIndianCurrency(remainingBalance)}</span>
-                                              </div>
-                                              <div className="deduction-row total">
-                                                <span>Total Available Next Month:</span>
-                                                <span>{formatIndianCurrency(salary + remainingBalance)}</span>
-                                              </div>
-                                            </div>
+                                            )}
                                           </div>
-                                        )}
+                                        </div>
                                       </>
                                     );
                                   })()}
