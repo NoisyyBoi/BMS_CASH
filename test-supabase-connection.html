@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Supabase Connection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 5px;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .error {
+      background: #ffebee;
+      color: #c62828;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .info {
+      background: #e3f2fd;
+      color: #1565c0;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    h1 {
+      color: #333;
+    }
+    h2 {
+      color: #666;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Supabase Connection Test</h1>
+    
+    <div class="info">
+      <strong>Instructions:</strong>
+      <ol>
+        <li>Click "Test Connection" to verify Supabase is accessible</li>
+        <li>Click "Check Tables" to see if tables exist</li>
+        <li>If tables don't exist, click "Create Tables"</li>
+        <li>Click "Test User Creation" to verify everything works</li>
+      </ol>
+    </div>
+
+    <div>
+      <button onclick="testConnection()">1. Test Connection</button>
+      <button onclick="checkTables()">2. Check Tables</button>
+      <button onclick="createTables()">3. Create Tables</button>
+      <button onclick="testUserCreation()">4. Test User Creation</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const supabaseUrl = 'https://prjezxbbkqoieockoymh.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByamV6eGJia3FvaWVvY2tveW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1MjIzOTgsImV4cCI6MjA4ODA5ODM5OH0.06egx5ok0Z7kAjv9NMP0xTqbunSR8CzrnyLe-YnYMBs';
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    window.testConnection = async function() {
+      const result = document.getElementById('result');
+      result.innerHTML = '<div class="info">Testing connection...</div>';
+      
+      try {
+        const { data, error } = await supabase.from('users').select('count');
+        
+        if (error) {
+          if (error.message.includes('relation') || error.message.includes('does not exist')) {
+            result.innerHTML = `
+              <div class="error">
+                <strong>❌ Tables don't exist yet!</strong>
+                <p>The database tables haven't been created. Click "Create Tables" to set them up.</p>
+              </div>
+            `;
+          } else {
+            result.innerHTML = `
+              <div class="error">
+                <strong>❌ Connection Error:</strong>
+                <pre>${error.message}</pre>
+              </div>
+            `;
+          }
+        } else {
+          result.innerHTML = `
+            <div class="success">
+              <strong>✅ Connection Successful!</strong>
+              <p>Supabase is accessible and working.</p>
+            </div>
+          `;
+        }
+      } catch (err) {
+        result.innerHTML = `
+          <div class="error">
+            <strong>❌ Error:</strong>
+            <pre>${err.message}</pre>
+          </div>
+        `;
+      }
+    };
+
+    window.checkTables = async function() {
+      const result = document.getElementById('result');
+      result.innerHTML = '<div class="info">Checking tables...</div>';
+      
+      try {
+        const { data: usersData, error: usersError } = await supabase.from('users').select('count');
+        const { data: transData, error: transError } = await supabase.from('transactions').select('count');
+        
+        let html = '<h2>Table Status:</h2>';
+        
+        if (usersError) {
+          html += `<div class="error">❌ Users table: ${usersError.message}</div>`;
+        } else {
+          html += `<div class="success">✅ Users table exists</div>`;
+        }
+        
+        if (transError) {
+          html += `<div class="error">❌ Transactions table: ${transError.message}</div>`;
+        } else {
+          html += `<div class="success">✅ Transactions table exists</div>`;
+        }
+        
+        if (usersError || transError) {
+          html += `
+            <div class="info" style="margin-top: 20px;">
+              <strong>Tables need to be created!</strong>
+              <p>Click "Create Tables" button or run the SQL manually in Supabase dashboard.</p>
+            </div>
+          `;
+        }
+        
+        result.innerHTML = html;
+      } catch (err) {
+        result.innerHTML = `
+          <div class="error">
+            <strong>❌ Error:</strong>
+            <pre>${err.message}</pre>
+          </div>
+        `;
+      }
+    };
+
+    window.createTables = async function() {
+      const result = document.getElementById('result');
+      result.innerHTML = `
+        <div class="info">
+          <strong>⚠️ Manual Setup Required</strong>
+          <p>Tables must be created through the Supabase SQL Editor. Follow these steps:</p>
+          <ol>
+            <li>Go to: <a href="https://supabase.com/dashboard/project/prjezxbbkqoieockoymh/sql" target="_blank">Supabase SQL Editor</a></li>
+            <li>Click "New query"</li>
+            <li>Copy the SQL from <code>supabase-schema.sql</code> file</li>
+            <li>Paste and click "Run"</li>
+            <li>Come back here and click "Check Tables"</li>
+          </ol>
+          <h3>SQL to run:</h3>
+          <pre>-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  referral TEXT,
+  "createdAt" TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create transactions table
+CREATE TABLE IF NOT EXISTS transactions (
+  id BIGINT PRIMARY KEY,
+  "userId" BIGINT NOT NULL,
+  "userName" TEXT NOT NULL,
+  "userPhone" TEXT NOT NULL,
+  amount NUMERIC NOT NULL,
+  purpose TEXT NOT NULL,
+  "createdAt" TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+-- Create policies (allow all operations)
+CREATE POLICY "Enable all for users" ON users FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all for transactions" ON transactions FOR ALL USING (true) WITH CHECK (true);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users("createdAt" DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions("userId");
+CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions("createdAt" DESC);</pre>
+        </div>
+      `;
+    };
+
+    window.testUserCreation = async function() {
+      const result = document.getElementById('result');
+      result.innerHTML = '<div class="info">Testing user creation...</div>';
+      
+      try {
+        const testUser = {
+          id: Date.now(),
+          name: 'Test User',
+          phone: '9999999999',
+          referral: 'Test',
+          createdAt: new Date().toISOString()
+        };
+        
+        const { data, error } = await supabase
+          .from('users')
+          .insert([testUser])
+          .select()
+          .single();
+        
+        if (error) {
+          result.innerHTML = `
+            <div class="error">
+              <strong>❌ Failed to create user:</strong>
+              <pre>${error.message}</pre>
+              <p>Make sure tables are created first!</p>
+            </div>
+          `;
+        } else {
+          result.innerHTML = `
+            <div class="success">
+              <strong>✅ User created successfully!</strong>
+              <pre>${JSON.stringify(data, null, 2)}</pre>
+              <p>Everything is working! You can now use the app.</p>
+            </div>
+          `;
+        }
+      } catch (err) {
+        result.innerHTML = `
+          <div class="error">
+            <strong>❌ Error:</strong>
+            <pre>${err.message}</pre>
+          </div>
+        `;
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
-import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted } from './utils/storage';
-import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase } from './utils/supabaseStorage';
+import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp } from './utils/storage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 
 // View constants
 const VIEWS = {
   HOME: 'home',
+  LOGIN: 'login',
   CREATE_USER: 'create_user',
   GIVE_MONEY: 'give_money',
   USER_TOTAL: 'user_total',
@@ -18,8 +19,18 @@ const VIEWS = {
   HISTORY: 'history',
 };
 
+// Admin credentials
+const ADMIN_CREDENTIALS = {
+  admin: 'admin123',
+  secondadmin: 'admin456'
+};
+
 function App() {
-  const [view, setView] = useState(VIEWS.HOME);
+  const [view, setView] = useState(VIEWS.LOGIN);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null); // 'admin', 'secondadmin', or 'viewer'
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [currentCategory, setCurrentCategory] = useState(null);
   const [selectedItems, setSelectedItems] = useState({});
   const [siteName, setSiteName] = useState('');
@@ -66,13 +77,67 @@ function App() {
 
   useEffect(() => {
     setSavedLists(getSavedLists());
-    loadUsers();
-    loadTransactions();
+    
+    // Check for stored session
+    const storedRole = localStorage.getItem('bms_user_role');
+    if (storedRole) {
+      setIsAuthenticated(true);
+      setUserRole(storedRole);
+      setView(VIEWS.HOME);
+      loadUsers();
+      loadTransactions();
+    }
   }, []);
 
+  const handleLogin = () => {
+    const username = loginUsername.toLowerCase().trim();
+    const password = loginPassword.trim();
+
+    // Check admin credentials
+    if (ADMIN_CREDENTIALS[username] === password) {
+      setIsAuthenticated(true);
+      setUserRole(username);
+      localStorage.setItem('bms_user_role', username);
+      setView(VIEWS.HOME);
+      loadUsers();
+      loadTransactions();
+      showToast('✓ Login successful');
+    } else if (username === 'viewer' || password === 'viewer') {
+      // Anyone can login as viewer
+      setIsAuthenticated(true);
+      setUserRole('viewer');
+      localStorage.setItem('bms_user_role', 'viewer');
+      setView(VIEWS.HOME);
+      loadUsers();
+      loadTransactions();
+      showToast('✓ Logged in as Viewer');
+    } else {
+      showToast('⚠️ Invalid credentials');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUserRole(null);
+    localStorage.removeItem('bms_user_role');
+    setView(VIEWS.LOGIN);
+    setLoginUsername('');
+    setLoginPassword('');
+    showToast('✓ Logged out');
+  };
+
+  const isAdmin = () => {
+    return userRole === 'admin' || userRole === 'secondadmin';
+  };
+
   const loadUsers = async () => {
-    const users = await getUsers();
-    setAllUsers(users);
+    try {
+      const users = await getUsersFromSupabase();
+      setAllUsers(users);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setAllUsers([]);
+    }
   };
 
   const loadTransactions = async () => {
@@ -98,6 +163,10 @@ function App() {
   };
 
   const startCreateUser = () => {
+    if (!isAdmin()) {
+      showToast('⚠️ Only admins can create users');
+      return;
+    }
     setUserName('');
     setUserPhone('');
     setUserReferral('');
@@ -105,6 +174,10 @@ function App() {
   };
 
   const startGiveMoney = () => {
+    if (!isAdmin()) {
+      showToast('⚠️ Only admins can add transactions');
+      return;
+    }
     setSelectedUser(null);
     setUserSearchQuery('');
     setMoneyAmount('');
@@ -138,10 +211,10 @@ function App() {
     setTotalSalary('');
     
     // Load user transactions
-    const transactions = await getUserTransactions(user.id);
+    const transactions = await getUserTransactionsFromSupabase(user.id);
     setUserTransactionsData(transactions);
     
-    const monthlyTotal = await getMonthlyTotal(user.id);
+    const monthlyTotal = getMonthlyTotal(transactions);
     setUserMonthlyTotal(monthlyTotal);
     
     setView(VIEWS.USER_HISTORY);
@@ -157,18 +230,7 @@ function App() {
     );
   };
 
-  const getUserTransactions = async (userId) => {
-    try {
-      const { getUserTransactionsFromSupabase } = await import('./utils/supabaseStorage');
-      return await getUserTransactionsFromSupabase(userId);
-    } catch (error) {
-      console.error('Error fetching user transactions:', error);
-      return [];
-    }
-  };
-
-  const getMonthlyTotal = async (userId) => {
-    const transactions = await getUserTransactions(userId);
+  const getMonthlyTotal = (transactions) => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -179,16 +241,6 @@ function App() {
         return transDate.getMonth() === currentMonth && transDate.getFullYear() === currentYear;
       })
       .reduce((sum, t) => sum + t.amount, 0);
-  };
-
-  const getUsers = async () => {
-    try {
-      return await getUsersFromSupabase();
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      showToast('⚠️ Error loading users');
-      return [];
-    }
   };
 
   const getFilteredUsers = () => {
@@ -274,7 +326,16 @@ function App() {
       setView(VIEWS.HOME);
     } catch (error) {
       console.error('Error saving user:', error);
-      showToast('⚠️ Error saving user');
+      
+      // Show more specific error message
+      if (error.message && error.message.includes('relation')) {
+        showToast('⚠️ Database tables not set up. Check console.');
+        console.error('Please run the SQL schema in Supabase dashboard. See SUPABASE_SETUP.md');
+      } else if (error.message) {
+        showToast(`⚠️ Error: ${error.message.substring(0, 50)}`);
+      } else {
+        showToast('⚠️ Error saving user. Check console.');
+      }
     }
   };
 
@@ -292,6 +353,36 @@ function App() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleDownloadUserPDF = () => {
+    generateUserTransactionsPDF(
+      selectedUserForHistory,
+      userTransactionsData,
+      userMonthlyTotal,
+      formatIndianCurrency
+    );
+    showToast('✓ PDF downloaded');
+  };
+
+  const handleShareUserWhatsApp = () => {
+    const message = formatUserTransactionsForWhatsApp(
+      selectedUserForHistory,
+      userTransactionsData,
+      userMonthlyTotal,
+      formatIndianCurrency
+    );
+    shareViaWhatsApp(message);
+  };
+
+  const handleDownloadDailyPDF = (date, transactions, total) => {
+    generateDailyTransactionsPDF(date, transactions, total, formatIndianCurrency);
+    showToast('✓ PDF downloaded');
+  };
+
+  const handleShareDailyWhatsApp = (date, transactions, total) => {
+    const message = formatDailyTransactionsForWhatsApp(date, transactions, total, formatIndianCurrency);
+    shareViaWhatsApp(message);
   };
 
   const continueToCategories = () => {
@@ -723,6 +814,68 @@ function App() {
       )}
 
       <main className="main-content">
+        {/* Login Screen */}
+        {view === VIEWS.LOGIN && (
+          <div className="login-screen">
+            <div className="login-container">
+              <div className="login-logo">
+                <img src="/logo.png" alt="BMS Diesel Systems" className="company-logo" />
+              </div>
+              <h2 className="login-title">BMS Cash Entry</h2>
+              <p className="login-subtitle">Login to continue</p>
+              
+              <div className="login-form">
+                <div className="project-section">
+                  <label className="project-label">
+                    <span>Username</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="project-input"
+                    placeholder="Enter username"
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && document.getElementById('password-input').focus()}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="project-section">
+                  <label className="project-label">
+                    <span>Password</span>
+                  </label>
+                  <input
+                    id="password-input"
+                    type="password"
+                    className="project-input"
+                    placeholder="Enter password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                  />
+                </div>
+
+                <button 
+                  className="btn btn-success project-continue" 
+                  onClick={handleLogin}
+                  disabled={!loginUsername.trim() || !loginPassword.trim()}
+                >
+                  Login →
+                </button>
+
+                <div className="login-info">
+                  <p className="login-info-text">
+                    <strong>For Admins:</strong> Use your admin credentials
+                  </p>
+                  <p className="login-info-text">
+                    <strong>For Viewing:</strong> Username: viewer, Password: viewer
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Home Screen */}
         {view === VIEWS.HOME && (
           <div className="home-screen">
@@ -730,23 +883,44 @@ function App() {
               <div className="home-hero-icon">
                 <img src="/logo.png" alt="BMS Diesel Systems" className="company-logo" />
               </div>
+              <div className="user-role-badge">
+                <span className="role-icon">{isAdmin() ? '👑' : '👁️'}</span>
+                <span className="role-text">
+                  {userRole === 'admin' ? 'Admin' : userRole === 'secondadmin' ? 'Second Admin' : 'Viewer'}
+                </span>
+                <button className="logout-btn" onClick={handleLogout}>
+                  Logout
+                </button>
+              </div>
             </div>
             
             <div className="home-actions">
-              <button className="btn btn-primary" onClick={startCreateUser}>
+              <button 
+                className="btn btn-primary" 
+                onClick={startCreateUser}
+                disabled={!isAdmin()}
+                style={{ opacity: isAdmin() ? 1 : 0.5 }}
+              >
                 <span className="btn-icon">👤</span>
                 <span className="btn-content">
                   <span>Create a User</span>
                   <span className="btn-kannada">ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ</span>
                 </span>
+                {!isAdmin() && <span className="btn-lock">🔒</span>}
               </button>
               
-              <button className="btn btn-success" onClick={startGiveMoney}>
+              <button 
+                className="btn btn-success" 
+                onClick={startGiveMoney}
+                disabled={!isAdmin()}
+                style={{ opacity: isAdmin() ? 1 : 0.5 }}
+              >
                 <span className="btn-icon">💰</span>
                 <span className="btn-content">
                   <span>Give Money</span>
                   <span className="btn-kannada">ಹಣ ನೀಡಿ</span>
                 </span>
+                {!isAdmin() && <span className="btn-lock">🔒</span>}
               </button>
               
               <button className="btn btn-warning" onClick={startUserTotal}>
@@ -1096,6 +1270,16 @@ function App() {
                       <span className="monthly-total-label">Total Amount Given:</span>
                       <span className="monthly-total-value">{formatIndianCurrency(monthlyTotal)}</span>
                     </div>
+                  </div>
+                  
+                  {/* Download and Share Buttons */}
+                  <div className="transaction-actions">
+                    <button className="share-btn whatsapp" onClick={handleShareUserWhatsApp}>
+                      📱 WhatsApp
+                    </button>
+                    <button className="share-btn pdf" onClick={handleDownloadUserPDF}>
+                      📄 Download PDF
+                    </button>
                   </div>
                   
                   <div className="salary-calculator-card">
@@ -1539,6 +1723,22 @@ function App() {
                           </div>
                         </div>
                       ))}
+                      
+                      {/* Download and Share Buttons for Daily Transactions */}
+                      <div className="transaction-actions">
+                        <button 
+                          className="share-btn whatsapp" 
+                          onClick={() => handleShareDailyWhatsApp(date, data.transactions, data.total)}
+                        >
+                          📱 WhatsApp
+                        </button>
+                        <button 
+                          className="share-btn pdf" 
+                          onClick={() => handleDownloadDailyPDF(date, data.transactions, data.total)}
+                        >
+                          📄 Download PDF
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

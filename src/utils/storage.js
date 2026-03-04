@@ -188,3 +188,360 @@ export const formatDate = (date) => {
 export const getTodayFormatted = () => {
   return formatDate(new Date());
 };
+
+// ===== USER MANAGEMENT =====
+const USERS_KEY = 'bms_users';
+
+export const getUsers = () => {
+  try {
+    const data = localStorage.getItem(USERS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error('Error loading users:', e);
+    return [];
+  }
+};
+
+export const saveUser = (user) => {
+  try {
+    const users = getUsers();
+    const newUser = {
+      ...user,
+      id: user.id || Date.now(),
+      createdAt: user.createdAt || new Date().toISOString(),
+    };
+    
+    const updatedUsers = [...users, newUser];
+    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+    return newUser;
+  } catch (e) {
+    console.error('Error saving user:', e);
+    return null;
+  }
+};
+
+// ===== TRANSACTION MANAGEMENT =====
+const TRANSACTIONS_KEY = 'bms_transactions';
+
+export const getTransactions = () => {
+  try {
+    const data = localStorage.getItem(TRANSACTIONS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error('Error loading transactions:', e);
+    return [];
+  }
+};
+
+export const saveTransaction = (transaction) => {
+  try {
+    const transactions = getTransactions();
+    const newTransaction = {
+      ...transaction,
+      id: transaction.id || Date.now(),
+      createdAt: transaction.createdAt || new Date().toISOString(),
+    };
+    
+    const updatedTransactions = [...transactions, newTransaction];
+    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+    return newTransaction;
+  } catch (e) {
+    console.error('Error saving transaction:', e);
+    return null;
+  }
+};
+
+export const getUserTransactions = (userId) => {
+  const transactions = getTransactions();
+  return transactions.filter(t => t.userId === userId);
+};
+
+// ===== TRANSACTION PDF & SHARING =====
+
+// Helper function to format currency for PDF (using Rs. instead of ₹)
+const formatCurrencyForPDF = (amount) => {
+  if (!amount && amount !== 0) return 'Rs. 0';
+  
+  const num = parseFloat(amount);
+  if (isNaN(num)) return 'Rs. 0';
+  
+  // Convert to string and split into integer and decimal parts
+  const [integerPart, decimalPart] = num.toFixed(2).split('.');
+  
+  // Indian numbering system: last 3 digits, then groups of 2
+  let lastThree = integerPart.substring(integerPart.length - 3);
+  const otherNumbers = integerPart.substring(0, integerPart.length - 3);
+  
+  if (otherNumbers !== '') {
+    lastThree = ',' + lastThree;
+  }
+  
+  const formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+  
+  // Return with decimal if not .00
+  if (decimalPart && decimalPart !== '00') {
+    return `Rs. ${formatted}.${decimalPart}`;
+  }
+  
+  return `Rs. ${formatted}`;
+};
+
+// Generate PDF for user transactions
+export const generateUserTransactionsPDF = (user, transactions, monthlyTotal, formatCurrency) => {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+  
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  let y = 25;
+  
+  // Title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('User Transaction History', pageWidth / 2, y, { align: 'center' });
+  y += 15;
+  
+  // User info
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('User:', margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(user.name, margin + 15, y);
+  y += 8;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.text('Phone:', margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(user.phone, margin + 18, y);
+  y += 8;
+  
+  const now = new Date();
+  const monthName = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  doc.setFont('helvetica', 'bold');
+  doc.text('Period:', margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(monthName, margin + 18, y);
+  y += 8;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total:', margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(formatCurrencyForPDF(monthlyTotal), margin + 15, y);
+  y += 10;
+  
+  // Separator line
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+  
+  // Transactions
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Transactions:', margin, y);
+  y += 8;
+  
+  doc.setFont('helvetica', 'normal');
+  
+  if (transactions.length === 0) {
+    doc.text('No transactions found', margin, y);
+  } else {
+    transactions.forEach((transaction, index) => {
+      // Check if we need a new page
+      if (y > 260) {
+        doc.addPage();
+        y = 25;
+      }
+      
+      const date = new Date(transaction.createdAt).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${index + 1}.`, margin, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(date, margin + 8, y);
+      y += 6;
+      
+      doc.text(`   Purpose: ${transaction.purpose}`, margin, y);
+      y += 6;
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(`   Amount: ${formatCurrencyForPDF(transaction.amount)}`, margin, y);
+      doc.setFont('helvetica', 'normal');
+      y += 8;
+    });
+  }
+  
+  // Footer
+  const footerY = 280;
+  doc.setFontSize(9);
+  doc.setTextColor(128);
+  doc.text('Generated by BMS Cash Entry', pageWidth / 2, footerY, { align: 'center' });
+  
+  // Generate filename
+  const filename = `${user.name.replace(/\s+/g, '_')}_Transactions_${monthName.replace(/\s+/g, '_')}.pdf`;
+  doc.save(filename);
+};
+
+// Generate PDF for daily transactions
+export const generateDailyTransactionsPDF = (date, transactions, dailyTotal, formatCurrency) => {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+  
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  let y = 25;
+  
+  // Title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Daily Transaction Report', pageWidth / 2, y, { align: 'center' });
+  y += 15;
+  
+  // Date info
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Date:', margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(date, margin + 15, y);
+  y += 8;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total:', margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(formatCurrencyForPDF(dailyTotal), margin + 15, y);
+  y += 8;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.text('Count:', margin, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${transactions.length} transactions`, margin + 17, y);
+  y += 10;
+  
+  // Separator line
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 10;
+  
+  // Transactions
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Transactions:', margin, y);
+  y += 8;
+  
+  doc.setFont('helvetica', 'normal');
+  
+  transactions.forEach((transaction, index) => {
+    // Check if we need a new page
+    if (y > 250) {
+      doc.addPage();
+      y = 25;
+    }
+    
+    const time = new Date(transaction.createdAt).toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${index + 1}.`, margin, y);
+    doc.text(time, margin + 8, y);
+    doc.setFont('helvetica', 'normal');
+    y += 6;
+    
+    doc.text(`   User: ${transaction.userName}`, margin, y);
+    y += 6;
+    
+    doc.text(`   Phone: ${transaction.userPhone}`, margin, y);
+    y += 6;
+    
+    doc.text(`   Purpose: ${transaction.purpose}`, margin, y);
+    y += 6;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text(`   Amount: ${formatCurrencyForPDF(transaction.amount)}`, margin, y);
+    doc.setFont('helvetica', 'normal');
+    y += 8;
+  });
+  
+  // Footer
+  const footerY = 280;
+  doc.setFontSize(9);
+  doc.setTextColor(128);
+  doc.text('Generated by BMS Cash Entry', pageWidth / 2, footerY, { align: 'center' });
+  
+  // Generate filename
+  const filename = `Daily_Transactions_${date.replace(/\s+/g, '_')}.pdf`;
+  doc.save(filename);
+};
+
+// Format user transactions for WhatsApp
+export const formatUserTransactionsForWhatsApp = (user, transactions, monthlyTotal, formatCurrency) => {
+  const now = new Date();
+  const monthName = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  
+  let message = `*User Transaction History*\n\n`;
+  message += `👤 *User:* ${user.name}\n`;
+  message += `📱 *Phone:* ${user.phone}\n`;
+  message += `📅 *Period:* ${monthName}\n`;
+  message += `💰 *Total:* ${formatCurrency(monthlyTotal)}\n`;
+  message += `\n━━━━━━━━━━━━━━━━━━\n\n`;
+  
+  if (transactions.length === 0) {
+    message += `No transactions found`;
+  } else {
+    message += `*Transactions (${transactions.length}):*\n\n`;
+    
+    transactions.forEach((transaction, index) => {
+      const date = new Date(transaction.createdAt).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      message += `${index + 1}. ${date}\n`;
+      message += `   Purpose: ${transaction.purpose}\n`;
+      message += `   Amount: ${formatCurrency(transaction.amount)}\n\n`;
+    });
+  }
+  
+  message += `\n_Generated by BMS Cash Entry_`;
+  return message;
+};
+
+// Format daily transactions for WhatsApp
+export const formatDailyTransactionsForWhatsApp = (date, transactions, dailyTotal, formatCurrency) => {
+  let message = `*Daily Transaction Report*\n\n`;
+  message += `📅 *Date:* ${date}\n`;
+  message += `💰 *Total:* ${formatCurrency(dailyTotal)}\n`;
+  message += `📊 *Count:* ${transactions.length} transactions\n`;
+  message += `\n━━━━━━━━━━━━━━━━━━\n\n`;
+  
+  message += `*Transactions:*\n\n`;
+  
+  transactions.forEach((transaction, index) => {
+    const time = new Date(transaction.createdAt).toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    message += `${index + 1}. ${time}\n`;
+    message += `   👤 ${transaction.userName} (${transaction.userPhone})\n`;
+    message += `   Purpose: ${transaction.purpose}\n`;
+    message += `   Amount: ${formatCurrency(transaction.amount)}\n\n`;
+  });
+  
+  message += `\n_Generated by BMS Cash Entry_`;
+  return message;
+};
