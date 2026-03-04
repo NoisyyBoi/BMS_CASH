@@ -888,9 +888,7 @@ function App() {
                 <span className="role-text">
                   {userRole === 'admin' ? 'Admin' : userRole === 'secondadmin' ? 'Second Admin' : 'Viewer'}
                 </span>
-                <button className="logout-btn" onClick={handleLogout}>
-                  Logout
-                </button>
+                <span className="others-heading">OTHERS</span>
               </div>
             </div>
             
@@ -937,6 +935,14 @@ function App() {
                   <span>History</span>
                   <span className="btn-kannada">ಇತಿಹಾಸ</span>
                 </span>
+              </button>
+            </div>
+            
+            {/* Logout Button at Bottom */}
+            <div className="logout-container">
+              <button className="btn-logout-bottom" onClick={handleLogout}>
+                <span className="logout-icon">🚪</span>
+                Logout
               </button>
             </div>
           </div>
@@ -1285,19 +1291,19 @@ function App() {
                   <div className="salary-calculator-card">
                     <div className="calculator-header">
                       <span className="calculator-icon">🧮</span>
-                      <span className="calculator-title">Salary Calculator</span>
+                      <span className="calculator-title">Salary & Balance Calculator</span>
                     </div>
                     
                     <div className="calculator-input-group">
-                      <label className="calculator-label">Total Salary (₹)</label>
+                      <label className="calculator-label">Monthly Salary (₹)</label>
                       <input
                         type="number"
                         className="calculator-input"
-                        placeholder="Enter total salary"
+                        placeholder="Enter monthly salary"
                         value={totalSalary}
                         onChange={(e) => setTotalSalary(e.target.value)}
                         min="0"
-                        step="0.01"
+                        step="100"
                       />
                     </div>
                     
@@ -1305,20 +1311,99 @@ function App() {
                       <div className="calculator-result">
                         <div className="calculator-breakdown">
                           <div className="calculator-row">
-                            <span className="calculator-row-label">Total Salary:</span>
+                            <span className="calculator-row-label">💰 Monthly Salary:</span>
                             <span className="calculator-row-value">{formatIndianCurrency(parseFloat(totalSalary))}</span>
                           </div>
                           <div className="calculator-row subtract">
-                            <span className="calculator-row-label">Amount Given:</span>
+                            <span className="calculator-row-label">💸 Money Given This Month:</span>
                             <span className="calculator-row-value">- {formatIndianCurrency(monthlyTotal)}</span>
                           </div>
                         </div>
-                        <div className="calculator-final">
-                          <span className="calculator-final-label">Remaining Balance:</span>
-                          <span className="calculator-final-value">
-                            {formatIndianCurrency(parseFloat(totalSalary) - monthlyTotal)}
-                          </span>
-                        </div>
+                        
+                        {(() => {
+                          const balance = parseFloat(totalSalary) - monthlyTotal;
+                          const isNegative = balance < 0;
+                          const absBalance = Math.abs(balance);
+                          
+                          return (
+                            <>
+                              <div className={`calculator-final ${isNegative ? 'negative' : 'positive'}`}>
+                                <span className="calculator-final-label">
+                                  {isNegative ? '⚠️ Balance to Return:' : '✅ Balance Remaining:'}
+                                </span>
+                                <span className="calculator-final-value">
+                                  {formatIndianCurrency(absBalance)}
+                                </span>
+                              </div>
+                              
+                              {isNegative && (
+                                <div className="balance-info negative-info">
+                                  <div className="info-icon">⚠️</div>
+                                  <div className="info-content">
+                                    <div className="info-title">Amount to Return</div>
+                                    <div className="info-text">
+                                      Employee should return {formatIndianCurrency(absBalance)} or it will be deducted from next month's salary.
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {!isNegative && balance > 0 && (
+                                <div className="balance-info positive-info">
+                                  <div className="info-icon">✅</div>
+                                  <div className="info-content">
+                                    <div className="info-title">Can Give More</div>
+                                    <div className="info-text">
+                                      Can give up to {formatIndianCurrency(balance)} more this month.
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {!isNegative && balance === 0 && (
+                                <div className="balance-info neutral-info">
+                                  <div className="info-icon">⚖️</div>
+                                  <div className="info-content">
+                                    <div className="info-title">Fully Utilized</div>
+                                    <div className="info-text">
+                                      Monthly salary fully utilized. No balance remaining.
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <div className="next-month-deduction">
+                                <div className="deduction-header">
+                                  <span className="deduction-icon">📅</span>
+                                  <span className="deduction-title">Next Month Calculation</span>
+                                </div>
+                                <div className="deduction-content">
+                                  {isNegative ? (
+                                    <>
+                                      <div className="deduction-row">
+                                        <span>Next Month Salary:</span>
+                                        <span>{formatIndianCurrency(parseFloat(totalSalary))}</span>
+                                      </div>
+                                      <div className="deduction-row subtract">
+                                        <span>Deduction (Balance):</span>
+                                        <span>- {formatIndianCurrency(absBalance)}</span>
+                                      </div>
+                                      <div className="deduction-row total">
+                                        <span>Available Next Month:</span>
+                                        <span>{formatIndianCurrency(parseFloat(totalSalary) - absBalance)}</span>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="deduction-row">
+                                      <span>Full Salary Available:</span>
+                                      <span>{formatIndianCurrency(parseFloat(totalSalary))}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

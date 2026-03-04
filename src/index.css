@@ -271,6 +271,48 @@ h3 { font-size: var(--font-size-lg); }
   opacity: 0.8;
 }
 
+.others-heading {
+  margin-left: auto;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Logout Button at Bottom */
+.logout-container {
+  padding: var(--space-lg);
+  margin-top: auto;
+}
+
+.btn-logout-bottom {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--danger);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-logout-bottom:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.logout-icon {
+  font-size: 20px;
+}
+
 .home-hero-icon {
   font-size: 64px;
   margin-bottom: var(--space-md);
@@ -2024,10 +2066,19 @@ h3 { font-size: var(--font-size-lg); }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: white;
   padding: var(--space-md) var(--space-lg);
   border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+
+.calculator-final.positive {
+  background: linear-gradient(135deg, var(--success) 0%, #43A047 100%);
+  color: white;
+}
+
+.calculator-final.negative {
+  background: linear-gradient(135deg, var(--danger) 0%, #D32F2F 100%);
+  color: white;
 }
 
 .calculator-final-label {
@@ -2038,6 +2089,105 @@ h3 { font-size: var(--font-size-lg); }
 .calculator-final-value {
   font-size: var(--font-size-2xl);
   font-weight: 700;
+}
+
+/* Balance Info Cards */
+.balance-info {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+
+.balance-info.negative-info {
+  background: #ffebee;
+  border-left: 4px solid var(--danger);
+}
+
+.balance-info.positive-info {
+  background: #e8f5e9;
+  border-left: 4px solid var(--success);
+}
+
+.balance-info.neutral-info {
+  background: #e3f2fd;
+  border-left: 4px solid var(--primary);
+}
+
+.info-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.info-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Next Month Deduction */
+.next-month-deduction {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.deduction-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.deduction-icon {
+  font-size: 20px;
+}
+
+.deduction-title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.deduction-content {
+  padding: var(--space-md);
+}
+
+.deduction-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  font-size: var(--font-size-base);
+}
+
+.deduction-row.subtract {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.deduction-row.total {
+  border-top: 2px solid var(--border);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-md);
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+  color: var(--primary);
 }
 
 
