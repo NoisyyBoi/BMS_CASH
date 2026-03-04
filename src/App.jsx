@@ -1060,9 +1060,6 @@ function App() {
               <div className="home-hero-icon">
                 <img src="/logo.png" alt="BMS Diesel Systems" className="company-logo" />
               </div>
-              <div className="user-role-badge">
-                <img src="/other.png" alt="Others" className="others-image" />
-              </div>
             </div>
             
             <div className="home-actions">
