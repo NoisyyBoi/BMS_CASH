@@ -81,3 +81,52 @@ export const getUserTransactionsFromSupabase = async (userId) => {
     throw error;
   }
 };
+
+// ===== SALARY PAYMENT MANAGEMENT =====
+
+export const getSalaryPaymentsFromSupabase = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('salary_payments')
+      .select('*')
+      .order('createdAt', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching salary payments:', error);
+    throw error;
+  }
+};
+
+export const saveSalaryPaymentToSupabase = async (payment) => {
+  try {
+    const { data, error } = await supabase
+      .from('salary_payments')
+      .insert([payment])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error saving salary payment:', error);
+    throw error;
+  }
+};
+
+export const getUserSalaryPaymentsFromSupabase = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('salary_payments')
+      .select('*')
+      .eq('userId', userId)
+      .order('createdAt', { ascending: false});
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching user salary payments:', error);
+    throw error;
+  }
+};

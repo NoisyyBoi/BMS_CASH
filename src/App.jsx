@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp } from './utils/storage';
-import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase } from './utils/supabaseStorage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 
 // View constants
@@ -12,6 +12,7 @@ const VIEWS = {
   GIVE_MONEY: 'give_money',
   USER_TOTAL: 'user_total',
   USER_HISTORY: 'user_history',
+  SALARY_PAYMENTS: 'salary_payments',
   PROJECT: 'project',
   CATEGORIES: 'categories',
   ITEMS: 'items',
@@ -72,11 +73,10 @@ function App() {
   const [userHistorySearchQuery, setUserHistorySearchQuery] = useState('');
   const [showUserHistoryDropdown, setShowUserHistoryDropdown] = useState(false);
   const [totalSalary, setTotalSalary] = useState('');
-  const [paidSalary, setPaidSalary] = useState('');
-  const [canPayNow, setCanPayNow] = useState('');
-  const [deductFromSalary, setDeductFromSalary] = useState('');
   const [userTransactionsData, setUserTransactionsData] = useState([]);
   const [userMonthlyTotal, setUserMonthlyTotal] = useState(0);
+  const [salaryPayments, setSalaryPayments] = useState([]);
+  const [loadingSalaryPayments, setLoadingSalaryPayments] = useState(false);
 
   useEffect(() => {
     setSavedLists(getSavedLists());
@@ -299,6 +299,64 @@ function App() {
       console.error('Error saving transaction:', error);
       showToast('⚠️ Error saving transaction');
     }
+  };
+
+  const handleSaveSalaryPayment = async () => {
+    if (!selectedUserForHistory) {
+      showToast('⚠️ No user selected');
+      return;
+    }
+    if (!totalSalary || parseFloat(totalSalary) <= 0) {
+      showToast('⚠️ Please enter monthly salary');
+      return;
+    }
+
+    const salary = parseFloat(totalSalary);
+    const balance = salary - userMonthlyTotal;
+    const isNegative = balance < 0;
+    const absBalance = Math.abs(balance);
+    
+    const now = new Date();
+    const monthName = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+    const salaryPayment = {
+      id: Date.now(),
+      userId: selectedUserForHistory.id,
+      userName: selectedUserForHistory.name,
+      userPhone: selectedUserForHistory.phone,
+      monthlySalary: salary,
+      moneyGiven: userMonthlyTotal,
+      paidSalary: null,
+      deductedAmount: null,
+      paidToEmployee: isNegative ? 0 : balance,
+      remainingBalance: isNegative ? absBalance : null,
+      month: monthName,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      await saveSalaryPaymentToSupabase(salaryPayment);
+      showToast('✓ Salary payment saved successfully');
+      // Reset field
+      setTotalSalary('');
+    } catch (error) {
+      console.error('Error saving salary payment:', error);
+      showToast('⚠️ Error saving salary payment');
+    }
+  };
+
+  const openSalaryPayments = async () => {
+    setLoadingSalaryPayments(true);
+    try {
+      const payments = await getSalaryPaymentsFromSupabase();
+      setSalaryPayments(payments);
+    } catch (error) {
+      console.error('Error loading salary payments:', error);
+      setSalaryPayments([]);
+    } finally {
+      setLoadingSalaryPayments(false);
+    }
+    setView(VIEWS.SALARY_PAYMENTS);
   };
 
   const toggleDateExpansion = (date) => {
@@ -585,7 +643,7 @@ function App() {
       setView(VIEWS.CATEGORIES);
     } else if (view === VIEWS.CATEGORIES) {
       setView(VIEWS.PROJECT);
-    } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL) {
+    } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL || view === VIEWS.SALARY_PAYMENTS) {
       setView(VIEWS.HOME);
     } else if (view === VIEWS.USER_HISTORY) {
       setView(VIEWS.USER_TOTAL);
@@ -786,6 +844,7 @@ function App() {
                 {view === VIEWS.GIVE_MONEY && 'Give Money'}
                 {view === VIEWS.USER_TOTAL && 'User Total'}
                 {view === VIEWS.USER_HISTORY && 'User History'}
+                {view === VIEWS.SALARY_PAYMENTS && 'Salary Payments'}
                 {view === VIEWS.CATEGORIES && 'Select Category'}
                 {view === VIEWS.ITEMS && categories.find(c => c.id === currentCategory)?.name}
                 {view === VIEWS.REVIEW && 'Review List'}
@@ -805,6 +864,9 @@ function App() {
               )}
               {view === VIEWS.USER_HISTORY && selectedUserForHistory && (
                 <p className="header-subtitle">{selectedUserForHistory.name}</p>
+              )}
+              {view === VIEWS.SALARY_PAYMENTS && (
+                <p className="header-subtitle">ಸಂಬಳ ಪಾವತಿಗಳು</p>
               )}
               {view === VIEWS.ITEMS && (
                 <p className="header-subtitle">
@@ -925,6 +987,14 @@ function App() {
                 <span className="btn-content">
                   <span>User Total</span>
                   <span className="btn-kannada">ಬಳಕೆದಾರರ ಒಟ್ಟು</span>
+                </span>
+              </button>
+              
+              <button className="btn btn-accent" onClick={openSalaryPayments}>
+                <span className="btn-icon">💵</span>
+                <span className="btn-content">
+                  <span>Salary Payments</span>
+                  <span className="btn-kannada">ಸಂಬಳ ಪಾವತಿಗಳು</span>
                 </span>
               </button>
               
@@ -1306,22 +1376,6 @@ function App() {
                       />
                     </div>
                     
-                    <div className="calculator-input-group">
-                      <label className="calculator-label">💳 Paid Salary (₹)</label>
-                      <input
-                        type="number"
-                        className="calculator-input"
-                        placeholder="Enter salary already paid to employee"
-                        value={paidSalary}
-                        onChange={(e) => setPaidSalary(e.target.value)}
-                        min="0"
-                        step="100"
-                      />
-                      <div className="input-helper-text">
-                        Enter any salary amount already paid to reduce the money given balance
-                      </div>
-                    </div>
-                    
                     {totalSalary && parseFloat(totalSalary) > 0 && (
                       <div className="calculator-result">
                         <div className="calculator-breakdown">
@@ -1333,263 +1387,204 @@ function App() {
                             <span className="calculator-row-label">💸 Money Given This Month:</span>
                             <span className="calculator-row-value">- {formatIndianCurrency(monthlyTotal)}</span>
                           </div>
-                          {paidSalary && parseFloat(paidSalary) > 0 && (
-                            <div className="calculator-row paid">
-                              <span className="calculator-row-label">💳 Paid Salary (Reduces Balance):</span>
-                              <span className="calculator-row-value">+ {formatIndianCurrency(parseFloat(paidSalary))}</span>
-                            </div>
-                          )}
                         </div>
                         
                         {(() => {
-                          const paidAmount = parseFloat(paidSalary) || 0;
-                          const adjustedMonthlyTotal = monthlyTotal - paidAmount;
-                          const balance = parseFloat(totalSalary) - adjustedMonthlyTotal;
+                          const salary = parseFloat(totalSalary);
+                          const balance = salary - monthlyTotal;
                           const isNegative = balance < 0;
                           const absBalance = Math.abs(balance);
-                          const payNowAmount = parseFloat(canPayNow) || 0;
-                          const deductAmount = parseFloat(deductFromSalary) || 0;
-                          const totalPaid = payNowAmount + deductAmount;
-                          const remainingBalance = absBalance - totalPaid;
-                          const nextMonthBalance = remainingBalance > 0 ? remainingBalance : 0;
                           
                           return (
                             <>
                               <div className={`calculator-final ${isNegative ? 'negative' : 'positive'}`}>
                                 <span className="calculator-final-label">
-                                  {isNegative ? '⚠️ Balance to Return:' : '✅ Balance Remaining:'}
+                                  {isNegative ? '⚠️ Employee Owes:' : '✅ Salary Remaining:'}
                                 </span>
                                 <span className="calculator-final-value">
                                   {formatIndianCurrency(absBalance)}
                                 </span>
                               </div>
                               
-                              {isNegative && (
+                              {isNegative ? (
                                 <>
                                   <div className="balance-info negative-info">
                                     <div className="info-icon">⚠️</div>
                                     <div className="info-content">
-                                      <div className="info-title">Amount to Return</div>
+                                      <div className="info-title">Advance Taken</div>
                                       <div className="info-text">
-                                        Employee has taken {formatIndianCurrency(absBalance)} advance. Decide how much to deduct from salary and how much to carry forward.
+                                        Employee has taken {formatIndianCurrency(absBalance)} more than their salary. This will be deducted from next month.
                                       </div>
                                     </div>
                                   </div>
                                   
-                                  <div className="calculator-input-group">
-                                    <label className="calculator-label">💵 Can Pay Now (₹)</label>
-                                    <input
-                                      type="number"
-                                      className="calculator-input"
-                                      placeholder="Amount employee can pay immediately"
-                                      value={canPayNow}
-                                      onChange={(e) => setCanPayNow(e.target.value)}
-                                      min="0"
-                                      max={absBalance}
-                                      step="100"
-                                    />
-                                  </div>
-                                  
-                                  <div className="calculator-input-group">
-                                    <label className="calculator-label">💰 Deduct from This Month Salary (₹)</label>
-                                    <input
-                                      type="number"
-                                      className="calculator-input"
-                                      placeholder="Amount to deduct from salary"
-                                      value={deductFromSalary}
-                                      onChange={(e) => setDeductFromSalary(e.target.value)}
-                                      min="0"
-                                      max={Math.min(absBalance - payNowAmount, parseFloat(totalSalary))}
-                                      step="100"
-                                    />
-                                  </div>
-                                  
-                                  {(payNowAmount > 0 || deductAmount > 0) && (
-                                    <div className="payment-breakdown">
-                                      <div className="payment-row">
-                                        <span>Total Advance Taken:</span>
-                                        <span>{formatIndianCurrency(absBalance)}</span>
-                                      </div>
-                                      {payNowAmount > 0 && (
-                                        <div className="payment-row paid">
-                                          <span>Paying Now (Cash):</span>
-                                          <span>- {formatIndianCurrency(payNowAmount)}</span>
-                                        </div>
-                                      )}
-                                      {deductAmount > 0 && (
-                                        <div className="payment-row paid">
-                                          <span>Deducting from Salary:</span>
-                                          <span>- {formatIndianCurrency(deductAmount)}</span>
-                                        </div>
-                                      )}
-                                      <div className="payment-row remaining">
-                                        <span>Remaining Balance (Carry Forward):</span>
-                                        <span>{formatIndianCurrency(remainingBalance)}</span>
-                                      </div>
+                                  <div className="next-month-deduction">
+                                    <div className="deduction-header">
+                                      <span className="deduction-icon">📅</span>
+                                      <span className="deduction-title">Next Month Calculation</span>
                                     </div>
-                                  )}
-                                  
-                                  <div className="salary-after-deduction">
-                                    <div className="salary-header">
-                                      <span className="salary-icon">💵</span>
-                                      <span className="salary-title">This Month Salary After Deduction</span>
-                                    </div>
-                                    <div className="salary-content">
-                                      <div className="salary-row">
-                                        <span>Monthly Salary:</span>
-                                        <span>{formatIndianCurrency(parseFloat(totalSalary))}</span>
+                                    <div className="deduction-content">
+                                      <div className="deduction-row">
+                                        <span>Next Month Salary:</span>
+                                        <span>{formatIndianCurrency(salary)}</span>
                                       </div>
-                                      {deductAmount > 0 && (
-                                        <div className="salary-row subtract">
-                                          <span>Deduction:</span>
-                                          <span>- {formatIndianCurrency(deductAmount)}</span>
+                                      <div className="deduction-row subtract">
+                                        <span>Carried Forward Balance:</span>
+                                        <span>- {formatIndianCurrency(absBalance)}</span>
+                                      </div>
+                                      <div className="deduction-row total">
+                                        <span>Available Next Month:</span>
+                                        <span>{formatIndianCurrency(Math.max(0, salary - absBalance))}</span>
+                                      </div>
+                                      {absBalance > salary && (
+                                        <div className="deduction-note">
+                                          <span className="note-icon">ℹ️</span>
+                                          <span className="note-text">
+                                            Balance of {formatIndianCurrency(absBalance - salary)} will carry forward to the following month.
+                                          </span>
                                         </div>
                                       )}
-                                      <div className="salary-row total">
-                                        <span>Salary to Give:</span>
-                                        <span>{formatIndianCurrency(parseFloat(totalSalary) - deductAmount)}</span>
-                                      </div>
                                     </div>
                                   </div>
                                 </>
-                              )}
-                              
-                              {!isNegative && balance > 0 && (
+                              ) : (
                                 <>
                                   <div className="balance-info positive-info">
                                     <div className="info-icon">✅</div>
                                     <div className="info-content">
-                                      <div className="info-title">Salary Remaining</div>
+                                      <div className="info-title">Salary Available</div>
                                       <div className="info-text">
-                                        Employee has {formatIndianCurrency(balance)} remaining from salary after advances.
+                                        Employee has {formatIndianCurrency(balance)} remaining from this month's salary.
                                       </div>
                                     </div>
                                   </div>
                                   
-                                  <div className="calculator-input-group">
-                                    <label className="calculator-label">💰 Deduct from Salary (₹)</label>
-                                    <input
-                                      type="number"
-                                      className="calculator-input"
-                                      placeholder="Amount to deduct (if any)"
-                                      value={deductFromSalary}
-                                      onChange={(e) => setDeductFromSalary(e.target.value)}
-                                      min="0"
-                                      max={balance}
-                                      step="100"
-                                    />
-                                    <div className="input-helper-text">
-                                      Deduct any additional amount from remaining salary
+                                  <div className="salary-after-deduction">
+                                    <div className="salary-header">
+                                      <span className="salary-icon">💵</span>
+                                      <span className="salary-title">Pay to Employee</span>
+                                    </div>
+                                    <div className="salary-content">
+                                      <div className="salary-row total">
+                                        <span>Amount to Pay:</span>
+                                        <span>{formatIndianCurrency(balance)}</span>
+                                      </div>
                                     </div>
                                   </div>
-                                  
-                                  {(() => {
-                                    const deductAmt = parseFloat(deductFromSalary) || 0;
-                                    const remainingAfterDeduction = balance - deductAmt;
-                                    
-                                    return (
-                                      <>
-                                        {deductAmt > 0 && (
-                                          <div className="payment-breakdown">
-                                            <div className="payment-row">
-                                              <span>Salary Remaining:</span>
-                                              <span>{formatIndianCurrency(balance)}</span>
-                                            </div>
-                                            <div className="payment-row subtract">
-                                              <span>Deducting:</span>
-                                              <span>- {formatIndianCurrency(deductAmt)}</span>
-                                            </div>
-                                            <div className="payment-row remaining">
-                                              <span>Balance After Deduction:</span>
-                                              <span>{formatIndianCurrency(remainingAfterDeduction)}</span>
-                                            </div>
-                                          </div>
-                                        )}
-                                        
-                                        <div className="salary-after-deduction">
-                                          <div className="salary-header">
-                                            <span className="salary-icon">💵</span>
-                                            <span className="salary-title">How Much Are You Paying Him</span>
-                                          </div>
-                                          <div className="salary-content">
-                                            <div className="salary-row">
-                                              <span>Salary Remaining:</span>
-                                              <span>{formatIndianCurrency(balance)}</span>
-                                            </div>
-                                            {deductAmt > 0 && (
-                                              <div className="salary-row subtract">
-                                                <span>Deduction:</span>
-                                                <span>- {formatIndianCurrency(deductAmt)}</span>
-                                              </div>
-                                            )}
-                                            <div className="salary-row total">
-                                              <span>Paying to Employee:</span>
-                                              <span>{formatIndianCurrency(remainingAfterDeduction)}</span>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </>
-                                    );
-                                  })()}
                                 </>
                               )}
-                              
-                              {!isNegative && balance === 0 && (
-                                <div className="balance-info neutral-info">
-                                  <div className="info-icon">⚖️</div>
-                                  <div className="info-content">
-                                    <div className="info-title">Fully Utilized</div>
-                                    <div className="info-text">
-                                      Monthly salary fully utilized. No balance remaining.
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              <div className="next-month-deduction">
-                                <div className="deduction-header">
-                                  <span className="deduction-icon">📅</span>
-                                  <span className="deduction-title">Next Month Calculation</span>
-                                </div>
-                                <div className="deduction-content">
-                                  {isNegative && nextMonthBalance > 0 ? (
-                                    <>
-                                      <div className="deduction-row">
-                                        <span>Next Month Salary:</span>
-                                        <span>{formatIndianCurrency(parseFloat(totalSalary))}</span>
-                                      </div>
-                                      <div className="deduction-row subtract">
-                                        <span>Carried Forward Balance:</span>
-                                        <span>- {formatIndianCurrency(nextMonthBalance)}</span>
-                                      </div>
-                                      <div className="deduction-row total">
-                                        <span>Available Next Month:</span>
-                                        <span>{formatIndianCurrency(parseFloat(totalSalary) - nextMonthBalance)}</span>
-                                      </div>
-                                      <div className="deduction-note">
-                                        <span className="note-icon">ℹ️</span>
-                                        <span className="note-text">
-                                          {formatIndianCurrency(nextMonthBalance)} will be deducted from next month's salary or can be paid in cash.
-                                        </span>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div className="deduction-row">
-                                      <span>Full Salary Available:</span>
-                                      <span>{formatIndianCurrency(parseFloat(totalSalary))}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
                             </>
                           );
                         })()}
                       </div>
                     )}
                   </div>
+                  
+                  {/* Debug info - Always visible for testing */}
+                  <div style={{ fontSize: '12px', color: '#999', marginTop: '10px', padding: '10px', background: '#f0f0f0', borderRadius: '8px' }}>
+                    Debug Info:<br/>
+                    - Salary entered: {totalSalary || 'None'}<br/>
+                    - Is Admin: {isAdmin() ? 'Yes' : 'No'}<br/>
+                    - User Role: {userRole || 'Not logged in'}<br/>
+                    - Button should show: {(isAdmin() && totalSalary && parseFloat(totalSalary) > 0) ? 'YES' : 'NO'}
+                  </div>
+                  
+                  {/* Save Salary Payment Button - Shows for admins when salary is entered */}
+                  {isAdmin() && totalSalary && parseFloat(totalSalary) > 0 && (
+                    <div className="save-payment-container">
+                      <button 
+                        className="btn btn-success save-salary-btn" 
+                        onClick={handleSaveSalaryPayment}
+                      >
+                        💾 Save Salary Payment
+                      </button>
+                    </div>
+                  )}
                 </>
               );
             })()}
+          </div>
+        )}
+
+        {/* Salary Payments History Screen */}
+        {view === VIEWS.SALARY_PAYMENTS && (
+          <div className="salary-payments-screen">
+            {loadingSalaryPayments ? (
+              <div className="empty-state">
+                <div className="empty-icon">⏳</div>
+                <p>Loading salary payments...</p>
+              </div>
+            ) : salaryPayments.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">💰</div>
+                <p>No salary payments saved yet</p>
+                <p>ಇನ್ನೂ ಯಾವುದೇ ಸಂಬಳ ಪಾವತಿಗಳಿಲ್ಲ</p>
+              </div>
+            ) : (
+              <div className="salary-payments-list">
+                {[...salaryPayments].sort((a, b) => 
+                  new Date(b.createdAt) - new Date(a.createdAt)
+                ).map(payment => (
+                  <div key={payment.id} className="salary-payment-card">
+                    <div className="payment-card-header">
+                      <div className="payment-user-info">
+                        <div className="payment-user-icon">👤</div>
+                        <div>
+                          <div className="payment-user-name">{payment.userName}</div>
+                          <div className="payment-user-phone">{payment.userPhone}</div>
+                        </div>
+                      </div>
+                      <div className="payment-month">{payment.month}</div>
+                    </div>
+                    
+                    <div className="payment-card-body">
+                      <div className="payment-detail-row">
+                        <span className="payment-detail-label">💰 Monthly Salary:</span>
+                        <span className="payment-detail-value">{formatIndianCurrency(payment.monthlySalary)}</span>
+                      </div>
+                      <div className="payment-detail-row">
+                        <span className="payment-detail-label">💸 Money Given:</span>
+                        <span className="payment-detail-value subtract">{formatIndianCurrency(payment.moneyGiven)}</span>
+                      </div>
+                      {payment.paidSalary && (
+                        <div className="payment-detail-row">
+                          <span className="payment-detail-label">💳 Paid Salary:</span>
+                          <span className="payment-detail-value positive">{formatIndianCurrency(payment.paidSalary)}</span>
+                        </div>
+                      )}
+                      {payment.deductedAmount && (
+                        <div className="payment-detail-row">
+                          <span className="payment-detail-label">📉 Deducted:</span>
+                          <span className="payment-detail-value subtract">{formatIndianCurrency(payment.deductedAmount)}</span>
+                        </div>
+                      )}
+                      <div className="payment-detail-row total">
+                        <span className="payment-detail-label">💵 Paid to Employee:</span>
+                        <span className="payment-detail-value">{formatIndianCurrency(payment.paidToEmployee)}</span>
+                      </div>
+                      {payment.remainingBalance && payment.remainingBalance > 0 && (
+                        <div className="payment-detail-row remaining">
+                          <span className="payment-detail-label">⚠️ Remaining Balance:</span>
+                          <span className="payment-detail-value">{formatIndianCurrency(payment.remainingBalance)}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="payment-card-footer">
+                      <span className="payment-date">
+                        {new Date(payment.createdAt).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
