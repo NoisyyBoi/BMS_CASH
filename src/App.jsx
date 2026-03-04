@@ -316,19 +316,20 @@ function App() {
     const balance = salary - userMonthlyTotal;
     const isNegative = balance < 0;
     const absBalance = Math.abs(balance);
-    const payAmount = parseFloat(payingNow) || (isNegative ? 0 : balance);
+    const payAmount = parseFloat(payingNow) || 0;
     
     let paidToEmployee, remainingBalance, deductedAmount;
     
     if (isNegative) {
-      // Employee owes money
-      deductedAmount = Math.min(payAmount, salary);
+      // Employee owes money - deduct from salary
+      const maxDeduction = Math.min(absBalance, salary);
+      deductedAmount = payAmount > 0 ? Math.min(maxDeduction, salary - payAmount) : maxDeduction;
       paidToEmployee = salary - deductedAmount;
       remainingBalance = absBalance - deductedAmount;
     } else {
       // Employee has salary remaining
-      paidToEmployee = payAmount;
-      remainingBalance = balance - payAmount;
+      paidToEmployee = payAmount > 0 ? payAmount : balance;
+      remainingBalance = balance - paidToEmployee;
       deductedAmount = null;
     }
     
@@ -1475,9 +1476,12 @@ function App() {
                                   
                                   {(() => {
                                     const payAmount = parseFloat(payingNow) || 0;
-                                    const deductedFromSalary = Math.min(payAmount, salary);
-                                    const remainingDebt = absBalance - deductedFromSalary;
-                                    const salaryToPay = salary - deductedFromSalary;
+                                    // When negative balance: employee owes money
+                                    // We need to deduct the debt from salary first
+                                    const maxDeduction = Math.min(absBalance, salary); // Can't deduct more than salary
+                                    const actualDeduction = payAmount > 0 ? Math.min(maxDeduction, salary - payAmount) : maxDeduction;
+                                    const salaryToPay = salary - actualDeduction;
+                                    const remainingDebt = absBalance - actualDeduction;
                                     
                                     return (
                                       <>
@@ -1489,7 +1493,7 @@ function App() {
                                             </div>
                                             <div className="payment-row paid">
                                               <span>Deducting from Salary:</span>
-                                              <span>- {formatIndianCurrency(deductedFromSalary)}</span>
+                                              <span>- {formatIndianCurrency(actualDeduction)}</span>
                                             </div>
                                             <div className="payment-row remaining">
                                               <span>Remaining Balance (Carry Forward):</span>
@@ -1511,7 +1515,7 @@ function App() {
                                               </div>
                                               <div className="salary-row subtract">
                                                 <span>Deduction (Advance Repayment):</span>
-                                                <span>- {formatIndianCurrency(deductedFromSalary)}</span>
+                                                <span>- {formatIndianCurrency(actualDeduction)}</span>
                                               </div>
                                               <div className="salary-row total">
                                                 <span>Paying to Employee:</span>
