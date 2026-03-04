@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png'],
       manifest: {
-        name: 'BMS Cash Entry',
-        short_name: 'BMS Cash',
+        name: 'BMS Cash Others',
+        short_name: 'BMS Others',
         description: 'Employee cash transaction management system for BMS Diesel Systems',
         theme_color: '#1565C0',
         background_color: '#ffffff',
