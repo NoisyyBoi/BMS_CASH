@@ -1060,6 +1060,7 @@ function App() {
               <div className="home-hero-icon">
                 <img src="/logo.png" alt="BMS Diesel Systems" className="company-logo" />
               </div>
+              <img src="/others.png" alt="Others" className="others-image" />
             </div>
             
             <div className="home-actions">
