@@ -322,13 +322,12 @@ function App() {
     
     if (isNegative) {
       // Employee owes money
-      // Cash payback reduces the debt
       const remainingDebt = absBalance - cashPayback;
-      // Deduct remaining debt from salary
-      deductedAmount = Math.min(remainingDebt, salary);
+      // Deduct remaining debt from salary (can't deduct more than salary)
+      deductedAmount = Math.min(Math.max(0, remainingDebt), salary);
       paidToEmployee = salary - deductedAmount;
       // What's still owed after salary deduction
-      remainingBalance = remainingDebt - deductedAmount;
+      remainingBalance = Math.max(0, remainingDebt - deductedAmount);
     } else {
       // Employee has salary remaining
       paidToEmployee = cashPayback > 0 ? cashPayback : balance;
@@ -1492,34 +1491,36 @@ function App() {
                                     const cashPayback = parseFloat(payingNow) || 0;
                                     // Employee is paying back in cash, rest deducted from salary
                                     const remainingDebt = absBalance - cashPayback;
-                                    const deductFromSalary = Math.min(remainingDebt, salary);
+                                    const deductFromSalary = Math.min(Math.max(0, remainingDebt), salary);
                                     const salaryToPay = salary - deductFromSalary;
-                                    const stillOwes = remainingDebt - deductFromSalary;
+                                    const stillOwes = Math.max(0, remainingDebt - deductFromSalary);
                                     
                                     return (
                                       <>
-                                        {cashPayback > 0 && (
-                                          <div className="payment-breakdown">
-                                            <div className="payment-row">
-                                              <span>Total Advance Taken:</span>
-                                              <span>{formatIndianCurrency(absBalance)}</span>
-                                            </div>
+                                        <div className="payment-breakdown">
+                                          <div className="payment-row">
+                                            <span>Total Advance Taken:</span>
+                                            <span>{formatIndianCurrency(absBalance)}</span>
+                                          </div>
+                                          {cashPayback > 0 && (
                                             <div className="payment-row paid">
                                               <span>Employee Paying Back (Cash):</span>
                                               <span>- {formatIndianCurrency(cashPayback)}</span>
                                             </div>
+                                          )}
+                                          {deductFromSalary > 0 && (
                                             <div className="payment-row paid">
                                               <span>Deducting from Salary:</span>
                                               <span>- {formatIndianCurrency(deductFromSalary)}</span>
                                             </div>
-                                            {stillOwes > 0 && (
-                                              <div className="payment-row remaining">
-                                                <span>Still Owes (Carry Forward):</span>
-                                                <span>{formatIndianCurrency(stillOwes)}</span>
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
+                                          )}
+                                          {stillOwes > 0 && (
+                                            <div className="payment-row remaining">
+                                              <span>Still Owes (Carry Forward):</span>
+                                              <span>{formatIndianCurrency(stillOwes)}</span>
+                                            </div>
+                                          )}
+                                        </div>
                                         
                                         <div className="salary-after-deduction">
                                           <div className="salary-header">
