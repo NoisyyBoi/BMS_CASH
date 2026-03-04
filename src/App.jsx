@@ -361,8 +361,19 @@ function App() {
       // Delete all old transactions for this user
       await deleteUserTransactionsFromSupabase(selectedUserForHistory.id);
       
-      // DO NOT create a new transaction - just clear everything
-      // The remaining balance is stored in the salary payment record only
+      // If there's remaining balance (debt), create a new transaction
+      if (remainingBalance > 0) {
+        const pendingTransaction = {
+          id: Date.now() + 1,
+          userId: selectedUserForHistory.id,
+          userName: selectedUserForHistory.name,
+          userPhone: selectedUserForHistory.phone,
+          amount: remainingBalance,
+          purpose: 'Last Month Pending',
+          createdAt: new Date().toISOString(),
+        };
+        await saveTransactionToSupabase(pendingTransaction);
+      }
       
       showToast('✓ Salary payment saved successfully');
       
