@@ -357,23 +357,15 @@ function App() {
       // Delete all old transactions for this user
       await deleteUserTransactionsFromSupabase(selectedUserForHistory.id);
       
-      // If there's a remaining balance, create a new transaction with negative amount
-      if (remainingBalance > 0) {
-        const balanceTransaction = {
-          id: Date.now() + 1,
-          userId: selectedUserForHistory.id,
-          userName: selectedUserForHistory.name,
-          userPhone: selectedUserForHistory.phone,
-          amount: -remainingBalance, // Negative amount (debt)
-          purpose: isNegative ? 'Balance Carried Forward (Advance)' : 'Balance Carried Forward (Credit)',
-          createdAt: new Date().toISOString(),
-        };
-        await saveTransactionToSupabase(balanceTransaction);
-      }
+      // DO NOT create a new transaction - just clear everything
+      // The remaining balance is stored in the salary payment record only
       
       showToast('✓ Salary payment saved successfully');
       
-      // Reload transactions and user data
+      // Wait a moment for database to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Reload all data
       await loadTransactions();
       const transactions = await getUserTransactionsFromSupabase(selectedUserForHistory.id);
       setUserTransactionsData(transactions);
