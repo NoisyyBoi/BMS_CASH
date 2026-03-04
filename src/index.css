@@ -2225,6 +2225,81 @@ h3 { font-size: var(--font-size-lg); }
   color: var(--danger);
 }
 
+/* Salary After Deduction */
+.salary-after-deduction {
+  background: var(--bg-card);
+  border: 2px solid var(--success);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: var(--space-md);
+}
+
+.salary-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: linear-gradient(135deg, var(--success) 0%, #43A047 100%);
+  color: white;
+}
+
+.salary-icon {
+  font-size: 20px;
+}
+
+.salary-title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+}
+
+.salary-content {
+  padding: var(--space-md);
+}
+
+.salary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  font-size: var(--font-size-base);
+}
+
+.salary-row.subtract {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.salary-row.total {
+  border-top: 2px solid var(--border);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-md);
+  font-weight: 700;
+  font-size: var(--font-size-xl);
+  color: var(--success);
+}
+
+/* Deduction Note */
+.deduction-note {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  margin-top: var(--space-md);
+  background: #fff3e0;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--accent);
+}
+
+.note-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.note-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
 
 /* Image Upload */
 .image-upload-container {

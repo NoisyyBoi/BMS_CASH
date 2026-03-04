@@ -73,6 +73,7 @@ function App() {
   const [showUserHistoryDropdown, setShowUserHistoryDropdown] = useState(false);
   const [totalSalary, setTotalSalary] = useState('');
   const [canPayNow, setCanPayNow] = useState('');
+  const [deductFromSalary, setDeductFromSalary] = useState('');
   const [userTransactionsData, setUserTransactionsData] = useState([]);
   const [userMonthlyTotal, setUserMonthlyTotal] = useState(0);
 
@@ -1322,7 +1323,10 @@ function App() {
                           const isNegative = balance < 0;
                           const absBalance = Math.abs(balance);
                           const payNowAmount = parseFloat(canPayNow) || 0;
-                          const remainingBalance = isNegative ? absBalance - payNowAmount : 0;
+                          const deductAmount = parseFloat(deductFromSalary) || 0;
+                          const totalPaid = payNowAmount + deductAmount;
+                          const remainingBalance = absBalance - totalPaid;
+                          const nextMonthBalance = remainingBalance > 0 ? remainingBalance : 0;
                           
                           return (
                             <>
@@ -1342,7 +1346,7 @@ function App() {
                                     <div className="info-content">
                                       <div className="info-title">Amount to Return</div>
                                       <div className="info-text">
-                                        Employee should return {formatIndianCurrency(absBalance)} or it will be deducted from next month's salary.
+                                        Employee has taken {formatIndianCurrency(absBalance)} advance. Decide how much to deduct from salary and how much to carry forward.
                                       </div>
                                     </div>
                                   </div>
@@ -1352,7 +1356,7 @@ function App() {
                                     <input
                                       type="number"
                                       className="calculator-input"
-                                      placeholder="Enter amount employee can pay now"
+                                      placeholder="Amount employee can pay immediately"
                                       value={canPayNow}
                                       onChange={(e) => setCanPayNow(e.target.value)}
                                       min="0"
@@ -1361,22 +1365,67 @@ function App() {
                                     />
                                   </div>
                                   
-                                  {payNowAmount > 0 && (
+                                  <div className="calculator-input-group">
+                                    <label className="calculator-label">💰 Deduct from This Month Salary (₹)</label>
+                                    <input
+                                      type="number"
+                                      className="calculator-input"
+                                      placeholder="Amount to deduct from salary"
+                                      value={deductFromSalary}
+                                      onChange={(e) => setDeductFromSalary(e.target.value)}
+                                      min="0"
+                                      max={Math.min(absBalance - payNowAmount, parseFloat(totalSalary))}
+                                      step="100"
+                                    />
+                                  </div>
+                                  
+                                  {(payNowAmount > 0 || deductAmount > 0) && (
                                     <div className="payment-breakdown">
                                       <div className="payment-row">
-                                        <span>Total to Return:</span>
+                                        <span>Total Advance Taken:</span>
                                         <span>{formatIndianCurrency(absBalance)}</span>
                                       </div>
-                                      <div className="payment-row paid">
-                                        <span>Paying Now:</span>
-                                        <span>- {formatIndianCurrency(payNowAmount)}</span>
-                                      </div>
+                                      {payNowAmount > 0 && (
+                                        <div className="payment-row paid">
+                                          <span>Paying Now (Cash):</span>
+                                          <span>- {formatIndianCurrency(payNowAmount)}</span>
+                                        </div>
+                                      )}
+                                      {deductAmount > 0 && (
+                                        <div className="payment-row paid">
+                                          <span>Deducting from Salary:</span>
+                                          <span>- {formatIndianCurrency(deductAmount)}</span>
+                                        </div>
+                                      )}
                                       <div className="payment-row remaining">
-                                        <span>Remaining Balance:</span>
+                                        <span>Remaining Balance (Carry Forward):</span>
                                         <span>{formatIndianCurrency(remainingBalance)}</span>
                                       </div>
                                     </div>
                                   )}
+                                  
+                                  <div className="salary-after-deduction">
+                                    <div className="salary-header">
+                                      <span className="salary-icon">💵</span>
+                                      <span className="salary-title">This Month Salary After Deduction</span>
+                                    </div>
+                                    <div className="salary-content">
+                                      <div className="salary-row">
+                                        <span>Monthly Salary:</span>
+                                        <span>{formatIndianCurrency(parseFloat(totalSalary))}</span>
+                                      </div>
+                                      {deductAmount > 0 && (
+                                        <div className="salary-row subtract">
+                                          <span>Deduction:</span>
+                                          <span>- {formatIndianCurrency(deductAmount)}</span>
+                                        </div>
+                                      )}
+                                      <div className="salary-row total">
+                                        <span>Salary to Give:</span>
+                                        <span>{formatIndianCurrency(parseFloat(totalSalary) - deductAmount)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </>
                               )}
                               
@@ -1410,25 +1459,25 @@ function App() {
                                   <span className="deduction-title">Next Month Calculation</span>
                                 </div>
                                 <div className="deduction-content">
-                                  {isNegative ? (
+                                  {isNegative && nextMonthBalance > 0 ? (
                                     <>
                                       <div className="deduction-row">
                                         <span>Next Month Salary:</span>
                                         <span>{formatIndianCurrency(parseFloat(totalSalary))}</span>
                                       </div>
-                                      {payNowAmount > 0 && (
-                                        <div className="deduction-row paid">
-                                          <span>Paid Now:</span>
-                                          <span>+ {formatIndianCurrency(payNowAmount)}</span>
-                                        </div>
-                                      )}
                                       <div className="deduction-row subtract">
-                                        <span>Deduction (Remaining Balance):</span>
-                                        <span>- {formatIndianCurrency(remainingBalance)}</span>
+                                        <span>Carried Forward Balance:</span>
+                                        <span>- {formatIndianCurrency(nextMonthBalance)}</span>
                                       </div>
                                       <div className="deduction-row total">
                                         <span>Available Next Month:</span>
-                                        <span>{formatIndianCurrency(parseFloat(totalSalary) - remainingBalance)}</span>
+                                        <span>{formatIndianCurrency(parseFloat(totalSalary) - nextMonthBalance)}</span>
+                                      </div>
+                                      <div className="deduction-note">
+                                        <span className="note-icon">ℹ️</span>
+                                        <span className="note-text">
+                                          {formatIndianCurrency(nextMonthBalance)} will be deducted from next month's salary or can be paid in cash.
+                                        </span>
                                       </div>
                                     </>
                                   ) : (
