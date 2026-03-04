@@ -72,6 +72,7 @@ function App() {
   const [userHistorySearchQuery, setUserHistorySearchQuery] = useState('');
   const [showUserHistoryDropdown, setShowUserHistoryDropdown] = useState(false);
   const [totalSalary, setTotalSalary] = useState('');
+  const [paidSalary, setPaidSalary] = useState('');
   const [canPayNow, setCanPayNow] = useState('');
   const [deductFromSalary, setDeductFromSalary] = useState('');
   const [userTransactionsData, setUserTransactionsData] = useState([]);
@@ -1305,6 +1306,22 @@ function App() {
                       />
                     </div>
                     
+                    <div className="calculator-input-group">
+                      <label className="calculator-label">💳 Paid Salary (₹)</label>
+                      <input
+                        type="number"
+                        className="calculator-input"
+                        placeholder="Enter salary already paid to employee"
+                        value={paidSalary}
+                        onChange={(e) => setPaidSalary(e.target.value)}
+                        min="0"
+                        step="100"
+                      />
+                      <div className="input-helper-text">
+                        Enter any salary amount already paid to reduce the money given balance
+                      </div>
+                    </div>
+                    
                     {totalSalary && parseFloat(totalSalary) > 0 && (
                       <div className="calculator-result">
                         <div className="calculator-breakdown">
@@ -1316,10 +1333,18 @@ function App() {
                             <span className="calculator-row-label">💸 Money Given This Month:</span>
                             <span className="calculator-row-value">- {formatIndianCurrency(monthlyTotal)}</span>
                           </div>
+                          {paidSalary && parseFloat(paidSalary) > 0 && (
+                            <div className="calculator-row paid">
+                              <span className="calculator-row-label">💳 Paid Salary (Reduces Balance):</span>
+                              <span className="calculator-row-value">+ {formatIndianCurrency(parseFloat(paidSalary))}</span>
+                            </div>
+                          )}
                         </div>
                         
                         {(() => {
-                          const balance = parseFloat(totalSalary) - monthlyTotal;
+                          const paidAmount = parseFloat(paidSalary) || 0;
+                          const adjustedMonthlyTotal = monthlyTotal - paidAmount;
+                          const balance = parseFloat(totalSalary) - adjustedMonthlyTotal;
                           const isNegative = balance < 0;
                           const absBalance = Math.abs(balance);
                           const payNowAmount = parseFloat(canPayNow) || 0;

@@ -2022,6 +2022,14 @@ h3 { font-size: var(--font-size-lg); }
   font-weight: 400;
 }
 
+.input-helper-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-sm);
+  font-style: italic;
+  line-height: 1.4;
+}
+
 .calculator-result {
   background: linear-gradient(135deg, rgba(21, 101, 192, 0.05) 0%, rgba(21, 101, 192, 0.1) 100%);
   border-radius: var(--radius-md);
@@ -2059,6 +2067,11 @@ h3 { font-size: var(--font-size-lg); }
 
 .calculator-row.subtract .calculator-row-value {
   color: var(--danger);
+}
+
+.calculator-row.paid .calculator-row-value {
+  color: var(--success);
+  font-weight: 600;
 }
 
 .calculator-final {
