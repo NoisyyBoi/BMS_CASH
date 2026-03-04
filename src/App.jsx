@@ -1061,7 +1061,7 @@ function App() {
                 <img src="/logo.png" alt="BMS Diesel Systems" className="company-logo" />
               </div>
               <div className="user-role-badge">
-                <span className="others-heading">OTHERS</span>
+                <img src="/other.png" alt="Others" className="others-image" />
               </div>
             </div>
             

@@ -279,6 +279,12 @@ h3 { font-size: var(--font-size-lg); }
   letter-spacing: 1.5px;
 }
 
+.others-image {
+  max-width: 200px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
 /* Logout Button at Bottom */
 .logout-container {
   padding: var(--space-lg);
