@@ -322,13 +322,21 @@ function App() {
     
     if (isNegative) {
       // Employee owes money
-      // Cash payback reduces the debt
-      const remainingDebt = absBalance - cashPayback;
+      const totalPayback = cashPayback;
+      const overpayment = totalPayback > absBalance ? totalPayback - absBalance : 0;
+      const actualDebt = Math.max(0, absBalance - totalPayback);
+      
       // Deduct remaining debt from salary
-      deductedAmount = Math.min(remainingDebt, salary);
-      paidToEmployee = salary - deductedAmount;
-      // What's still owed after salary deduction
-      remainingBalance = remainingDebt - deductedAmount;
+      deductedAmount = Math.min(actualDebt, salary);
+      paidToEmployee = salary - deductedAmount + overpayment; // Add overpayment to salary
+      
+      // What's still owed after salary deduction (negative means credit)
+      remainingBalance = actualDebt - deductedAmount;
+      
+      // If overpayment, store as negative (credit to employee)
+      if (overpayment > 0 && remainingBalance === 0) {
+        remainingBalance = -overpayment; // Negative means employee has credit
+      }
     } else {
       // Employee has salary remaining
       paidToEmployee = cashPayback > 0 ? cashPayback : balance;
@@ -1480,10 +1488,17 @@ function App() {
                                   {(() => {
                                     const cashPayback = parseFloat(payingNow) || 0;
                                     // Employee is paying back in cash, rest deducted from salary
-                                    const remainingDebt = absBalance - cashPayback;
-                                    const deductFromSalary = Math.min(remainingDebt, salary);
+                                    const totalPayback = cashPayback; // Just cash for now
+                                    const remainingDebt = absBalance - totalPayback;
+                                    
+                                    // If employee paid more than they owe
+                                    const overpayment = totalPayback > absBalance ? totalPayback - absBalance : 0;
+                                    const actualDebt = Math.max(0, remainingDebt);
+                                    
+                                    // Deduct remaining debt from salary
+                                    const deductFromSalary = Math.min(actualDebt, salary);
                                     const salaryToPay = salary - deductFromSalary;
-                                    const stillOwes = remainingDebt - deductFromSalary;
+                                    const stillOwes = actualDebt - deductFromSalary;
                                     
                                     return (
                                       <>
@@ -1497,10 +1512,18 @@ function App() {
                                               <span>Employee Paying Back (Cash):</span>
                                               <span>- {formatIndianCurrency(cashPayback)}</span>
                                             </div>
-                                            <div className="payment-row paid">
-                                              <span>Deducting from Salary:</span>
-                                              <span>- {formatIndianCurrency(deductFromSalary)}</span>
-                                            </div>
+                                            {deductFromSalary > 0 && (
+                                              <div className="payment-row paid">
+                                                <span>Deducting from Salary:</span>
+                                                <span>- {formatIndianCurrency(deductFromSalary)}</span>
+                                              </div>
+                                            )}
+                                            {overpayment > 0 && (
+                                              <div className="payment-row positive">
+                                                <span>Overpayment (Credit to Employee):</span>
+                                                <span>+ {formatIndianCurrency(overpayment)}</span>
+                                              </div>
+                                            )}
                                             {stillOwes > 0 && (
                                               <div className="payment-row remaining">
                                                 <span>Still Owes (Carry Forward):</span>
@@ -1526,9 +1549,15 @@ function App() {
                                                 <span>- {formatIndianCurrency(deductFromSalary)}</span>
                                               </div>
                                             )}
+                                            {overpayment > 0 && (
+                                              <div className="salary-row positive">
+                                                <span>Add Overpayment Credit:</span>
+                                                <span>+ {formatIndianCurrency(overpayment)}</span>
+                                              </div>
+                                            )}
                                             <div className="salary-row total">
                                               <span>Paying to Employee:</span>
-                                              <span>{formatIndianCurrency(salaryToPay)}</span>
+                                              <span>{formatIndianCurrency(salaryToPay + overpayment)}</span>
                                             </div>
                                           </div>
                                         </div>
@@ -1546,7 +1575,7 @@ function App() {
                                                   <span>{formatIndianCurrency(salary)}</span>
                                                 </div>
                                                 <div className="deduction-row subtract">
-                                                  <span>Carried Forward Balance:</span>
+                                                  <span>Carried Forward Debt:</span>
                                                   <span>- {formatIndianCurrency(stillOwes)}</span>
                                                 </div>
                                                 <div className="deduction-row total">
@@ -1561,6 +1590,27 @@ function App() {
                                                     </span>
                                                   </div>
                                                 )}
+                                              </>
+                                            ) : overpayment > 0 ? (
+                                              <>
+                                                <div className="deduction-row">
+                                                  <span>Next Month Salary:</span>
+                                                  <span>{formatIndianCurrency(salary)}</span>
+                                                </div>
+                                                <div className="deduction-row positive">
+                                                  <span>Carried Forward Credit:</span>
+                                                  <span>+ {formatIndianCurrency(overpayment)}</span>
+                                                </div>
+                                                <div className="deduction-row total">
+                                                  <span>Total Available Next Month:</span>
+                                                  <span>{formatIndianCurrency(salary + overpayment)}</span>
+                                                </div>
+                                                <div className="deduction-note">
+                                                  <span className="note-icon">✅</span>
+                                                  <span className="note-text">
+                                                    Employee has {formatIndianCurrency(overpayment)} credit that will be added to next month's salary.
+                                                  </span>
+                                                </div>
                                               </>
                                             ) : (
                                               <div className="deduction-row">
