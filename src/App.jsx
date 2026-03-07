@@ -79,6 +79,7 @@ function App() {
   const [transactionFilter, setTransactionFilter] = useState('all');
   const [salaryPayments, setSalaryPayments] = useState([]);
   const [loadingSalaryPayments, setLoadingSalaryPayments] = useState(false);
+  const [showMonthlySummary, setShowMonthlySummary] = useState(false);
 
   useEffect(() => {
     setSavedLists(getSavedLists());
@@ -2330,14 +2331,19 @@ function App() {
                   {/* Monthly Summary Button */}
                   {dailySummaries.length > 0 && (
                     <div style={{ marginBottom: 'var(--space-lg)' }}>
-                      <div style={{ 
-                        background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%)',
-                        color: 'white',
-                        padding: 'var(--space-md)',
-                        borderRadius: 'var(--radius-lg)',
-                        marginBottom: 'var(--space-md)',
-                        textAlign: 'center'
-                      }}>
+                      <div 
+                        style={{ 
+                          background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%)',
+                          color: 'white',
+                          padding: 'var(--space-md)',
+                          borderRadius: 'var(--radius-lg)',
+                          marginBottom: showMonthlySummary ? 'var(--space-md)' : '0',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onClick={() => setShowMonthlySummary(!showMonthlySummary)}
+                      >
                         <div style={{ fontSize: 'var(--font-size-sm)', opacity: 0.9 }}>Monthly Summary</div>
                         <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginTop: 'var(--space-xs)' }}>
                           {formatIndianCurrency(monthlyTotal)}
@@ -2345,22 +2351,27 @@ function App() {
                         <div style={{ fontSize: 'var(--font-size-sm)', opacity: 0.9, marginTop: 'var(--space-xs)' }}>
                           {monthYear} • {dailySummaries.length} days
                         </div>
+                        <div style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--space-xs)', opacity: 0.8 }}>
+                          {showMonthlySummary ? '▲ Hide Options' : '▼ Show Options'}
+                        </div>
                       </div>
                       
-                      <div className="transaction-actions">
-                        <button 
-                          className="share-btn whatsapp" 
-                          onClick={() => handleShareMonthlySummaryWhatsApp(monthYear, dailySummaries, monthlyTotal)}
-                        >
-                          📱 Share Summary
-                        </button>
-                        <button 
-                          className="share-btn pdf" 
-                          onClick={() => handleDownloadMonthlySummaryPDF(monthYear, dailySummaries, monthlyTotal)}
-                        >
-                          📄 Download Summary
-                        </button>
-                      </div>
+                      {showMonthlySummary && (
+                        <div className="transaction-actions" style={{ animation: 'slideDown 0.3s ease' }}>
+                          <button 
+                            className="share-btn whatsapp" 
+                            onClick={() => handleShareMonthlySummaryWhatsApp(monthYear, dailySummaries, monthlyTotal)}
+                          >
+                            📱 Share Summary
+                          </button>
+                          <button 
+                            className="share-btn pdf" 
+                            onClick={() => handleDownloadMonthlySummaryPDF(monthYear, dailySummaries, monthlyTotal)}
+                          >
+                            📄 Download Summary
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                   
