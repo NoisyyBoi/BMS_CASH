@@ -1088,55 +1088,65 @@ function App() {
             </div>
             
             <div className="home-actions">
-              <div className="home-cards-grid">
-                <button 
-                  className="home-card" 
-                  onClick={startCreateUser}
-                  disabled={!isAdmin()}
-                  style={{ opacity: isAdmin() ? 1 : 0.6 }}
-                >
-                  <div className="home-card-icon">👤</div>
-                  <div className="home-card-title">Create User</div>
-                  <div className="home-card-subtitle">ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ</div>
-                  {!isAdmin() && <div className="home-card-lock">🔒</div>}
-                </button>
-                
-                <button 
-                  className="home-card" 
-                  onClick={startGiveMoney}
-                  disabled={!isAdmin()}
-                  style={{ opacity: isAdmin() ? 1 : 0.6 }}
-                >
-                  <div className="home-card-icon">💰</div>
-                  <div className="home-card-title">Give Money</div>
-                  <div className="home-card-subtitle">ಹಣ ನೀಡಿ</div>
-                  {!isAdmin() && <div className="home-card-lock">🔒</div>}
-                </button>
-                
-                <button className="home-card" onClick={startUserTotal}>
-                  <div className="home-card-icon">📊</div>
-                  <div className="home-card-title">User Total</div>
-                  <div className="home-card-subtitle">ಬಳಕೆದಾರರ ಒಟ್ಟು</div>
-                </button>
-                
-                <button className="home-card" onClick={openSalaryPayments}>
-                  <div className="home-card-icon">💵</div>
-                  <div className="home-card-title">Salary Payments</div>
-                  <div className="home-card-subtitle">ಸಂಬಳ ಪಾವತಿಗಳು</div>
-                </button>
-                
-                <button className="home-card home-card-full" onClick={openHistory}>
-                  <div className="home-card-icon">�</div>
-                  <div className="home-card-title">History</div>
-                  <div className="home-card-subtitle">ಇತಿಹಾಸ</div>
-                </button>
-                
-                <button className="home-card home-card-full home-card-logout" onClick={handleLogout}>
-                  <div className="home-card-icon">�</div>
-                  <div className="home-card-title">Logout</div>
-                  <div className="home-card-subtitle">Log out of your account</div>
-                </button>
-              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={startCreateUser}
+                disabled={!isAdmin()}
+                style={{ opacity: isAdmin() ? 1 : 0.5 }}
+              >
+                <span className="btn-icon">👤</span>
+                <span className="btn-content">
+                  <span>Create a User</span>
+                  <span className="btn-kannada">ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ</span>
+                </span>
+                {!isAdmin() && <span className="btn-lock">🔒</span>}
+              </button>
+              
+              <button 
+                className="btn btn-success" 
+                onClick={startGiveMoney}
+                disabled={!isAdmin()}
+                style={{ opacity: isAdmin() ? 1 : 0.5 }}
+              >
+                <span className="btn-icon">💰</span>
+                <span className="btn-content">
+                  <span>Give Money</span>
+                  <span className="btn-kannada">ಹಣ ನೀಡಿ</span>
+                </span>
+                {!isAdmin() && <span className="btn-lock">🔒</span>}
+              </button>
+              
+              <button className="btn btn-accent" onClick={startUserTotal}>
+                <span className="btn-icon">📊</span>
+                <span className="btn-content">
+                  <span>User Total</span>
+                  <span className="btn-kannada">ಬಳಕೆದಾರರ ಒಟ್ಟು</span>
+                </span>
+              </button>
+              
+              <button className="btn btn-lilac" onClick={openSalaryPayments}>
+                <span className="btn-icon">💵</span>
+                <span className="btn-content">
+                  <span>Salary Payments</span>
+                  <span className="btn-kannada">ಸಂಬಳ ಪಾವತಿಗಳು</span>
+                </span>
+              </button>
+              
+              <button className="btn btn-grey" onClick={openHistory}>
+                <span className="btn-icon">📋</span>
+                <span className="btn-content">
+                  <span>History</span>
+                  <span className="btn-kannada">ಇತಿಹಾಸ</span>
+                </span>
+              </button>
+            </div>
+            
+            {/* Logout Button at Bottom */}
+            <div className="logout-container">
+              <button className="btn-logout-bottom" onClick={handleLogout}>
+                <span className="logout-icon">🚪</span>
+                Logout
+              </button>
             </div>
           </div>
         )}
