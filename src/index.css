@@ -430,6 +430,16 @@ h3 { font-size: var(--font-size-lg); }
   transform: scale(0.98);
 }
 
+.btn-olive {
+  background: linear-gradient(135deg, #689F38 0%, #558B2F 100%);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-olive:active {
+  transform: scale(0.98);
+}
+
 .btn-icon {
   font-size: 28px;
 }

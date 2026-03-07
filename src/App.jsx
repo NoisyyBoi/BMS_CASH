@@ -1124,7 +1124,7 @@ function App() {
                 </span>
               </button>
               
-              <button className="btn btn-accent" onClick={openSalaryPayments}>
+              <button className="btn btn-olive" onClick={openSalaryPayments}>
                 <span className="btn-icon">💵</span>
                 <span className="btn-content">
                   <span>Salary Payments</span>
@@ -1132,7 +1132,7 @@ function App() {
                 </span>
               </button>
               
-              <button className="btn btn-secondary" onClick={openHistory}>
+              <button className="btn btn-grey" onClick={openHistory}>
                 <span className="btn-icon">📋</span>
                 <span className="btn-content">
                   <span>History</span>
