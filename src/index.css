@@ -892,7 +892,7 @@ h3 { font-size: var(--font-size-lg); }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #616161 0%, #424242 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: white;
   padding: var(--space-md) var(--space-lg);
   border-radius: var(--radius-lg);
