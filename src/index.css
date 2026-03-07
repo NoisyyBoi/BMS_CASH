@@ -410,6 +410,16 @@ h3 { font-size: var(--font-size-lg); }
   transform: scale(0.98);
 }
 
+.btn-purple {
+  background: linear-gradient(135deg, #7B1FA2 0%, #9C27B0 100%);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-purple:active {
+  transform: scale(0.98);
+}
+
 .btn-icon {
   font-size: 28px;
 }

@@ -1110,7 +1110,7 @@ function App() {
                 </span>
               </button>
               
-              <button className="btn btn-accent" onClick={openSalaryPayments}>
+              <button className="btn btn-purple" onClick={openSalaryPayments}>
                 <span className="btn-icon">💵</span>
                 <span className="btn-content">
                   <span>Salary Payments</span>
