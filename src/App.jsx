@@ -968,7 +968,17 @@ function App() {
     <div className="app">
       {/* Header */}
       {view !== VIEWS.HOME && (
-        <header className="header">
+        <header className="header" style={{
+          background: view === VIEWS.GIVE_MONEY || view === VIEWS.USER_HISTORY 
+            ? 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)' // Green for Give Money
+            : view === VIEWS.USER_TOTAL 
+            ? 'linear-gradient(135deg, #FF6F00 0%, #E65100 100%)' // Orange for User Total
+            : view === VIEWS.SALARY_PAYMENTS 
+            ? 'linear-gradient(135deg, #7B1FA2 0%, #6A1B9A 100%)' // Purple for Salary Payments
+            : view === VIEWS.HISTORY
+            ? 'linear-gradient(135deg, #616161 0%, #424242 100%)' // Grey for History
+            : 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)' // Default blue
+        }}>
           <div className="header-content">
             <button className="back-btn" onClick={goBack} aria-label="Go back">
               ←
@@ -1132,7 +1142,7 @@ function App() {
                 </span>
               </button>
               
-              <button className="btn btn-secondary" onClick={openHistory}>
+              <button className="btn btn-grey" onClick={openHistory}>
                 <span className="btn-icon">📋</span>
                 <span className="btn-content">
                   <span>History</span>
