@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
-import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp } from './utils/storage';
+import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp } from './utils/storage';
 import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 
@@ -555,6 +555,16 @@ function App() {
 
   const handleShareDailyWhatsApp = (date, transactions, total) => {
     const message = formatDailyTransactionsForWhatsApp(date, transactions, total, formatIndianCurrency);
+    shareViaWhatsApp(message);
+  };
+
+  const handleDownloadMonthlySummaryPDF = (monthYear, dailySummaries, monthlyTotal) => {
+    generateMonthlySummaryPDF(monthYear, dailySummaries, monthlyTotal, formatIndianCurrency);
+    showToast('✓ Monthly summary PDF downloaded');
+  };
+
+  const handleShareMonthlySummaryWhatsApp = (monthYear, dailySummaries, monthlyTotal) => {
+    const message = formatMonthlySummaryForWhatsApp(monthYear, dailySummaries, monthlyTotal, formatIndianCurrency);
     shareViaWhatsApp(message);
   };
 
@@ -2261,7 +2271,7 @@ function App() {
               if (transactions.length === 0) {
                 return (
                   <div className="empty-state">
-                    <div className="empty-icon">�</div>
+                    <div className="empty-icon">📋</div>
                     <p>No transactions yet</p>
                     <p>ಯಾವುದೇ ವಹಿವಾಟುಗಳಿಲ್ಲ</p>
                   </div>
@@ -2290,82 +2300,146 @@ function App() {
                 }
                 
                 groupedByDate[date].transactions.push(transaction);
-                groupedByDate[date].total += transaction.amount;
+                // Add absolute values - don't subtract negatives
+                groupedByDate[date].total += Math.abs(transaction.amount);
               });
               
-              return Object.entries(groupedByDate).map(([date, data]) => (
-                <div key={date} className="history-date-group">
-                  <div 
-                    className="daily-summary"
-                    onClick={() => toggleDateExpansion(date)}
-                  >
-                    <div className="daily-summary-date">
-                      <span className="daily-summary-icon">📅</span>
-                      {date}
-                      <span className="daily-summary-count">({data.transactions.length})</span>
-                    </div>
-                    <div className="daily-summary-right">
-                      <div className="daily-summary-total">
-                        <span className="daily-summary-label">Total:</span>
-                        <span className="daily-summary-amount">{formatIndianCurrency(data.total)}</span>
-                      </div>
-                      <span className={`expand-icon ${expandedDates[date] ? 'expanded' : ''}`}>
-                        ▼
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {expandedDates[date] && (
-                    <div className="transactions-container">
-                      {data.transactions.map(transaction => (
-                        <div key={transaction.id} className="history-card transaction-card">
-                          <div className="transaction-header">
-                            <div className="transaction-user">
-                              <div className="transaction-user-icon">👤</div>
-                              <div>
-                                <div className="transaction-user-name">{transaction.userName}</div>
-                                <div className="transaction-user-phone">{transaction.userPhone}</div>
-                              </div>
-                            </div>
-                            <div className={`transaction-amount ${transaction.amount < 0 ? 'negative' : ''}`}>
-                              {transaction.amount < 0 ? '-' : ''}{formatIndianCurrency(Math.abs(transaction.amount))}
-                            </div>
-                          </div>
-                          
-                          <div className="transaction-details">
-                            <div className="transaction-purpose">
-                              <span className="transaction-label">Purpose:</span>
-                              <span className="transaction-value">{transaction.purpose}</span>
-                            </div>
-                            <div className="transaction-date">
-                              {new Date(transaction.createdAt).toLocaleTimeString('en-IN', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </div>
-                          </div>
+              // Calculate monthly summary
+              const now = new Date();
+              const currentMonth = now.getMonth();
+              const currentYear = now.getFullYear();
+              const monthYear = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+              
+              const dailySummaries = [];
+              let monthlyTotal = 0;
+              
+              Object.entries(groupedByDate).forEach(([date, data]) => {
+                const transDate = new Date(data.transactions[0].createdAt);
+                if (transDate.getMonth() === currentMonth && transDate.getFullYear() === currentYear) {
+                  dailySummaries.push({
+                    date: date,
+                    total: data.total,
+                    count: data.transactions.length
+                  });
+                  monthlyTotal += data.total;
+                }
+              });
+              
+              return (
+                <>
+                  {/* Monthly Summary Button */}
+                  {dailySummaries.length > 0 && (
+                    <div style={{ marginBottom: 'var(--space-lg)' }}>
+                      <div style={{ 
+                        background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%)',
+                        color: 'white',
+                        padding: 'var(--space-md)',
+                        borderRadius: 'var(--radius-lg)',
+                        marginBottom: 'var(--space-md)',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', opacity: 0.9 }}>Monthly Summary</div>
+                        <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginTop: 'var(--space-xs)' }}>
+                          {formatIndianCurrency(monthlyTotal)}
                         </div>
-                      ))}
+                        <div style={{ fontSize: 'var(--font-size-sm)', opacity: 0.9, marginTop: 'var(--space-xs)' }}>
+                          {monthYear} • {dailySummaries.length} days
+                        </div>
+                      </div>
                       
-                      {/* Download and Share Buttons for Daily Transactions */}
                       <div className="transaction-actions">
                         <button 
                           className="share-btn whatsapp" 
-                          onClick={() => handleShareDailyWhatsApp(date, data.transactions, data.total)}
+                          onClick={() => handleShareMonthlySummaryWhatsApp(monthYear, dailySummaries, monthlyTotal)}
                         >
-                          📱 WhatsApp
+                          📱 Share Summary
                         </button>
                         <button 
                           className="share-btn pdf" 
-                          onClick={() => handleDownloadDailyPDF(date, data.transactions, data.total)}
+                          onClick={() => handleDownloadMonthlySummaryPDF(monthYear, dailySummaries, monthlyTotal)}
                         >
-                          📄 Download PDF
+                          📄 Download Summary
                         </button>
                       </div>
                     </div>
                   )}
-                </div>
-              ));
+                  
+                  {/* Daily Transactions */}
+                  {Object.entries(groupedByDate).map(([date, data]) => (
+                    <div key={date} className="history-date-group">
+                      <div 
+                        className="daily-summary"
+                        onClick={() => toggleDateExpansion(date)}
+                      >
+                        <div className="daily-summary-date">
+                          <span className="daily-summary-icon">📅</span>
+                          {date}
+                          <span className="daily-summary-count">({data.transactions.length})</span>
+                        </div>
+                        <div className="daily-summary-right">
+                          <div className="daily-summary-total">
+                            <span className="daily-summary-label">Total:</span>
+                            <span className="daily-summary-amount">{formatIndianCurrency(data.total)}</span>
+                          </div>
+                          <span className={`expand-icon ${expandedDates[date] ? 'expanded' : ''}`}>
+                            ▼
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {expandedDates[date] && (
+                        <div className="transactions-container">
+                          {data.transactions.map(transaction => (
+                            <div key={transaction.id} className="history-card transaction-card">
+                              <div className="transaction-header">
+                                <div className="transaction-user">
+                                  <div className="transaction-user-icon">👤</div>
+                                  <div>
+                                    <div className="transaction-user-name">{transaction.userName}</div>
+                                    <div className="transaction-user-phone">{transaction.userPhone}</div>
+                                  </div>
+                                </div>
+                                <div className={`transaction-amount ${transaction.amount < 0 ? 'negative' : ''}`}>
+                                  {transaction.amount < 0 ? '-' : ''}{formatIndianCurrency(Math.abs(transaction.amount))}
+                                </div>
+                              </div>
+                              
+                              <div className="transaction-details">
+                                <div className="transaction-purpose">
+                                  <span className="transaction-label">Purpose:</span>
+                                  <span className="transaction-value">{transaction.purpose}</span>
+                                </div>
+                                <div className="transaction-date">
+                                  {new Date(transaction.createdAt).toLocaleTimeString('en-IN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* Download and Share Buttons for Daily Transactions */}
+                          <div className="transaction-actions">
+                            <button 
+                              className="share-btn whatsapp" 
+                              onClick={() => handleShareDailyWhatsApp(date, data.transactions, data.total)}
+                            >
+                              📱 WhatsApp
+                            </button>
+                            <button 
+                              className="share-btn pdf" 
+                              onClick={() => handleDownloadDailyPDF(date, data.transactions, data.total)}
+                            >
+                              📄 Download PDF
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              );
             })()}
           </div>
         )}
