@@ -95,6 +95,11 @@ function App() {
     }
   }, []);
 
+  // Scroll to top whenever view changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view]);
+
   const handleLogin = () => {
     const username = loginUsername.toLowerCase().trim();
     const password = loginPassword.trim();
