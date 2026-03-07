@@ -1,0 +1,55 @@
+═══════════════════════════════════════════════════════════════
+  QUICK FIX: "Error deleting transaction"
+═══════════════════════════════════════════════════════════════
+
+The error happens because the database table doesn't exist yet.
+
+═══════════════════════════════════════════════════════════════
+  SOLUTION (2 MINUTES):
+═══════════════════════════════════════════════════════════════
+
+STEP 1: Open Supabase
+  → Go to: https://supabase.com/dashboard
+  → Login
+  → Select your project
+
+STEP 2: Open SQL Editor
+  → Click "SQL Editor" (left sidebar)
+  → Click "New Query" button
+
+STEP 3: Copy & Run SQL
+  → Open file: supabase-schema.sql
+  → Copy ALL the text
+  → Paste into SQL Editor
+  → Click "Run" button
+
+STEP 4: Verify
+  → Click "Table Editor" (left sidebar)
+  → Look for "deleted_transactions" table
+  → It should be there now!
+
+STEP 5: Test
+  → Refresh your app (F5)
+  → Try deleting a transaction again
+  → Should work now! ✓
+
+═══════════════════════════════════════════════════════════════
+  WHAT YOU'LL SEE AFTER SETUP:
+═══════════════════════════════════════════════════════════════
+
+1. Click delete (🗑️) on a transaction
+2. Modal appears: "Delete Transaction"
+3. Enter reason (required)
+4. Click "Delete Transaction"
+5. Transaction moves to "Deleted Transactions"
+6. Auto-deleted after 30 days
+
+═══════════════════════════════════════════════════════════════
+  STILL HAVING ISSUES?
+═══════════════════════════════════════════════════════════════
+
+→ Read: FIX_DELETE_ERROR.md (detailed instructions)
+→ Read: SETUP_DELETED_TRANSACTIONS.md (step-by-step guide)
+→ Check browser console (F12) for error messages
+
+═══════════════════════════════════════════════════════════════

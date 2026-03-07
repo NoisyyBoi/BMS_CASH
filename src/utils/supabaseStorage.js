@@ -183,3 +183,70 @@ export const deleteTransactionFromSupabase = async (transactionId) => {
     throw error;
   }
 };
+
+// ===== DELETED TRANSACTIONS MANAGEMENT =====
+
+export const saveDeletedTransactionToSupabase = async (deletedTransaction) => {
+  try {
+    const { data, error } = await supabase
+      .from('deleted_transactions')
+      .insert([deletedTransaction])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error saving deleted transaction:', error);
+    throw error;
+  }
+};
+
+export const getDeletedTransactionsFromSupabase = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('deleted_transactions')
+      .select('*')
+      .order('deletedAt', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching deleted transactions:', error);
+    throw error;
+  }
+};
+
+export const deleteOldDeletedTransactionsFromSupabase = async () => {
+  try {
+    // Calculate date 30 days ago
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const { error } = await supabase
+      .from('deleted_transactions')
+      .delete()
+      .lt('deletedAt', thirtyDaysAgo.toISOString());
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting old deleted transactions:', error);
+    throw error;
+  }
+};
+
+export const permanentlyDeleteTransactionFromSupabase = async (deletedTransactionId) => {
+  try {
+    const { error } = await supabase
+      .from('deleted_transactions')
+      .delete()
+      .eq('id', deletedTransactionId);
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error permanently deleting transaction:', error);
+    throw error;
+  }
+};

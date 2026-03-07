@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp } from './utils/storage';
-import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase } from './utils/supabaseStorage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 
 // View constants
@@ -13,6 +13,7 @@ const VIEWS = {
   USER_TOTAL: 'user_total',
   USER_HISTORY: 'user_history',
   SALARY_PAYMENTS: 'salary_payments',
+  DELETED_TRANSACTIONS: 'deleted_transactions',
   PROJECT: 'project',
   CATEGORIES: 'categories',
   ITEMS: 'items',
@@ -81,6 +82,11 @@ function App() {
   const [loadingSalaryPayments, setLoadingSalaryPayments] = useState(false);
   const [showMonthlySummary, setShowMonthlySummary] = useState(false);
   const [expandedSalaryMonths, setExpandedSalaryMonths] = useState({});
+  const [deletedTransactions, setDeletedTransactions] = useState([]);
+  const [loadingDeletedTransactions, setLoadingDeletedTransactions] = useState(false);
+  const [showDeleteReasonModal, setShowDeleteReasonModal] = useState(false);
+  const [deleteReasonText, setDeleteReasonText] = useState('');
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
 
   useEffect(() => {
     setSavedLists(getSavedLists());
@@ -93,6 +99,7 @@ function App() {
       setView(VIEWS.HOME);
       loadUsers();
       loadTransactions();
+      cleanupOldDeletedTransactions();
     }
   }, []);
 
@@ -160,6 +167,43 @@ function App() {
       console.error('Error loading transactions:', error);
       setAllTransactions([]);
     }
+  };
+
+  const cleanupOldDeletedTransactions = async () => {
+    try {
+      await deleteOldDeletedTransactionsFromSupabase();
+    } catch (error) {
+      // Silently fail if table doesn't exist yet
+      if (!error.message || !error.message.includes('relation')) {
+        console.error('Error cleaning up old deleted transactions:', error);
+      }
+    }
+  };
+
+  const loadDeletedTransactions = async () => {
+    setLoadingDeletedTransactions(true);
+    try {
+      const deleted = await getDeletedTransactionsFromSupabase();
+      setDeletedTransactions(deleted);
+    } catch (error) {
+      console.error('Error loading deleted transactions:', error);
+      
+      // Check if table doesn't exist
+      if (error.message && error.message.includes('relation') && error.message.includes('deleted_transactions')) {
+        showToast('⚠️ Database not set up. Check SETUP_DELETED_TRANSACTIONS.md');
+        console.error('Please run the SQL schema from supabase-schema.sql in your Supabase dashboard.');
+        console.error('See SETUP_DELETED_TRANSACTIONS.md for instructions.');
+      }
+      
+      setDeletedTransactions([]);
+    } finally {
+      setLoadingDeletedTransactions(false);
+    }
+  };
+
+  const openDeletedTransactions = async () => {
+    await loadDeletedTransactions();
+    setView(VIEWS.DELETED_TRANSACTIONS);
   };
 
   const showToast = (message) => {
@@ -459,13 +503,56 @@ function App() {
       return;
     }
     
-    if (!confirm('Are you sure you want to delete this transaction?')) {
+    // Find the transaction to delete
+    const transaction = userTransactionsData.find(t => t.id === transactionId);
+    if (!transaction) {
+      showToast('⚠️ Transaction not found');
       return;
     }
     
+    // Show delete reason modal
+    setTransactionToDelete(transaction);
+    setDeleteReasonText('');
+    setShowDeleteReasonModal(true);
+  };
+
+  const confirmDeleteTransaction = async () => {
+    if (!deleteReasonText.trim()) {
+      showToast('⚠️ Please provide a reason for deletion');
+      return;
+    }
+
+    if (!transactionToDelete) return;
+
     try {
-      await deleteTransactionFromSupabase(transactionId);
+      // Save to deleted_transactions table
+      const deletedTransaction = {
+        id: Date.now(), // New ID for deleted_transactions table
+        userId: transactionToDelete.userId,
+        userName: transactionToDelete.userName,
+        userPhone: transactionToDelete.userPhone,
+        amount: transactionToDelete.amount,
+        purpose: transactionToDelete.purpose,
+        deletedReason: deleteReasonText.trim(),
+        deletedBy: userRole,
+        originalCreatedAt: transactionToDelete.createdAt,
+        deletedAt: new Date().toISOString(),
+      };
+      
+      console.log('Saving deleted transaction:', deletedTransaction);
+      await saveDeletedTransactionToSupabase(deletedTransaction);
+      
+      console.log('Deleting from transactions table:', transactionToDelete.id);
+      // Delete from transactions table
+      await deleteTransactionFromSupabase(transactionToDelete.id);
+      
       showToast('✓ Transaction deleted');
+      
+      // Close modal
+      setShowDeleteReasonModal(false);
+      setTransactionToDelete(null);
+      setDeleteReasonText('');
+      
       // Reload transactions
       const transactions = await getUserTransactionsFromSupabase(selectedUserForHistory.id);
       setUserTransactionsData(transactions);
@@ -474,7 +561,17 @@ function App() {
       await loadTransactions(); // Reload global transactions too
     } catch (error) {
       console.error('Error deleting transaction:', error);
-      showToast('⚠️ Error deleting transaction');
+      console.error('Error details:', error.message, error.details, error.hint);
+      
+      // Show more specific error message
+      if (error.message && error.message.includes('relation') && error.message.includes('deleted_transactions')) {
+        showToast('⚠️ Database table not set up. Please run SQL schema.');
+        console.error('Please run the SQL schema from supabase-schema.sql in your Supabase dashboard.');
+      } else if (error.message) {
+        showToast(`⚠️ Error: ${error.message.substring(0, 50)}`);
+      } else {
+        showToast('⚠️ Error deleting transaction');
+      }
     }
   };
 
@@ -779,7 +876,7 @@ function App() {
       setView(VIEWS.CATEGORIES);
     } else if (view === VIEWS.CATEGORIES) {
       setView(VIEWS.PROJECT);
-    } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL || view === VIEWS.SALARY_PAYMENTS) {
+    } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL || view === VIEWS.SALARY_PAYMENTS || view === VIEWS.DELETED_TRANSACTIONS) {
       setView(VIEWS.HOME);
     } else if (view === VIEWS.USER_HISTORY) {
       setView(VIEWS.USER_TOTAL);
@@ -981,6 +1078,7 @@ function App() {
                 {view === VIEWS.USER_TOTAL && 'User Total'}
                 {view === VIEWS.USER_HISTORY && 'User History'}
                 {view === VIEWS.SALARY_PAYMENTS && 'Salary Payments'}
+                {view === VIEWS.DELETED_TRANSACTIONS && 'Deleted Transactions'}
                 {view === VIEWS.CATEGORIES && 'Select Category'}
                 {view === VIEWS.ITEMS && categories.find(c => c.id === currentCategory)?.name}
                 {view === VIEWS.REVIEW && 'Review List'}
@@ -1003,6 +1101,9 @@ function App() {
               )}
               {view === VIEWS.SALARY_PAYMENTS && (
                 <p className="header-subtitle">ಸಂಬಳ ಪಾವತಿಗಳು</p>
+              )}
+              {view === VIEWS.DELETED_TRANSACTIONS && (
+                <p className="header-subtitle">ಅಳಿಸಿದ ವಹಿವಾಟುಗಳು</p>
               )}
               {view === VIEWS.ITEMS && (
                 <p className="header-subtitle">
@@ -1137,6 +1238,14 @@ function App() {
                 <span className="btn-content">
                   <span>History</span>
                   <span className="btn-kannada">ಇತಿಹಾಸ</span>
+                </span>
+              </button>
+              
+              <button className="btn btn-danger" onClick={openDeletedTransactions}>
+                <span className="btn-icon">🗑️</span>
+                <span className="btn-content">
+                  <span>Deleted Transactions</span>
+                  <span className="btn-kannada">ಅಳಿಸಿದ ವಹಿವಾಟುಗಳು</span>
                 </span>
               </button>
             </div>
@@ -1854,14 +1963,6 @@ function App() {
                     )}
                   </div>
                   
-                  {/* Debug info - Always visible for testing */}
-                  <div style={{ fontSize: '12px', color: '#999', marginTop: '10px', padding: '10px', background: '#f0f0f0', borderRadius: '8px' }}>
-                    Debug Info:<br/>
-                    - Salary entered: {totalSalary || 'None'}<br/>
-                    - Is Admin: {isAdmin() ? 'Yes' : 'No'}<br/>
-                    - User Role: {userRole || 'Not logged in'}<br/>
-                    - Button should show: {(isAdmin() && totalSalary && parseFloat(totalSalary) > 0) ? 'YES' : 'NO'}
-                  </div>
                   
                   {/* Save Salary Payment Button - Shows for admins when salary is entered */}
                   {isAdmin() && totalSalary && parseFloat(totalSalary) > 0 && (
@@ -2013,6 +2114,104 @@ function App() {
                     </div>
                   ));
                 })()}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Deleted Transactions Screen */}
+        {view === VIEWS.DELETED_TRANSACTIONS && (
+          <div className="deleted-transactions-screen">
+            {loadingDeletedTransactions ? (
+              <div className="empty-state">
+                <div className="empty-icon">⏳</div>
+                <p>Loading deleted transactions...</p>
+              </div>
+            ) : deletedTransactions.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">🗑️</div>
+                <p>No deleted transactions</p>
+                <p>ಅಳಿಸಿದ ವಹಿವಾಟುಗಳಿಲ್ಲ</p>
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', marginTop: 'var(--space-md)' }}>
+                  Deleted transactions are automatically removed after 30 days
+                </p>
+              </div>
+            ) : (
+              <div className="deleted-transactions-list">
+                <div className="info-banner">
+                  <span className="info-banner-icon">ℹ️</span>
+                  <span className="info-banner-text">
+                    Deleted transactions are automatically removed after 30 days
+                  </span>
+                </div>
+                
+                {deletedTransactions.map(transaction => {
+                  const deletedDate = new Date(transaction.deletedAt);
+                  const originalDate = new Date(transaction.originalCreatedAt);
+                  const daysRemaining = 30 - Math.floor((new Date() - deletedDate) / (1000 * 60 * 60 * 24));
+                  
+                  return (
+                    <div key={transaction.id} className="deleted-transaction-card">
+                      <div className="deleted-card-header">
+                        <div className="deleted-user-info">
+                          <div className="deleted-user-icon">👤</div>
+                          <div>
+                            <div className="deleted-user-name">{transaction.userName}</div>
+                            <div className="deleted-user-phone">{transaction.userPhone}</div>
+                          </div>
+                        </div>
+                        <div className={`transaction-amount ${transaction.amount < 0 ? 'negative' : ''}`}>
+                          {transaction.amount < 0 ? '-' : ''}{formatIndianCurrency(Math.abs(transaction.amount))}
+                        </div>
+                      </div>
+                      
+                      <div className="deleted-card-body">
+                        <div className="deleted-detail-row">
+                          <span className="deleted-detail-label">Purpose:</span>
+                          <span className="deleted-detail-value">{transaction.purpose}</span>
+                        </div>
+                        <div className="deleted-detail-row">
+                          <span className="deleted-detail-label">Original Date:</span>
+                          <span className="deleted-detail-value">
+                            {originalDate.toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                        <div className="deleted-detail-row">
+                          <span className="deleted-detail-label">Deleted Date:</span>
+                          <span className="deleted-detail-value">
+                            {deletedDate.toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        <div className="deleted-detail-row">
+                          <span className="deleted-detail-label">Deleted By:</span>
+                          <span className="deleted-detail-value">{transaction.deletedBy}</span>
+                        </div>
+                        <div className="deleted-reason-box">
+                          <div className="deleted-reason-label">Reason for Deletion:</div>
+                          <div className="deleted-reason-text">{transaction.deletedReason}</div>
+                        </div>
+                        <div className="deleted-expiry-info">
+                          <span className="expiry-icon">⏰</span>
+                          <span className="expiry-text">
+                            {daysRemaining > 0 
+                              ? `Will be permanently deleted in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`
+                              : 'Will be deleted soon'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -2608,6 +2807,69 @@ function App() {
               <button className="btn btn-danger" onClick={confirmDelete}>
                 Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Reason Modal */}
+      {showDeleteReasonModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowDeleteReasonModal(false);
+          setTransactionToDelete(null);
+          setDeleteReasonText('');
+        }}>
+          <div className="modal delete-reason-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Delete Transaction</h3>
+              <button className="modal-close" onClick={() => {
+                setShowDeleteReasonModal(false);
+                setTransactionToDelete(null);
+                setDeleteReasonText('');
+              }}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="delete-reason-info">
+                <div className="info-icon">⚠️</div>
+                <div className="info-content">
+                  <div className="info-title">Please provide a reason</div>
+                  <div className="info-text">
+                    This transaction will be moved to deleted transactions and automatically removed after 30 days.
+                  </div>
+                </div>
+              </div>
+              
+              <div className="delete-reason-form">
+                <label className="delete-reason-label">Reason for deletion:</label>
+                <textarea
+                  className="delete-reason-textarea"
+                  placeholder="Enter reason (e.g., Duplicate entry, Wrong amount, etc.)"
+                  value={deleteReasonText}
+                  onChange={(e) => setDeleteReasonText(e.target.value)}
+                  rows="4"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="delete-reason-buttons">
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setShowDeleteReasonModal(false);
+                    setTransactionToDelete(null);
+                    setDeleteReasonText('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={confirmDeleteTransaction}
+                  disabled={!deleteReasonText.trim()}
+                >
+                  Delete Transaction
+                </button>
+              </div>
             </div>
           </div>
         </div>

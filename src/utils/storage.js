@@ -287,7 +287,7 @@ const formatCurrencyForPDF = (amount) => {
 };
 
 // Generate PDF for user transactions
-export const generateUserTransactionsPDF = (user, transactions, monthlyTotal, formatCurrency) => {
+export const generateUserTransactionsPDF = async (user, transactions, monthlyTotal, formatCurrency) => {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -296,27 +296,63 @@ export const generateUserTransactionsPDF = (user, transactions, monthlyTotal, fo
   
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
-  let y = 25;
+  let y = 15;
   
-  // Title
-  doc.setFontSize(18);
+  // Load and add logo
+  try {
+    const logoImg = new Image();
+    logoImg.src = '/icons/icon-512.png';
+    await new Promise((resolve, reject) => {
+      logoImg.onload = resolve;
+      logoImg.onerror = reject;
+      setTimeout(reject, 2000); // Timeout after 2 seconds
+    });
+    
+    // Add logo (30x30mm)
+    doc.addImage(logoImg, 'PNG', margin, y, 30, 30);
+  } catch (error) {
+    console.log('Logo not loaded, continuing without it');
+  }
+  
+  // Company information (to the right of logo)
+  const textX = margin + 35;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BMS DEISEL SYSTEMS INDIA PVT LTD', textX, y + 5);
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura,', textX, y + 11);
+  doc.text('Bengaluru, Karnataka 560065', textX, y + 16);
+  doc.text('Land: 080 2973 3225, Ph: 9900118148, 9844088148', textX, y + 21);
+  doc.text('Email: bmsdieselsystems@gmail.com', textX, y + 26);
+  
+  y += 35;
+  
+  // Separator line
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 8;
+  
+  // Document title
+  doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.text('User Transaction History', pageWidth / 2, y, { align: 'center' });
-  y += 15;
+  y += 10;
   
   // User info
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('User:', margin, y);
   doc.setFont('helvetica', 'normal');
   doc.text(user.name, margin + 15, y);
-  y += 8;
+  y += 6;
   
   doc.setFont('helvetica', 'bold');
   doc.text('Phone:', margin, y);
   doc.setFont('helvetica', 'normal');
   doc.text(user.phone, margin + 18, y);
-  y += 8;
+  y += 6;
   
   const now = new Date();
   const monthName = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
@@ -324,7 +360,7 @@ export const generateUserTransactionsPDF = (user, transactions, monthlyTotal, fo
   doc.text('Period:', margin, y);
   doc.setFont('helvetica', 'normal');
   doc.text(monthName, margin + 18, y);
-  y += 8;
+  y += 6;
   
   doc.setFont('helvetica', 'bold');
   doc.text('Total:', margin, y);
@@ -332,58 +368,97 @@ export const generateUserTransactionsPDF = (user, transactions, monthlyTotal, fo
   doc.text(formatCurrencyForPDF(monthlyTotal), margin + 15, y);
   y += 10;
   
-  // Separator line
-  doc.setLineWidth(0.5);
+  // Table header
+  doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 10;
+  y += 5;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Date', margin, y);
+  doc.text('Time', margin + 30, y);
+  doc.text('Purpose', margin + 50, y);
+  doc.text('Amount (Rs.)', pageWidth - margin - 35, y);
+  y += 2;
+  
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 5;
   
   // Transactions
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Transactions:', margin, y);
-  y += 8;
-  
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
   
   if (transactions.length === 0) {
     doc.text('No transactions found', margin, y);
   } else {
-    transactions.forEach((transaction, index) => {
+    transactions.forEach((transaction) => {
       // Check if we need a new page
-      if (y > 260) {
+      if (y > 270) {
         doc.addPage();
         y = 25;
+        
+        // Repeat table header on new page
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 5;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Date', margin, y);
+        doc.text('Time', margin + 30, y);
+        doc.text('Purpose', margin + 50, y);
+        doc.text('Amount (Rs.)', pageWidth - margin - 35, y);
+        y += 2;
+        
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 5;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
       }
       
-      const date = new Date(transaction.createdAt).toLocaleDateString('en-IN', {
+      const transDate = new Date(transaction.createdAt);
+      const date = transDate.toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
-        year: 'numeric',
+        year: 'numeric'
+      });
+      const time = transDate.toLocaleTimeString('en-IN', {
         hour: '2-digit',
         minute: '2-digit'
       });
       
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${index + 1}.`, margin, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(date, margin + 8, y);
-      y += 6;
+      // Truncate purpose if too long
+      let purpose = transaction.purpose;
+      if (purpose.length > 35) {
+        purpose = purpose.substring(0, 32) + '...';
+      }
       
-      doc.text(`   Purpose: ${transaction.purpose}`, margin, y);
-      y += 6;
+      doc.text(date, margin, y);
+      doc.text(time, margin + 30, y);
+      doc.text(purpose, margin + 50, y);
       
-      doc.setFont('helvetica', 'bold');
-      doc.text(`   Amount: ${formatCurrencyForPDF(transaction.amount)}`, margin, y);
-      doc.setFont('helvetica', 'normal');
-      y += 8;
+      // Amount (right-aligned, show negative in red)
+      const amountText = transaction.amount < 0 
+        ? `-${formatCurrencyForPDF(Math.abs(transaction.amount)).replace('Rs. ', '')}`
+        : formatCurrencyForPDF(transaction.amount).replace('Rs. ', '');
+      
+      if (transaction.amount < 0) {
+        doc.setTextColor(200, 0, 0); // Red for negative
+      }
+      doc.text(amountText, pageWidth - margin - 5, y, { align: 'right' });
+      doc.setTextColor(0, 0, 0); // Reset to black
+      
+      y += 6;
     });
   }
   
-  // Footer
-  const footerY = 280;
-  doc.setFontSize(9);
-  doc.setTextColor(128);
-  doc.text('Generated by BMS Cash Entry', pageWidth / 2, footerY, { align: 'center' });
+  // Bottom line
+  y += 2;
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
   
   // Generate filename
   const filename = `${user.name.replace(/\s+/g, '_')}_Transactions_${monthName.replace(/\s+/g, '_')}.pdf`;
@@ -391,7 +466,7 @@ export const generateUserTransactionsPDF = (user, transactions, monthlyTotal, fo
 };
 
 // Generate PDF for daily transactions
-export const generateDailyTransactionsPDF = (date, transactions, dailyTotal, formatCurrency) => {
+export const generateDailyTransactionsPDF = async (date, transactions, dailyTotal, formatCurrency) => {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -400,27 +475,62 @@ export const generateDailyTransactionsPDF = (date, transactions, dailyTotal, for
   
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
-  let y = 25;
+  let y = 15;
   
-  // Title
-  doc.setFontSize(18);
+  // Load and add logo
+  try {
+    const logoImg = new Image();
+    logoImg.src = '/icons/icon-512.png';
+    await new Promise((resolve, reject) => {
+      logoImg.onload = resolve;
+      logoImg.onerror = reject;
+      setTimeout(reject, 2000);
+    });
+    
+    doc.addImage(logoImg, 'PNG', margin, y, 30, 30);
+  } catch (error) {
+    console.log('Logo not loaded, continuing without it');
+  }
+  
+  // Company information
+  const textX = margin + 35;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BMS DEISEL SYSTEMS INDIA PVT LTD', textX, y + 5);
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura,', textX, y + 11);
+  doc.text('Bengaluru, Karnataka 560065', textX, y + 16);
+  doc.text('Land: 080 2973 3225, Ph: 9900118148, 9844088148', textX, y + 21);
+  doc.text('Email: bmsdieselsystems@gmail.com', textX, y + 26);
+  
+  y += 35;
+  
+  // Separator line
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 8;
+  
+  // Document title
+  doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.text('Daily Transaction Report', pageWidth / 2, y, { align: 'center' });
-  y += 15;
+  y += 10;
   
   // Date info
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('Date:', margin, y);
   doc.setFont('helvetica', 'normal');
   doc.text(date, margin + 15, y);
-  y += 8;
+  y += 6;
   
   doc.setFont('helvetica', 'bold');
   doc.text('Total:', margin, y);
   doc.setFont('helvetica', 'normal');
   doc.text(formatCurrencyForPDF(dailyTotal), margin + 15, y);
-  y += 8;
+  y += 6;
   
   doc.setFont('helvetica', 'bold');
   doc.text('Count:', margin, y);
@@ -428,24 +538,52 @@ export const generateDailyTransactionsPDF = (date, transactions, dailyTotal, for
   doc.text(`${transactions.length} transactions`, margin + 17, y);
   y += 10;
   
-  // Separator line
-  doc.setLineWidth(0.5);
+  // Table header
+  doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 10;
+  y += 5;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Time', margin, y);
+  doc.text('User', margin + 20, y);
+  doc.text('Purpose', margin + 60, y);
+  doc.text('Amount (Rs.)', pageWidth - margin - 35, y);
+  y += 2;
+  
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 5;
   
   // Transactions
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Transactions:', margin, y);
-  y += 8;
-  
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
   
-  transactions.forEach((transaction, index) => {
+  transactions.forEach((transaction) => {
     // Check if we need a new page
-    if (y > 250) {
+    if (y > 270) {
       doc.addPage();
       y = 25;
+      
+      // Repeat table header
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 5;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Time', margin, y);
+      doc.text('User', margin + 20, y);
+      doc.text('Purpose', margin + 60, y);
+      doc.text('Amount (Rs.)', pageWidth - margin - 35, y);
+      y += 2;
+      
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 5;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
     }
     
     const time = new Date(transaction.createdAt).toLocaleTimeString('en-IN', {
@@ -453,32 +591,40 @@ export const generateDailyTransactionsPDF = (date, transactions, dailyTotal, for
       minute: '2-digit'
     });
     
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${index + 1}.`, margin, y);
-    doc.text(time, margin + 8, y);
-    doc.setFont('helvetica', 'normal');
-    y += 6;
+    // Truncate user name if too long
+    let userName = transaction.userName;
+    if (userName.length > 20) {
+      userName = userName.substring(0, 17) + '...';
+    }
     
-    doc.text(`   User: ${transaction.userName}`, margin, y);
-    y += 6;
+    // Truncate purpose if too long
+    let purpose = transaction.purpose;
+    if (purpose.length > 30) {
+      purpose = purpose.substring(0, 27) + '...';
+    }
     
-    doc.text(`   Phone: ${transaction.userPhone}`, margin, y);
-    y += 6;
+    doc.text(time, margin, y);
+    doc.text(userName, margin + 20, y);
+    doc.text(purpose, margin + 60, y);
     
-    doc.text(`   Purpose: ${transaction.purpose}`, margin, y);
-    y += 6;
+    // Amount (right-aligned, show negative in red)
+    const amountText = transaction.amount < 0 
+      ? `-${formatCurrencyForPDF(Math.abs(transaction.amount)).replace('Rs. ', '')}`
+      : formatCurrencyForPDF(transaction.amount).replace('Rs. ', '');
     
-    doc.setFont('helvetica', 'bold');
-    doc.text(`   Amount: ${formatCurrencyForPDF(transaction.amount)}`, margin, y);
-    doc.setFont('helvetica', 'normal');
-    y += 8;
+    if (transaction.amount < 0) {
+      doc.setTextColor(200, 0, 0);
+    }
+    doc.text(amountText, pageWidth - margin - 5, y, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+    
+    y += 6;
   });
   
-  // Footer
-  const footerY = 280;
-  doc.setFontSize(9);
-  doc.setTextColor(128);
-  doc.text('Generated by BMS Cash Entry', pageWidth / 2, footerY, { align: 'center' });
+  // Bottom line
+  y += 2;
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
   
   // Generate filename
   const filename = `Daily_Transactions_${date.replace(/\s+/g, '_')}.pdf`;
@@ -516,7 +662,7 @@ export const formatUserTransactionsForWhatsApp = (user, transactions, monthlyTot
     });
   }
   
-  message += `\n_Generated by BMS Cash Entry_`;
+  message += `\n_BMS DEISEL SYSTEMS INDIA PVT LTD`;
   return message;
 };
 
@@ -542,12 +688,12 @@ export const formatDailyTransactionsForWhatsApp = (date, transactions, dailyTota
     message += `   Amount: ${formatCurrency(transaction.amount)}\n\n`;
   });
   
-  message += `\n_Generated by BMS Cash Entry_`;
+  message += `\n_BMS DEISEL SYSTEMS INDIA PVT LTD`;
   return message;
 };
 
 // Generate Monthly Summary PDF (only daily totals)
-export const generateMonthlySummaryPDF = (monthYear, dailySummaries, monthlyTotal, formatCurrency) => {
+export const generateMonthlySummaryPDF = async (monthYear, dailySummaries, monthlyTotal, formatCurrency) => {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -556,27 +702,62 @@ export const generateMonthlySummaryPDF = (monthYear, dailySummaries, monthlyTota
   
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
-  let y = 25;
+  let y = 15;
   
-  // Title
-  doc.setFontSize(18);
+  // Load and add logo
+  try {
+    const logoImg = new Image();
+    logoImg.src = '/icons/icon-512.png';
+    await new Promise((resolve, reject) => {
+      logoImg.onload = resolve;
+      logoImg.onerror = reject;
+      setTimeout(reject, 2000);
+    });
+    
+    doc.addImage(logoImg, 'PNG', margin, y, 30, 30);
+  } catch (error) {
+    console.log('Logo not loaded, continuing without it');
+  }
+  
+  // Company information
+  const textX = margin + 35;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BMS DEISEL SYSTEMS INDIA PVT LTD', textX, y + 5);
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura,', textX, y + 11);
+  doc.text('Bengaluru, Karnataka 560065', textX, y + 16);
+  doc.text('Land: 080 2973 3225, Ph: 9900118148, 9844088148', textX, y + 21);
+  doc.text('Email: bmsdieselsystems@gmail.com', textX, y + 26);
+  
+  y += 35;
+  
+  // Separator line
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 8;
+  
+  // Document title
+  doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.text('Monthly Transaction Summary', pageWidth / 2, y, { align: 'center' });
-  y += 15;
+  y += 10;
   
   // Month info
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('Period:', margin, y);
   doc.setFont('helvetica', 'normal');
   doc.text(monthYear, margin + 20, y);
-  y += 8;
+  y += 6;
   
   doc.setFont('helvetica', 'bold');
   doc.text('Monthly Total:', margin, y);
   doc.setFont('helvetica', 'normal');
   doc.text(formatCurrencyForPDF(monthlyTotal), margin + 35, y);
-  y += 8;
+  y += 6;
   
   doc.setFont('helvetica', 'bold');
   doc.text('Days:', margin, y);
@@ -584,42 +765,65 @@ export const generateMonthlySummaryPDF = (monthYear, dailySummaries, monthlyTota
   doc.text(`${dailySummaries.length} days`, margin + 15, y);
   y += 10;
   
-  // Separator line
-  doc.setLineWidth(0.5);
+  // Table header
+  doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 10;
+  y += 5;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Date', margin, y);
+  doc.text('Transactions', margin + 60, y);
+  doc.text('Amount (Rs.)', pageWidth - margin - 35, y);
+  y += 2;
+  
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 5;
   
   // Daily Summaries
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Daily Totals:', margin, y);
-  y += 8;
-  
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
   
-  dailySummaries.forEach((day, index) => {
+  dailySummaries.forEach((day) => {
     // Check if we need a new page
-    if (y > 260) {
+    if (y > 270) {
       doc.addPage();
       y = 25;
+      
+      // Repeat table header
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 5;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Date', margin, y);
+      doc.text('Transactions', margin + 60, y);
+      doc.text('Amount (Rs.)', pageWidth - margin - 35, y);
+      y += 2;
+      
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 5;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
     }
     
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${index + 1}.`, margin, y);
-    doc.text(day.date, margin + 8, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`(${day.count} transactions)`, margin + 50, y);
-    doc.setFont('helvetica', 'bold');
-    doc.text(formatCurrencyForPDF(day.total), pageWidth - margin - 30, y);
-    doc.setFont('helvetica', 'normal');
-    y += 7;
+    doc.text(day.date, margin, y);
+    doc.text(`${day.count} transactions`, margin + 60, y);
+    
+    const amountText = formatCurrencyForPDF(day.total).replace('Rs. ', '');
+    doc.text(amountText, pageWidth - margin - 5, y, { align: 'right' });
+    
+    y += 6;
   });
   
-  // Footer
-  const footerY = 280;
-  doc.setFontSize(9);
-  doc.setTextColor(128);
-  doc.text('Generated by BMS Cash Others', pageWidth / 2, footerY, { align: 'center' });
+  // Bottom line
+  y += 2;
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
   
   // Generate filename
   const filename = `Monthly_Summary_${monthYear.replace(/\s+/g, '_')}.pdf`;
@@ -641,6 +845,6 @@ export const formatMonthlySummaryForWhatsApp = (monthYear, dailySummaries, month
     message += `   ${formatCurrency(day.total)} (${day.count} transactions)\n\n`;
   });
   
-  message += `\n_Generated by BMS Cash Others_`;
+  message += `\n_BMS DEISEL SYSTEMS INDIA PVT LTD`;
   return message;
 };
