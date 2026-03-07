@@ -440,6 +440,16 @@ h3 { font-size: var(--font-size-lg); }
   transform: scale(0.98);
 }
 
+.btn-lilac {
+  background: linear-gradient(135deg, #9575CD 0%, #7E57C2 100%);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-lilac:active {
+  transform: scale(0.98);
+}
+
 .btn-icon {
   font-size: 28px;
 }
