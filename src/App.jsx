@@ -80,6 +80,7 @@ function App() {
   const [salaryPayments, setSalaryPayments] = useState([]);
   const [loadingSalaryPayments, setLoadingSalaryPayments] = useState(false);
   const [showMonthlySummary, setShowMonthlySummary] = useState(false);
+  const [expandedSalaryMonths, setExpandedSalaryMonths] = useState({});
 
   useEffect(() => {
     setSavedLists(getSavedLists());
@@ -481,6 +482,13 @@ function App() {
     setExpandedDates(prev => ({
       ...prev,
       [date]: !prev[date]
+    }));
+  };
+
+  const toggleSalaryMonthExpansion = (month) => {
+    setExpandedSalaryMonths(prev => ({
+      ...prev,
+      [month]: !prev[month]
     }));
   };
 
@@ -1888,78 +1896,123 @@ function App() {
               </div>
             ) : (
               <div className="salary-payments-list">
-                {[...salaryPayments].sort((a, b) => 
-                  new Date(b.createdAt) - new Date(a.createdAt)
-                ).map(payment => (
-                  <div key={payment.id} className="salary-payment-card">
-                    <div className="payment-card-header">
-                      <div className="payment-user-info">
-                        <div className="payment-user-icon">👤</div>
-                        <div>
-                          <div className="payment-user-name">{payment.userName}</div>
-                          <div className="payment-user-phone">{payment.userPhone}</div>
+                {(() => {
+                  // Sort payments by date (newest first)
+                  const sortedPayments = [...salaryPayments].sort((a, b) => 
+                    new Date(b.createdAt) - new Date(a.createdAt)
+                  );
+                  
+                  // Group by month
+                  const groupedByMonth = {};
+                  sortedPayments.forEach(payment => {
+                    const month = payment.month;
+                    if (!groupedByMonth[month]) {
+                      groupedByMonth[month] = {
+                        payments: [],
+                        total: 0
+                      };
+                    }
+                    groupedByMonth[month].payments.push(payment);
+                    groupedByMonth[month].total += payment.paidToEmployee;
+                  });
+                  
+                  return Object.entries(groupedByMonth).map(([month, data]) => (
+                    <div key={month} className="history-date-group">
+                      <div 
+                        className="daily-summary"
+                        onClick={() => toggleSalaryMonthExpansion(month)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="daily-summary-date">
+                          <span className="daily-summary-icon">📅</span>
+                          {month}
+                          <span className="daily-summary-count">({data.payments.length})</span>
+                        </div>
+                        <div className="daily-summary-right">
+                          <div className="daily-summary-total">
+                            <span className="daily-summary-label">Total:</span>
+                            <span className="daily-summary-amount">{formatIndianCurrency(data.total)}</span>
+                          </div>
+                          <span className={`expand-icon ${expandedSalaryMonths[month] ? 'expanded' : ''}`}>
+                            ▼
+                          </span>
                         </div>
                       </div>
-                      <div className="payment-header-right">
-                        <div className="payment-month">{payment.month}</div>
-                        {isAdmin() && (
-                          <button 
-                            className="delete-btn-small delete-btn-white"
-                            onClick={() => handleDeleteSalaryPayment(payment.id)}
-                            title="Delete payment record"
-                          >
-                            🗑️
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="payment-card-body">
-                      <div className="payment-detail-row">
-                        <span className="payment-detail-label">💰 Monthly Salary:</span>
-                        <span className="payment-detail-value">{formatIndianCurrency(payment.monthlySalary)}</span>
-                      </div>
-                      <div className="payment-detail-row">
-                        <span className="payment-detail-label">💸 Money Given:</span>
-                        <span className="payment-detail-value subtract">{formatIndianCurrency(payment.moneyGiven)}</span>
-                      </div>
-                      {payment.paidSalary && (
-                        <div className="payment-detail-row">
-                          <span className="payment-detail-label">💳 Paid Salary:</span>
-                          <span className="payment-detail-value positive">{formatIndianCurrency(payment.paidSalary)}</span>
+                      
+                      {expandedSalaryMonths[month] && (
+                        <div className="transactions-container">
+                          {data.payments.map(payment => (
+                            <div key={payment.id} className="salary-payment-card">
+                              <div className="payment-card-header">
+                                <div className="payment-user-info">
+                                  <div className="payment-user-icon">👤</div>
+                                  <div>
+                                    <div className="payment-user-name">{payment.userName}</div>
+                                    <div className="payment-user-phone">{payment.userPhone}</div>
+                                  </div>
+                                </div>
+                                {isAdmin() && (
+                                  <button 
+                                    className="delete-btn-small delete-btn-white"
+                                    onClick={() => handleDeleteSalaryPayment(payment.id)}
+                                    title="Delete payment record"
+                                  >
+                                    🗑️
+                                  </button>
+                                )}
+                              </div>
+                              
+                              <div className="payment-card-body">
+                                <div className="payment-detail-row">
+                                  <span className="payment-detail-label">💰 Monthly Salary:</span>
+                                  <span className="payment-detail-value">{formatIndianCurrency(payment.monthlySalary)}</span>
+                                </div>
+                                <div className="payment-detail-row">
+                                  <span className="payment-detail-label">💸 Money Given:</span>
+                                  <span className="payment-detail-value subtract">{formatIndianCurrency(payment.moneyGiven)}</span>
+                                </div>
+                                {payment.paidSalary && (
+                                  <div className="payment-detail-row">
+                                    <span className="payment-detail-label">💳 Paid Salary:</span>
+                                    <span className="payment-detail-value positive">{formatIndianCurrency(payment.paidSalary)}</span>
+                                  </div>
+                                )}
+                                {payment.deductedAmount && (
+                                  <div className="payment-detail-row">
+                                    <span className="payment-detail-label">📉 Deducted:</span>
+                                    <span className="payment-detail-value subtract">{formatIndianCurrency(payment.deductedAmount)}</span>
+                                  </div>
+                                )}
+                                <div className="payment-detail-row total">
+                                  <span className="payment-detail-label">💵 Paid to Employee:</span>
+                                  <span className="payment-detail-value">{formatIndianCurrency(payment.paidToEmployee)}</span>
+                                </div>
+                                {payment.remainingBalance && payment.remainingBalance > 0 && (
+                                  <div className="payment-detail-row remaining">
+                                    <span className="payment-detail-label">⚠️ Remaining Balance:</span>
+                                    <span className="payment-detail-value">{formatIndianCurrency(payment.remainingBalance)}</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="payment-card-footer">
+                                <span className="payment-date">
+                                  {new Date(payment.createdAt).toLocaleDateString('en-IN', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
-                      {payment.deductedAmount && (
-                        <div className="payment-detail-row">
-                          <span className="payment-detail-label">📉 Deducted:</span>
-                          <span className="payment-detail-value subtract">{formatIndianCurrency(payment.deductedAmount)}</span>
-                        </div>
-                      )}
-                      <div className="payment-detail-row total">
-                        <span className="payment-detail-label">💵 Paid to Employee:</span>
-                        <span className="payment-detail-value">{formatIndianCurrency(payment.paidToEmployee)}</span>
-                      </div>
-                      {payment.remainingBalance && payment.remainingBalance > 0 && (
-                        <div className="payment-detail-row remaining">
-                          <span className="payment-detail-label">⚠️ Remaining Balance:</span>
-                          <span className="payment-detail-value">{formatIndianCurrency(payment.remainingBalance)}</span>
-                        </div>
-                      )}
                     </div>
-                    
-                    <div className="payment-card-footer">
-                      <span className="payment-date">
-                        {new Date(payment.createdAt).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             )}
           </div>
