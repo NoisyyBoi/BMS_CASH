@@ -875,7 +875,7 @@ h3 { font-size: var(--font-size-lg); }
 
 /* Daily Summary */
 .history-date-group {
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-md);
 }
 
 .daily-summary {
