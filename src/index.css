@@ -265,6 +265,12 @@ h3 { font-size: var(--font-size-lg); }
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.home-content {
+  text-align: center;
+  padding: var(--space-md);
+  padding-top: 0;
+}
+
 .user-role-badge {
   display: flex;
   align-items: center;
