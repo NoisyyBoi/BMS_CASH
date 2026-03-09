@@ -2656,13 +2656,34 @@ h3 { font-size: var(--font-size-lg); }
   background: var(--bg);
   border-top: 1px solid var(--border);
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: var(--space-sm);
 }
 
 .payment-date {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
   font-style: italic;
+}
+
+.auto-delete-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(255, 111, 0, 0.1);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+}
+
+.warning-icon {
+  font-size: 14px;
+}
+
+.warning-text {
+  font-size: var(--font-size-sm);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp } from './utils/storage';
-import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase } from './utils/supabaseStorage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 
 import { hashPassword } from './utils/passwordHash';
@@ -137,6 +137,7 @@ function App() {
         loadUsers();
         loadTransactions();
         cleanupOldDeletedTransactions();
+        cleanupOldSalaryPayments();
       }
     }
   }, []);
@@ -160,6 +161,8 @@ function App() {
       setView(VIEWS.HOME);
       loadUsers();
       loadTransactions();
+      cleanupOldDeletedTransactions();
+      cleanupOldSalaryPayments();
       showToast('✓ Login successful');
       return;
     }
@@ -173,6 +176,8 @@ function App() {
       setView(VIEWS.HOME);
       loadUsers();
       loadTransactions();
+      cleanupOldDeletedTransactions();
+      cleanupOldSalaryPayments();
       showToast('✓ Logged in as Viewer');
       return;
     }
@@ -255,6 +260,15 @@ function App() {
       if (!error.message || !error.message.includes('relation')) {
         console.error('Error cleaning up old deleted transactions:', error);
       }
+    }
+  };
+
+  const cleanupOldSalaryPayments = async () => {
+    try {
+      await deleteOldSalaryPaymentsFromSupabase();
+    } catch (error) {
+      // Silently fail if there's an error
+      console.error('Error cleaning up old salary payments:', error);
     }
   };
 
@@ -2195,6 +2209,22 @@ function App() {
                                     <span className="transaction-admin"> • by {payment.createdBy}</span>
                                   )}
                                 </span>
+                                {(() => {
+                                  const createdDate = new Date(payment.createdAt);
+                                  const now = new Date();
+                                  const daysElapsed = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+                                  const daysRemaining = 120 - daysElapsed;
+                                  
+                                  if (daysRemaining <= 30 && daysRemaining > 0) {
+                                    return (
+                                      <div className="auto-delete-warning">
+                                        <span className="warning-icon">⏰</span>
+                                        <span className="warning-text">Auto-deletes in {daysRemaining} days</span>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             </div>
                           ))}

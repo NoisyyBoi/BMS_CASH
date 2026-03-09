@@ -236,6 +236,25 @@ export const deleteOldDeletedTransactionsFromSupabase = async () => {
   }
 };
 
+export const deleteOldSalaryPaymentsFromSupabase = async () => {
+  try {
+    // Calculate date 120 days ago
+    const oneHundredTwentyDaysAgo = new Date();
+    oneHundredTwentyDaysAgo.setDate(oneHundredTwentyDaysAgo.getDate() - 120);
+    
+    const { error } = await supabase
+      .from('salary_payments')
+      .delete()
+      .lt('createdAt', oneHundredTwentyDaysAgo.toISOString());
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting old salary payments:', error);
+    throw error;
+  }
+};
+
 export const permanentlyDeleteTransactionFromSupabase = async (deletedTransactionId) => {
   try {
     const { error } = await supabase
