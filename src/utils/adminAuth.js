@@ -43,7 +43,7 @@ export const sendPasswordResetEmail = async (email, resetToken, username) => {
 // Store OTP in database
 export const storeOTP = async (username, otp) => {
   try {
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
     const { data, error } = await supabase
       .from('admin_otp')
@@ -132,7 +132,7 @@ export const getAdminEmail = async (username) => {
 // Store password reset token
 export const storeResetToken = async (username, token) => {
   try {
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
     const { data, error } = await supabase
       .from('password_reset_tokens')

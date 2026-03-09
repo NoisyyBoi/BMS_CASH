@@ -3,7 +3,6 @@ import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } f
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp } from './utils/storage';
 import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
-import { generateOTP, sendOTPEmail, storeOTP, verifyOTP, getAdminEmail, generateResetToken, sendPasswordResetEmail, storeResetToken, verifyResetToken, updateAdminPassword, markResetTokenUsed } from './utils/adminAuth';
 
 import { hashPassword } from './utils/passwordHash';
 
@@ -11,9 +10,6 @@ import { hashPassword } from './utils/passwordHash';
 const VIEWS = {
   HOME: 'home',
   LOGIN: 'login',
-  OTP_VERIFY: 'otp_verify',
-  FORGOT_PASSWORD: 'forgot_password',
-  RESET_PASSWORD: 'reset_password',
   CREATE_USER: 'create_user',
   GIVE_MONEY: 'give_money',
   USER_TOTAL: 'user_total',
@@ -100,17 +96,6 @@ function App() {
   const [deleteReasonText, setDeleteReasonText] = useState('');
   const [transactionToDelete, setTransactionToDelete] = useState(null);
 
-  // 2FA and Password Reset states
-  const [pendingAdminUsername, setPendingAdminUsername] = useState(null);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpSending, setOtpSending] = useState(false);
-  const [otpVerifying, setOtpVerifying] = useState(false);
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
-  const [resetToken, setResetToken] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
-
   useEffect(() => {
     setSavedLists(getSavedLists());
     
@@ -169,44 +154,17 @@ function App() {
     // Check admin credentials (case-insensitive username)
     const lowerUsername = username.toLowerCase();
     if (ADMIN_CREDENTIALS[lowerUsername] === password) {
-      // Admin login - send OTP for 2FA
-      setOtpSending(true);
-      try {
-        // Get admin email
-        const emailResult = await getAdminEmail(lowerUsername);
-        if (!emailResult.success) {
-          showToast('⚠️ Admin email not configured. Please contact support.');
-          setOtpSending(false);
-          return;
-        }
-
-        // Generate and store OTP
-        const otp = generateOTP();
-        const storeResult = await storeOTP(lowerUsername, otp);
-        if (!storeResult.success) {
-          showToast('⚠️ Error generating OTP. Please try again.');
-          setOtpSending(false);
-          return;
-        }
-
-        // Send OTP email
-        const sendResult = await sendOTPEmail(emailResult.email, otp, lowerUsername);
-        if (!sendResult.success) {
-          showToast('⚠️ Error sending OTP email. Please try again.');
-          setOtpSending(false);
-          return;
-        }
-
-        // Move to OTP verification screen
-        setPendingAdminUsername(lowerUsername);
-        setView(VIEWS.OTP_VERIFY);
-        showToast('✓ OTP sent to your email');
-      } catch (error) {
-        console.error('Error in 2FA flow:', error);
-        showToast('⚠️ Error in login process. Please try again.');
-      } finally {
-        setOtpSending(false);
-      }
+      // Admin login - direct login (2FA disabled)
+      setIsAuthenticated(true);
+      setUserRole(lowerUsername);
+      localStorage.setItem('bms_user_role', lowerUsername);
+      localStorage.removeItem('bms_logged_in_user_id');
+      setView(VIEWS.HOME);
+      loadUsers();
+      loadTransactions();
+      cleanupOldDeletedTransactions();
+      cleanupOldSalaryPayments();
+      showToast('✓ Login successful');
       return;
     }
     
@@ -254,167 +212,6 @@ function App() {
     }
     
     showToast('⚠️ Invalid credentials');
-  };
-
-  const handleVerifyOTP = async () => {
-    if (!otpCode.trim() || otpCode.length !== 6) {
-      showToast('⚠️ Please enter a valid 6-digit OTP');
-      return;
-    }
-
-    setOtpVerifying(true);
-    try {
-      const result = await verifyOTP(pendingAdminUsername, otpCode);
-      if (result.success) {
-        // OTP verified - complete login
-        setIsAuthenticated(true);
-        setUserRole(pendingAdminUsername);
-        localStorage.setItem('bms_user_role', pendingAdminUsername);
-        localStorage.removeItem('bms_logged_in_user_id');
-        setView(VIEWS.HOME);
-        loadUsers();
-        loadTransactions();
-        cleanupOldDeletedTransactions();
-        cleanupOldSalaryPayments();
-        showToast('✓ Login successful');
-        
-        // Reset OTP states
-        setOtpCode('');
-        setPendingAdminUsername(null);
-      } else {
-        showToast('⚠️ ' + (result.error || 'Invalid or expired OTP'));
-      }
-    } catch (error) {
-      console.error('Error verifying OTP:', error);
-      showToast('⚠️ Error verifying OTP. Please try again.');
-    } finally {
-      setOtpVerifying(false);
-    }
-  };
-
-  const handleResendOTP = async () => {
-    if (!pendingAdminUsername) return;
-
-    setOtpSending(true);
-    try {
-      const emailResult = await getAdminEmail(pendingAdminUsername);
-      if (!emailResult.success) {
-        showToast('⚠️ Error getting admin email');
-        setOtpSending(false);
-        return;
-      }
-
-      const otp = generateOTP();
-      await storeOTP(pendingAdminUsername, otp);
-      await sendOTPEmail(emailResult.email, otp, pendingAdminUsername);
-      showToast('✓ New OTP sent to your email');
-    } catch (error) {
-      console.error('Error resending OTP:', error);
-      showToast('⚠️ Error resending OTP');
-    } finally {
-      setOtpSending(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    const username = forgotPasswordEmail.trim().toLowerCase();
-    if (!username) {
-      showToast('⚠️ Please enter your username');
-      return;
-    }
-
-    // Check if username exists in admin credentials
-    if (!ADMIN_CREDENTIALS[username]) {
-      showToast('⚠️ Username not found');
-      return;
-    }
-
-    setPasswordResetLoading(true);
-    try {
-      // Get admin email
-      const emailResult = await getAdminEmail(username);
-      if (!emailResult.success) {
-        showToast('⚠️ Email not configured for this account');
-        setPasswordResetLoading(false);
-        return;
-      }
-
-      // Generate and store reset token
-      const token = generateResetToken();
-      const storeResult = await storeResetToken(username, token);
-      if (!storeResult.success) {
-        showToast('⚠️ Error generating reset link');
-        setPasswordResetLoading(false);
-        return;
-      }
-
-      // Send reset email
-      const sendResult = await sendPasswordResetEmail(emailResult.email, token, username);
-      if (!sendResult.success) {
-        showToast('⚠️ Error sending reset email');
-        setPasswordResetLoading(false);
-        return;
-      }
-
-      showToast('✓ Password reset link sent to your email');
-      setForgotPasswordEmail('');
-      setView(VIEWS.LOGIN);
-    } catch (error) {
-      console.error('Error in password reset:', error);
-      showToast('⚠️ Error sending reset email');
-    } finally {
-      setPasswordResetLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (!newPassword.trim() || !confirmPassword.trim()) {
-      showToast('⚠️ Please fill in all fields');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showToast('⚠️ Passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      showToast('⚠️ Password must be at least 8 characters');
-      return;
-    }
-
-    setPasswordResetLoading(true);
-    try {
-      // Verify reset token
-      const verifyResult = await verifyResetToken(resetToken);
-      if (!verifyResult.success) {
-        showToast('⚠️ Invalid or expired reset link');
-        setPasswordResetLoading(false);
-        return;
-      }
-
-      // Update password
-      const updateResult = await updateAdminPassword(verifyResult.username, newPassword);
-      if (!updateResult.success) {
-        showToast('⚠️ Error updating password');
-        setPasswordResetLoading(false);
-        return;
-      }
-
-      // Mark token as used
-      await markResetTokenUsed(resetToken);
-
-      showToast('✓ Password updated successfully');
-      setNewPassword('');
-      setConfirmPassword('');
-      setResetToken('');
-      setView(VIEWS.LOGIN);
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      showToast('⚠️ Error resetting password');
-    } finally {
-      setPasswordResetLoading(false);
-    }
   };
 
   const handleLogout = () => {
@@ -1470,17 +1267,9 @@ function App() {
                 <button 
                   className="btn btn-success project-continue" 
                   onClick={handleLogin}
-                  disabled={!loginUsername.trim() || !loginPassword.trim() || otpSending}
+                  disabled={!loginUsername.trim() || !loginPassword.trim()}
                 >
-                  {otpSending ? 'Sending OTP...' : 'Login →'}
-                </button>
-
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => setView(VIEWS.FORGOT_PASSWORD)}
-                  style={{ marginTop: '10px' }}
-                >
-                  Forgot Password?
+                  Login →
                 </button>
 
                 <div className="login-info">
@@ -1488,186 +1277,6 @@ function App() {
                     <strong>For Viewers:</strong> Username: Your Name, Password: Your Phone Number
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* OTP Verification Screen */}
-        {view === VIEWS.OTP_VERIFY && (
-          <div className="login-screen">
-            <header className="app-header">
-              <div className="header-content">
-                <img src="/logo.png" alt="BMS Logo" className="header-logo" />
-                <h1 className="header-title">BMS Cash Entry</h1>
-              </div>
-            </header>
-            <div className="login-container">
-              <div className="login-form">
-                <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>
-                  Enter the 6-digit code sent to your email
-                </p>
-
-                <div className="project-section">
-                  <label className="project-label">
-                    <span>OTP Code</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="project-input"
-                    placeholder="Enter 6-digit OTP"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    onKeyPress={(e) => e.key === 'Enter' && handleVerifyOTP()}
-                    maxLength={6}
-                    autoFocus
-                    style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '5px' }}
-                  />
-                </div>
-
-                <button 
-                  className="btn btn-success project-continue" 
-                  onClick={handleVerifyOTP}
-                  disabled={otpCode.length !== 6 || otpVerifying}
-                >
-                  {otpVerifying ? 'Verifying...' : 'Verify OTP'}
-                </button>
-
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={handleResendOTP}
-                  disabled={otpSending}
-                  style={{ marginTop: '10px' }}
-                >
-                  {otpSending ? 'Sending...' : 'Resend OTP'}
-                </button>
-
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => {
-                    setView(VIEWS.LOGIN);
-                    setOtpCode('');
-                    setPendingAdminUsername(null);
-                  }}
-                  style={{ marginTop: '10px' }}
-                >
-                  ← Back to Login
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Forgot Password Screen */}
-        {view === VIEWS.FORGOT_PASSWORD && (
-          <div className="login-screen">
-            <div className="login-container">
-              <div className="login-form">
-                <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>
-                  Enter your username to receive a password reset link
-                </p>
-
-                <div className="project-section">
-                  <label className="project-label">
-                    <span>Username</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="project-input"
-                    placeholder="Enter your username"
-                    value={forgotPasswordEmail}
-                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleForgotPassword()}
-                    autoFocus
-                  />
-                </div>
-
-                <button 
-                  className="btn btn-success project-continue" 
-                  onClick={handleForgotPassword}
-                  disabled={!forgotPasswordEmail.trim() || passwordResetLoading}
-                >
-                  {passwordResetLoading ? 'Sending...' : 'Send Reset Link'}
-                </button>
-
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => {
-                    setView(VIEWS.LOGIN);
-                    setForgotPasswordEmail('');
-                  }}
-                  style={{ marginTop: '10px' }}
-                >
-                  ← Back to Login
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Reset Password Screen */}
-        {view === VIEWS.RESET_PASSWORD && (
-          <div className="login-screen">
-            <header className="app-header">
-              <div className="header-content">
-                <img src="/logo.png" alt="BMS Logo" className="header-logo" />
-                <h1 className="header-title">Reset Password</h1>
-              </div>
-            </header>
-            <div className="login-container">
-              <div className="login-form">
-                <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>
-                  Enter your new password
-                </p>
-
-                <div className="project-section">
-                  <label className="project-label">
-                    <span>New Password</span>
-                  </label>
-                  <input
-                    type="password"
-                    className="project-input"
-                    placeholder="Enter new password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-
-                <div className="project-section">
-                  <label className="project-label">
-                    <span>Confirm Password</span>
-                  </label>
-                  <input
-                    type="password"
-                    className="project-input"
-                    placeholder="Confirm new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleResetPassword()}
-                  />
-                </div>
-
-                <button 
-                  className="btn btn-success project-continue" 
-                  onClick={handleResetPassword}
-                  disabled={!newPassword.trim() || !confirmPassword.trim() || passwordResetLoading}
-                >
-                  {passwordResetLoading ? 'Resetting...' : 'Reset Password'}
-                </button>
-
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => {
-                    setView(VIEWS.LOGIN);
-                    setNewPassword('');
-                    setConfirmPassword('');
-                    setResetToken('');
-                  }}
-                  style={{ marginTop: '10px' }}
-                >
-                  ← Back to Login
-                </button>
               </div>
             </div>
           </div>
