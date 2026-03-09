@@ -1191,7 +1191,7 @@ function App() {
   return (
     <div className="app">
       {/* Header */}
-      {view !== VIEWS.HOME && (
+      {view !== VIEWS.HOME && view !== VIEWS.LOGIN && (
         <header className="header">
           <div className="header-content">
             <button className="back-btn" onClick={goBack} aria-label="Go back">
@@ -1228,8 +1228,9 @@ function App() {
         {view === VIEWS.LOGIN && (
           <div className="login-screen">
             <div className="login-container">
-              <h2 className="login-title">BMS CASH</h2>
-              <p className="login-subtitle">Login to continue</p>
+              <div className="login-logo">
+                <img src="/bmscash.png" alt="BMS CASH" className="login-logo-image" />
+              </div>
               
               <div className="login-form">
                 <div className="project-section">
