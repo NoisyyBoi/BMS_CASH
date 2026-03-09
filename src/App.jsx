@@ -1213,31 +1213,8 @@ function App() {
                   {view === VIEWS.REVIEW && 'Review List'}
                   {view === VIEWS.HISTORY && 'History'}
                 </h1>
-                {view === VIEWS.PROJECT && (
-                  <p className="header-subtitle">ಹೊಸ ಪ್ರಾಜೆಕ್ಟ್</p>
-                )}
-                {view === VIEWS.CREATE_USER && (
-                  <p className="header-subtitle">ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ</p>
-                )}
-                {view === VIEWS.GIVE_MONEY && (
-                  <p className="header-subtitle">ಹಣ ನೀಡಿ</p>
-                )}
-                {view === VIEWS.USER_TOTAL && (
-                  <p className="header-subtitle">ಬಳಕೆದಾರರ ಒಟ್ಟು</p>
-                )}
                 {view === VIEWS.USER_HISTORY && selectedUserForHistory && (
                   <p className="header-subtitle">{selectedUserForHistory.name}</p>
-                )}
-                {view === VIEWS.SALARY_PAYMENTS && (
-                  <p className="header-subtitle">ಸಂಬಳ ಪಾವತಿಗಳು</p>
-                )}
-                {view === VIEWS.DELETED_TRANSACTIONS && (
-                  <p className="header-subtitle">ಅಳಿಸಿದ ವಹಿವಾಟುಗಳು</p>
-                )}
-                {view === VIEWS.ITEMS && (
-                  <p className="header-subtitle">
-                    {categories.find(c => c.id === currentCategory)?.nameKannada}
-                  </p>
                 )}
               </div>
             </div>
