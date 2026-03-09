@@ -111,15 +111,14 @@ h3 { font-size: var(--font-size-lg); }
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  min-height: 60px;
 }
 
 .header-center {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-xs);
   flex: 1;
-  justify-content: center;
 }
 
 .header-logo {
@@ -132,7 +131,8 @@ h3 { font-size: var(--font-size-lg); }
 .header-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
 }
 
 .header h1 {
@@ -166,6 +166,7 @@ h3 { font-size: var(--font-size-lg); }
   cursor: pointer;
   transition: background 0.2s;
   flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .back-btn:active {
