@@ -252,13 +252,17 @@ h3 { font-size: var(--font-size-lg); }
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: var(--space-lg);
+  padding-top: 0;
 }
 
 .home-hero {
   text-align: center;
-  padding: var(--space-xl) var(--space-md);
-  position: relative;
+  padding: var(--space-md) var(--space-md) var(--space-xl);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .user-role-badge {
@@ -377,6 +381,7 @@ h3 { font-size: var(--font-size-lg); }
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  padding: 0 var(--space-md);
 }
 
 /* Buttons */
