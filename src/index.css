@@ -257,7 +257,7 @@ h3 { font-size: var(--font-size-lg); }
 
 .home-hero {
   text-align: center;
-  padding: var(--space-md) var(--space-md) var(--space-xl);
+  padding: var(--space-md) var(--space-md) 0;
   position: sticky;
   top: 0;
   background: var(--bg);
