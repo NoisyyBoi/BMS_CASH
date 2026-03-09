@@ -1197,47 +1197,51 @@ function App() {
             <button className="back-btn" onClick={goBack} aria-label="Go back">
               ←
             </button>
-            <div>
-              <h1>
-                {view === VIEWS.PROJECT && 'New Project'}
-                {view === VIEWS.CREATE_USER && 'Create User'}
-                {view === VIEWS.GIVE_MONEY && 'Give Money'}
-                {view === VIEWS.USER_TOTAL && 'User Total'}
-                {view === VIEWS.USER_HISTORY && 'User History'}
-                {view === VIEWS.SALARY_PAYMENTS && 'Salary Payments'}
-                {view === VIEWS.DELETED_TRANSACTIONS && 'Deleted Transactions'}
-                {view === VIEWS.CATEGORIES && 'Select Category'}
-                {view === VIEWS.ITEMS && categories.find(c => c.id === currentCategory)?.name}
-                {view === VIEWS.REVIEW && 'Review List'}
-                {view === VIEWS.HISTORY && 'History'}
-              </h1>
-              {view === VIEWS.PROJECT && (
-                <p className="header-subtitle">ಹೊಸ ಪ್ರಾಜೆಕ್ಟ್</p>
-              )}
-              {view === VIEWS.CREATE_USER && (
-                <p className="header-subtitle">ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ</p>
-              )}
-              {view === VIEWS.GIVE_MONEY && (
-                <p className="header-subtitle">ಹಣ ನೀಡಿ</p>
-              )}
-              {view === VIEWS.USER_TOTAL && (
-                <p className="header-subtitle">ಬಳಕೆದಾರರ ಒಟ್ಟು</p>
-              )}
-              {view === VIEWS.USER_HISTORY && selectedUserForHistory && (
-                <p className="header-subtitle">{selectedUserForHistory.name}</p>
-              )}
-              {view === VIEWS.SALARY_PAYMENTS && (
-                <p className="header-subtitle">ಸಂಬಳ ಪಾವತಿಗಳು</p>
-              )}
-              {view === VIEWS.DELETED_TRANSACTIONS && (
-                <p className="header-subtitle">ಅಳಿಸಿದ ವಹಿವಾಟುಗಳು</p>
-              )}
-              {view === VIEWS.ITEMS && (
-                <p className="header-subtitle">
-                  {categories.find(c => c.id === currentCategory)?.nameKannada}
-                </p>
-              )}
+            <div className="header-center">
+              <img src="/logo.png" alt="BMS Diesel Systems" className="header-logo" />
+              <div className="header-text">
+                <h1>
+                  {view === VIEWS.PROJECT && 'New Project'}
+                  {view === VIEWS.CREATE_USER && 'Create User'}
+                  {view === VIEWS.GIVE_MONEY && 'Give Money'}
+                  {view === VIEWS.USER_TOTAL && 'User Total'}
+                  {view === VIEWS.USER_HISTORY && 'User History'}
+                  {view === VIEWS.SALARY_PAYMENTS && 'Salary Payments'}
+                  {view === VIEWS.DELETED_TRANSACTIONS && 'Deleted Transactions'}
+                  {view === VIEWS.CATEGORIES && 'Select Category'}
+                  {view === VIEWS.ITEMS && categories.find(c => c.id === currentCategory)?.name}
+                  {view === VIEWS.REVIEW && 'Review List'}
+                  {view === VIEWS.HISTORY && 'History'}
+                </h1>
+                {view === VIEWS.PROJECT && (
+                  <p className="header-subtitle">ಹೊಸ ಪ್ರಾಜೆಕ್ಟ್</p>
+                )}
+                {view === VIEWS.CREATE_USER && (
+                  <p className="header-subtitle">ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ</p>
+                )}
+                {view === VIEWS.GIVE_MONEY && (
+                  <p className="header-subtitle">ಹಣ ನೀಡಿ</p>
+                )}
+                {view === VIEWS.USER_TOTAL && (
+                  <p className="header-subtitle">ಬಳಕೆದಾರರ ಒಟ್ಟು</p>
+                )}
+                {view === VIEWS.USER_HISTORY && selectedUserForHistory && (
+                  <p className="header-subtitle">{selectedUserForHistory.name}</p>
+                )}
+                {view === VIEWS.SALARY_PAYMENTS && (
+                  <p className="header-subtitle">ಸಂಬಳ ಪಾವತಿಗಳು</p>
+                )}
+                {view === VIEWS.DELETED_TRANSACTIONS && (
+                  <p className="header-subtitle">ಅಳಿಸಿದ ವಹಿವಾಟುಗಳು</p>
+                )}
+                {view === VIEWS.ITEMS && (
+                  <p className="header-subtitle">
+                    {categories.find(c => c.id === currentCategory)?.nameKannada}
+                  </p>
+                )}
+              </div>
             </div>
+            <div className="header-spacer"></div>
           </div>
         </header>
       )}
