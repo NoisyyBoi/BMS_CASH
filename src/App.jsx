@@ -576,20 +576,17 @@ function App() {
       return;
     }
     
-    if (!confirm('Are you sure you want to delete this salary payment record?')) {
+    // Find the payment to delete
+    const payment = salaryPayments.find(p => p.id === paymentId);
+    if (!payment) {
+      showToast('⚠️ Payment not found');
       return;
     }
     
-    try {
-      await deleteSalaryPaymentFromSupabase(paymentId);
-      showToast('✓ Salary payment deleted');
-      // Reload payments
-      const payments = await getSalaryPaymentsFromSupabase();
-      setSalaryPayments(payments);
-    } catch (error) {
-      console.error('Error deleting salary payment:', error);
-      showToast('⚠️ Error deleting payment');
-    }
+    // Show delete reason modal
+    setTransactionToDelete({ ...payment, type: 'salary_payment' });
+    setDeleteReasonText('');
+    setShowDeleteReasonModal(true);
   };
 
   const handleDeleteTransaction = async (transactionId) => {
@@ -620,42 +617,72 @@ function App() {
     if (!transactionToDelete) return;
 
     try {
-      // Save to deleted_transactions table
-      const deletedTransaction = {
-        id: Date.now(), // New ID for deleted_transactions table
-        userId: transactionToDelete.userId,
-        userName: transactionToDelete.userName,
-        userPhone: transactionToDelete.userPhone,
-        amount: transactionToDelete.amount,
-        purpose: transactionToDelete.purpose,
-        deletedReason: deleteReasonText.trim(),
-        deletedBy: userRole,
-        originalCreatedAt: transactionToDelete.createdAt,
-        deletedAt: new Date().toISOString(),
-      };
+      // Check if it's a salary payment or regular transaction
+      const isSalaryPayment = transactionToDelete.type === 'salary_payment';
       
-      console.log('Saving deleted transaction:', deletedTransaction);
-      await saveDeletedTransactionToSupabase(deletedTransaction);
-      
-      console.log('Deleting from transactions table:', transactionToDelete.id);
-      // Delete from transactions table
-      await deleteTransactionFromSupabase(transactionToDelete.id);
-      
-      showToast('✓ Transaction deleted');
+      if (isSalaryPayment) {
+        // Handle salary payment deletion
+        const deletedTransaction = {
+          id: Date.now(),
+          userId: transactionToDelete.userId,
+          userName: transactionToDelete.userName,
+          userPhone: transactionToDelete.userPhone,
+          amount: transactionToDelete.paidToEmployee, // Use paidToEmployee as the amount
+          purpose: `Salary Payment - ${transactionToDelete.month}`,
+          deletedReason: deleteReasonText.trim(),
+          deletedBy: userRole,
+          originalCreatedAt: transactionToDelete.createdAt,
+          deletedAt: new Date().toISOString(),
+        };
+        
+        console.log('Saving deleted salary payment:', deletedTransaction);
+        await saveDeletedTransactionToSupabase(deletedTransaction);
+        
+        console.log('Deleting from salary_payments table:', transactionToDelete.id);
+        await deleteSalaryPaymentFromSupabase(transactionToDelete.id);
+        
+        showToast('✓ Salary payment deleted');
+        
+        // Reload salary payments
+        const payments = await getSalaryPaymentsFromSupabase();
+        setSalaryPayments(payments);
+      } else {
+        // Handle regular transaction deletion
+        const deletedTransaction = {
+          id: Date.now(),
+          userId: transactionToDelete.userId,
+          userName: transactionToDelete.userName,
+          userPhone: transactionToDelete.userPhone,
+          amount: transactionToDelete.amount,
+          purpose: transactionToDelete.purpose,
+          deletedReason: deleteReasonText.trim(),
+          deletedBy: userRole,
+          originalCreatedAt: transactionToDelete.createdAt,
+          deletedAt: new Date().toISOString(),
+        };
+        
+        console.log('Saving deleted transaction:', deletedTransaction);
+        await saveDeletedTransactionToSupabase(deletedTransaction);
+        
+        console.log('Deleting from transactions table:', transactionToDelete.id);
+        await deleteTransactionFromSupabase(transactionToDelete.id);
+        
+        showToast('✓ Transaction deleted');
+        
+        // Reload transactions
+        const transactions = await getUserTransactionsFromSupabase(selectedUserForHistory.id);
+        setUserTransactionsData(transactions);
+        const monthlyTotal = getMonthlyTotal(transactions);
+        setUserMonthlyTotal(monthlyTotal);
+        await loadTransactions();
+      }
       
       // Close modal
       setShowDeleteReasonModal(false);
       setTransactionToDelete(null);
       setDeleteReasonText('');
-      
-      // Reload transactions
-      const transactions = await getUserTransactionsFromSupabase(selectedUserForHistory.id);
-      setUserTransactionsData(transactions);
-      const monthlyTotal = getMonthlyTotal(transactions);
-      setUserMonthlyTotal(monthlyTotal);
-      await loadTransactions(); // Reload global transactions too
     } catch (error) {
-      console.error('Error deleting transaction:', error);
+      console.error('Error deleting:', error);
       console.error('Error details:', error.message, error.details, error.hint);
       
       // Show more specific error message
@@ -665,7 +692,7 @@ function App() {
       } else if (error.message) {
         showToast(`⚠️ Error: ${error.message.substring(0, 50)}`);
       } else {
-        showToast('⚠️ Error deleting transaction');
+        showToast('⚠️ Error deleting');
       }
     }
   };
@@ -2943,7 +2970,7 @@ function App() {
         }}>
           <div className="modal delete-reason-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Delete Transaction</h3>
+              <h3>{transactionToDelete?.type === 'salary_payment' ? 'Delete Salary Payment' : 'Delete Transaction'}</h3>
               <button className="modal-close" onClick={() => {
                 setShowDeleteReasonModal(false);
                 setTransactionToDelete(null);
@@ -2956,7 +2983,7 @@ function App() {
                 <div className="info-content">
                   <div className="info-title">Please provide a reason</div>
                   <div className="info-text">
-                    This transaction will be moved to deleted transactions and automatically removed after 30 days.
+                    This {transactionToDelete?.type === 'salary_payment' ? 'salary payment' : 'transaction'} will be moved to deleted transactions and automatically removed after 30 days.
                   </div>
                 </div>
               </div>
@@ -2965,7 +2992,7 @@ function App() {
                 <label className="delete-reason-label">Reason for deletion:</label>
                 <textarea
                   className="delete-reason-textarea"
-                  placeholder="Enter reason (e.g., Duplicate entry, Wrong amount, etc.)"
+                  placeholder="Enter reason (e.g., Duplicate entry, Wrong amount, Incorrect calculation, etc.)"
                   value={deleteReasonText}
                   onChange={(e) => setDeleteReasonText(e.target.value)}
                   rows="4"
@@ -2989,7 +3016,7 @@ function App() {
                   onClick={confirmDeleteTransaction}
                   disabled={!deleteReasonText.trim()}
                 >
-                  Delete Transaction
+                  {transactionToDelete?.type === 'salary_payment' ? 'Delete Payment' : 'Delete Transaction'}
                 </button>
               </div>
             </div>
