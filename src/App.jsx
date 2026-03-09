@@ -4,6 +4,8 @@ import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSha
 import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 
+import { hashPassword } from './utils/passwordHash';
+
 // View constants
 const VIEWS = {
   HOME: 'home',
@@ -21,10 +23,16 @@ const VIEWS = {
   HISTORY: 'history',
 };
 
-// Admin credentials
+// Admin credentials (use strong passwords to avoid security warnings)
 const ADMIN_CREDENTIALS = {
-  admin: 'admin123',
-  secondadmin: 'admin456'
+  kushal: 'Kushal@BMS2024!',
+  admin2: 'Admin2@BMS2024!',
+  admin3: 'Admin3@BMS2024!',
+  admin4: 'Admin4@BMS2024!',
+  admin5: 'Admin5@BMS2024!',
+  admin6: 'Admin6@BMS2024!',
+  admin7: 'Admin7@BMS2024!',
+  admin8: 'Admin8@BMS2024!'
 };
 
 function App() {
@@ -93,13 +101,43 @@ function App() {
     
     // Check for stored session
     const storedRole = localStorage.getItem('bms_user_role');
+    const storedUserId = localStorage.getItem('bms_logged_in_user_id');
+    
     if (storedRole) {
       setIsAuthenticated(true);
       setUserRole(storedRole);
-      setView(VIEWS.HOME);
-      loadUsers();
-      loadTransactions();
-      cleanupOldDeletedTransactions();
+      
+      // If it's a user session, restore their data
+      if (storedRole === 'user' && storedUserId) {
+        const restoreUserSession = async () => {
+          try {
+            const users = await getUsersFromSupabase();
+            const user = users.find(u => u.id.toString() === storedUserId);
+            
+            if (user) {
+              setSelectedUserForHistory(user);
+              const transactions = await getUserTransactionsFromSupabase(user.id);
+              setUserTransactionsData(transactions);
+              const monthlyTotal = getMonthlyTotal(transactions);
+              setUserMonthlyTotal(monthlyTotal);
+              setView(VIEWS.USER_HISTORY);
+            } else {
+              // User not found, logout
+              handleLogout();
+            }
+          } catch (error) {
+            console.error('Error restoring user session:', error);
+            handleLogout();
+          }
+        };
+        restoreUserSession();
+      } else {
+        // Admin or viewer session
+        setView(VIEWS.HOME);
+        loadUsers();
+        loadTransactions();
+        cleanupOldDeletedTransactions();
+      }
     }
   }, []);
 
@@ -108,37 +146,76 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [view]);
 
-  const handleLogin = () => {
-    const username = loginUsername.toLowerCase().trim();
+  const handleLogin = async () => {
+    const username = loginUsername.trim();
     const password = loginPassword.trim();
 
-    // Check admin credentials
-    if (ADMIN_CREDENTIALS[username] === password) {
+    // Check admin credentials (case-insensitive username)
+    const lowerUsername = username.toLowerCase();
+    if (ADMIN_CREDENTIALS[lowerUsername] === password) {
       setIsAuthenticated(true);
-      setUserRole(username);
-      localStorage.setItem('bms_user_role', username);
+      setUserRole(lowerUsername);
+      localStorage.setItem('bms_user_role', lowerUsername);
+      localStorage.removeItem('bms_logged_in_user_id');
       setView(VIEWS.HOME);
       loadUsers();
       loadTransactions();
       showToast('✓ Login successful');
-    } else if (username === 'viewer' || password === 'viewer') {
-      // Anyone can login as viewer
+      return;
+    }
+    
+    // Check viewer credentials
+    if (lowerUsername === 'viewer' && password === 'viewer') {
       setIsAuthenticated(true);
       setUserRole('viewer');
       localStorage.setItem('bms_user_role', 'viewer');
+      localStorage.removeItem('bms_logged_in_user_id');
       setView(VIEWS.HOME);
       loadUsers();
       loadTransactions();
       showToast('✓ Logged in as Viewer');
-    } else {
-      showToast('⚠️ Invalid credentials');
+      return;
     }
+    
+    // Check if it's a user login (name + phone number)
+    try {
+      const users = await getUsersFromSupabase();
+      const matchedUser = users.find(user => 
+        user.name.toLowerCase() === lowerUsername && user.phone === password
+      );
+      
+      if (matchedUser) {
+        setIsAuthenticated(true);
+        setUserRole('user');
+        setSelectedUserForHistory(matchedUser);
+        localStorage.setItem('bms_user_role', 'user');
+        localStorage.setItem('bms_logged_in_user_id', matchedUser.id.toString());
+        
+        // Load user's transactions
+        const transactions = await getUserTransactionsFromSupabase(matchedUser.id);
+        setUserTransactionsData(transactions);
+        const monthlyTotal = getMonthlyTotal(transactions);
+        setUserMonthlyTotal(monthlyTotal);
+        
+        setView(VIEWS.USER_HISTORY);
+        showToast(`✓ Welcome ${matchedUser.name}`);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking user credentials:', error);
+    }
+    
+    showToast('⚠️ Invalid credentials');
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setUserRole(null);
+    setSelectedUserForHistory(null);
+    setUserTransactionsData([]);
+    setUserMonthlyTotal(0);
     localStorage.removeItem('bms_user_role');
+    localStorage.removeItem('bms_logged_in_user_id');
     setView(VIEWS.LOGIN);
     setLoginUsername('');
     setLoginPassword('');
@@ -146,7 +223,8 @@ function App() {
   };
 
   const isAdmin = () => {
-    return userRole === 'admin' || userRole === 'secondadmin';
+    // Check if userRole exists in ADMIN_CREDENTIALS (any admin account)
+    return userRole && ADMIN_CREDENTIALS.hasOwnProperty(userRole);
   };
 
   const loadUsers = async () => {
@@ -340,6 +418,7 @@ function App() {
       userPhone: selectedUser.phone,
       amount: parseFloat(moneyAmount),
       purpose: moneyPurpose === 'others' ? customPurpose.trim() : moneyPurpose,
+      createdBy: userRole, // Track which admin created this
       createdAt: new Date().toISOString(),
     };
 
@@ -409,6 +488,7 @@ function App() {
       paidToEmployee: paidToEmployee,
       remainingBalance: remainingBalance > 0 ? remainingBalance : null,
       month: monthName,
+      createdBy: userRole, // Track which admin created this
       createdAt: new Date().toISOString(),
     };
 
@@ -435,6 +515,7 @@ function App() {
             : isNegative 
               ? `Balance Carried Forward - Advance (${monthName})`
               : `Balance Carried Forward - Credit (${monthName})`,
+          createdBy: userRole, // Track which admin created this
           createdAt: new Date().toISOString(),
         };
         await saveTransactionToSupabase(balanceTransaction);
@@ -879,7 +960,12 @@ function App() {
     } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL || view === VIEWS.SALARY_PAYMENTS || view === VIEWS.DELETED_TRANSACTIONS) {
       setView(VIEWS.HOME);
     } else if (view === VIEWS.USER_HISTORY) {
-      setView(VIEWS.USER_TOTAL);
+      // If logged in as user, logout instead of going back
+      if (userRole === 'user') {
+        handleLogout();
+      } else {
+        setView(VIEWS.USER_TOTAL);
+      }
     } else if (view === VIEWS.REVIEW) {
       setView(VIEWS.CATEGORIES);
     }
@@ -1167,10 +1253,7 @@ function App() {
 
                 <div className="login-info">
                   <p className="login-info-text">
-                    <strong>For Admins:</strong> Use your admin credentials
-                  </p>
-                  <p className="login-info-text">
-                    <strong>For Viewing:</strong> Username: viewer, Password: viewer
+                    <strong>For Viewers:</strong> Username: Your Name, Password: Your Phone Number
                   </p>
                 </div>
               </div>
@@ -1612,6 +1695,9 @@ function App() {
                                 hour: '2-digit',
                                 minute: '2-digit'
                               })}
+                              {transaction.createdBy && (
+                                <span className="transaction-admin"> • by {transaction.createdBy}</span>
+                              )}
                             </div>
                           </div>
                           <div className="transaction-amount-container">
@@ -2105,6 +2191,9 @@ function App() {
                                     hour: '2-digit',
                                     minute: '2-digit'
                                   })}
+                                  {payment.createdBy && (
+                                    <span className="transaction-admin"> • by {payment.createdBy}</span>
+                                  )}
                                 </span>
                               </div>
                             </div>
@@ -2682,6 +2771,9 @@ function App() {
                                     hour: '2-digit',
                                     minute: '2-digit'
                                   })}
+                                  {transaction.createdBy && (
+                                    <span className="transaction-admin"> • by {transaction.createdBy}</span>
+                                  )}
                                 </div>
                               </div>
                             </div>

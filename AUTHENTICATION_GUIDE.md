@@ -1,34 +1,89 @@
 # Authentication & Access Control Guide
 
 ## Overview
-BMS Cash Entry now has role-based access control with three user types:
-- **Admin**: Full access to all features
-- **Second Admin**: Full access to all features
-- **Viewer**: Read-only access (can view but not modify)
+BMS Cash Entry has role-based access control with three user types:
+- **Admin**: Full access to all features (8 admin accounts available)
+- **User**: Can view only their own transactions
+- **Viewer**: Read-only access to all data
 
 ## User Roles
 
-### Admin
+### Admin Accounts (8 Available)
+
+#### Admin 1
 - **Username**: `admin`
 - **Password**: `admin123`
-- **Permissions**:
-  - ✓ Create users
-  - ✓ Add transactions (Give Money)
-  - ✓ View user totals
-  - ✓ View history
-  - ✓ Download PDFs
-  - ✓ Share via WhatsApp
 
-### Second Admin
+#### Admin 2
 - **Username**: `secondadmin`
 - **Password**: `admin456`
-- **Permissions**:
-  - ✓ Create users
-  - ✓ Add transactions (Give Money)
-  - ✓ View user totals
-  - ✓ View history
-  - ✓ Download PDFs
-  - ✓ Share via WhatsApp
+
+#### Admin 3
+- **Username**: `admin1`
+- **Password**: `admin111`
+
+#### Admin 4
+- **Username**: `admin2`
+- **Password**: `admin222`
+
+#### Admin 5
+- **Username**: `admin3`
+- **Password**: `admin333`
+
+#### Admin 6
+- **Username**: `admin4`
+- **Password**: `admin444`
+
+#### Admin 7
+- **Username**: `admin5`
+- **Password**: `admin555`
+
+#### Admin 8
+- **Username**: `admin6`
+- **Password**: `admin666`
+
+**Admin Permissions**:
+- ✓ Create users
+- ✓ Add transactions (Give Money)
+- ✓ Delete transactions (with reason)
+- ✓ View deleted transactions
+- ✓ Save salary payments
+- ✓ Delete salary payments
+- ✓ View ALL user totals
+- ✓ View ALL history
+- ✓ Download PDFs
+- ✓ Share via WhatsApp
+
+### User Accounts (Individual Users)
+
+**How to Login as a User:**
+- **Username**: Your full name (as registered in the system)
+- **Password**: Your phone number (as registered in the system)
+
+**Example:**
+- If your name is "John Doe" and phone is "9876543210"
+- Username: `john doe` (case-insensitive)
+- Password: `9876543210`
+
+**User Permissions**:
+- ✗ Cannot create users
+- ✗ Cannot add transactions
+- ✗ Cannot delete anything
+- ✗ Cannot save salary payments
+- ✓ View ONLY their own transactions
+- ✓ View their own monthly total
+- ✓ Download their own transaction PDF
+- ✓ Share their own transactions via WhatsApp
+- ✗ Cannot view other users' data
+- ✗ Cannot view global history
+
+**What Users See:**
+- Directly taken to their transaction history page
+- Can see their name, phone, and monthly total
+- Can see all their transactions with dates and purposes
+- Can download PDF of their transactions
+- Can share their transactions via WhatsApp
+- Back button logs them out (no access to home screen)
 
 ### Viewer (Everyone)
 - **Username**: `viewer`
@@ -36,8 +91,10 @@ BMS Cash Entry now has role-based access control with three user types:
 - **Permissions**:
   - ✗ Cannot create users
   - ✗ Cannot add transactions
-  - ✓ View user totals
-  - ✓ View history
+  - ✗ Cannot delete anything
+  - ✗ Cannot save salary payments
+  - ✓ View ALL user totals
+  - ✓ View ALL history
   - ✓ Download PDFs
   - ✓ Share via WhatsApp
 
@@ -96,7 +153,13 @@ To change admin passwords, edit `src/App.jsx`:
 ```javascript
 const ADMIN_CREDENTIALS = {
   admin: 'your-new-password',
-  secondadmin: 'your-new-password'
+  secondadmin: 'your-new-password',
+  admin1: 'your-new-password',
+  admin2: 'your-new-password',
+  admin3: 'your-new-password',
+  admin4: 'your-new-password',
+  admin5: 'your-new-password',
+  admin6: 'your-new-password'
 };
 ```
 
@@ -129,16 +192,34 @@ When viewers try to access restricted features:
 ## Testing
 
 ### Test Admin Access
-1. Login with: `admin` / `admin123`
+1. Login with any admin account (e.g., `admin` / `admin123`)
 2. Verify all buttons are enabled
 3. Try creating a user
 4. Try adding a transaction
+5. Try deleting a transaction
 
-### Test Second Admin Access
-1. Login with: `secondadmin` / `admin456`
-2. Verify all buttons are enabled
-3. Try creating a user
-4. Try adding a transaction
+**Available Admin Accounts for Testing:**
+- admin / admin123
+- secondadmin / admin456
+- admin1 / admin111
+- admin2 / admin222
+- admin3 / admin333
+- admin4 / admin444
+- admin5 / admin555
+- admin6 / admin666
+
+### Test User Access
+1. First, create a test user as admin:
+   - Name: "Test User"
+   - Phone: "1234567890"
+2. Logout from admin
+3. Login with:
+   - Username: `test user`
+   - Password: `1234567890`
+4. Verify you see only your own transactions
+5. Verify you can download PDF and share
+6. Verify back button logs you out
+7. Verify you cannot access home screen or other users' data
 
 ### Test Viewer Access
 1. Login with: `viewer` / `viewer`

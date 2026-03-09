@@ -916,6 +916,13 @@ h3 { font-size: var(--font-size-lg); }
   color: var(--text-muted);
 }
 
+.transaction-admin {
+  font-size: var(--font-size-sm);
+  color: var(--accent);
+  font-weight: 600;
+  opacity: 0.9;
+}
+
 /* Daily Summary */
 .history-date-group {
   margin-bottom: var(--space-sm);

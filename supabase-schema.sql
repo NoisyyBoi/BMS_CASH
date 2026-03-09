@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   "userPhone" TEXT NOT NULL,
   amount NUMERIC NOT NULL,
   purpose TEXT NOT NULL,
+  "createdBy" TEXT,
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS salary_payments (
   "paidToEmployee" NUMERIC NOT NULL,
   "remainingBalance" NUMERIC,
   month TEXT NOT NULL,
+  "createdBy" TEXT,
   "createdAt" TIMESTAMPTZ DEFAULT NOW()
 );
 
