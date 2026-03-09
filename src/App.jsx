@@ -1228,10 +1228,7 @@ function App() {
         {view === VIEWS.LOGIN && (
           <div className="login-screen">
             <div className="login-container">
-              <div className="login-logo">
-                <img src="/logo.png" alt="BMS Diesel Systems" className="company-logo" />
-              </div>
-              <h2 className="login-title">BMS Cash Entry</h2>
+              <h2 className="login-title">BMS CASH</h2>
               <p className="login-subtitle">Login to continue</p>
               
               <div className="login-form">
