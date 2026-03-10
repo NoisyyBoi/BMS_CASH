@@ -269,3 +269,126 @@ export const permanentlyDeleteTransactionFromSupabase = async (deletedTransactio
     throw error;
   }
 };
+// ===== USER CLEANUP MANAGEMENT =====
+
+export const cleanupInactiveUsersFromSupabase = async (inactiveDays = 120, dryRun = false) => {
+  try {
+    // Call the PostgreSQL function to cleanup inactive users
+    const { data, error } = await supabase
+      .rpc('auto_cleanup_inactive_users', {
+        inactive_days: inactiveDays,
+        dry_run: dryRun
+      });
+    
+    if (error) throw error;
+    return {
+      success: true,
+      cleanedUsers: data || [],
+      count: data ? data.length : 0
+    };
+  } catch (error) {
+    console.error('Error cleaning up inactive users:', error);
+    
+    // Fallback to manual cleanup if function doesn't exist
+    try {
+      return await manualCleanupInactiveUsers(inactiveDays, dryRun);
+    } catch (fallbackError) {
+      console.error('Fallback cleanup also failed:', fallbackError);
+      throw error;
+    }
+  }
+};
+
+// Fallback manual cleanup function
+const manualCleanupInactiveUsers = async (inactiveDays = 120, dryRun = false) => {
+  try {
+    // Get all users with their last activity
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('*');
+    
+    if (usersError) throw usersError;
+    
+    const inactiveUsers = [];
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - inactiveDays);
+    
+    for (const user of users) {
+      // Get user's latest transaction
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('createdAt')
+        .eq('userId', user.id)
+        .order('createdAt', { ascending: false })
+        .limit(1);
+      
+      // Get user's latest salary payment
+      const { data: salaryPayments } = await supabase
+        .from('salary_payments')
+        .select('createdAt')
+        .eq('userId', user.id)
+        .order('createdAt', { ascending: false })
+        .limit(1);
+      
+      // Determine last activity date
+      const lastTransaction = transactions && transactions.length > 0 ? new Date(transactions[0].createdAt) : null;
+      const lastSalaryPayment = salaryPayments && salaryPayments.length > 0 ? new Date(salaryPayments[0].createdAt) : null;
+      const userCreatedAt = new Date(user.createdAt);
+      
+      const lastActivity = [lastTransaction, lastSalaryPayment, userCreatedAt]
+        .filter(date => date !== null)
+        .reduce((latest, current) => current > latest ? current : latest);
+      
+      // Check if user is inactive
+      if (lastActivity < cutoffDate) {
+        const daysInactive = Math.floor((new Date() - lastActivity) / (1000 * 60 * 60 * 24));
+        inactiveUsers.push({
+          action: dryRun ? 'WOULD DELETE' : 'DELETED',
+          user_id: user.id,
+          user_name: user.name,
+          user_phone: user.phone,
+          last_activity_date: lastActivity.toISOString(),
+          days_inactive: daysInactive,
+          cleanup_date: new Date().toISOString()
+        });
+      }
+    }
+    
+    // Actually delete users if not dry run
+    if (!dryRun && inactiveUsers.length > 0) {
+      const userIdsToDelete = inactiveUsers.map(u => u.user_id);
+      
+      const { error: deleteError } = await supabase
+        .from('users')
+        .delete()
+        .in('id', userIdsToDelete);
+      
+      if (deleteError) throw deleteError;
+    }
+    
+    return {
+      success: true,
+      cleanedUsers: inactiveUsers,
+      count: inactiveUsers.length
+    };
+  } catch (error) {
+    console.error('Error in manual cleanup:', error);
+    throw error;
+  }
+};
+
+export const getCleanupLogFromSupabase = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('user_cleanup_log')
+      .select('*')
+      .order('cleanup_date', { ascending: false })
+      .limit(50);
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching cleanup log:', error);
+    return [];
+  }
+};

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp } from './utils/storage';
-import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase } from './utils/supabaseStorage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase, cleanupInactiveUsersFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 import { supabase } from './supabaseClient';
 
@@ -170,6 +170,7 @@ function App() {
         cleanupOldDeletedTransactions();
         cleanupOldSalaryPayments();
         cleanupExpiredOTPsOnLoad();
+        cleanupInactiveUsersOnLoad();
       }
     }
   }, []);
@@ -240,6 +241,7 @@ function App() {
       cleanupOldDeletedTransactions();
       cleanupOldSalaryPayments();
       cleanupExpiredOTPsOnLoad();
+      cleanupInactiveUsersOnLoad();
       showToast('✓ Logged in as Viewer');
       return;
     }
@@ -378,6 +380,7 @@ function App() {
         cleanupOldDeletedTransactions();
         cleanupOldSalaryPayments();
         cleanupExpiredOTPsOnLoad();
+        cleanupInactiveUsersOnLoad();
         showToast('✓ Login successful');
         
         // Reset OTP states
@@ -637,6 +640,25 @@ function App() {
     } catch (error) {
       // Silently fail if there's an error
       console.error('Error cleaning up expired OTPs:', error);
+    }
+  };
+
+  const cleanupInactiveUsersOnLoad = async () => {
+    try {
+      // Only run cleanup once per day to avoid excessive database calls
+      const lastCleanup = localStorage.getItem('last_user_cleanup');
+      const today = new Date().toDateString();
+      
+      if (lastCleanup !== today) {
+        const result = await cleanupInactiveUsersFromSupabase(120, false);
+        if (result.success && result.count > 0) {
+          console.log(`Cleaned up ${result.count} inactive users`);
+        }
+        localStorage.setItem('last_user_cleanup', today);
+      }
+    } catch (error) {
+      // Silently fail if there's an error
+      console.error('Error cleaning up inactive users:', error);
     }
   };
 
