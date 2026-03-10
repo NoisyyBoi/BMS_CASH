@@ -6,10 +6,12 @@ import { formatIndianCurrency } from './utils/formatCurrency';
 
 import { hashPassword } from './utils/passwordHash';
 import { 
-  sendOTPEmail, 
+  generateOTP,
+  storeOTP,
   verifyOTP, 
   updateAdminPassword, 
-  getAdminEmail
+  getAdminEmail,
+  sendOTPEmail
 } from './utils/adminAuth';
 
 // View constants
@@ -108,7 +110,6 @@ function App() {
 
   // OTP and Password Reset states
   const [pendingAdminUsername, setPendingAdminUsername] = useState(null);
-  const [pendingAdminEmail, setPendingAdminEmail] = useState(null);
   const [otpCode, setOtpCode] = useState('');
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
@@ -186,8 +187,17 @@ function App() {
           return;
         }
 
-        // Generate and send OTP using Supabase built-in auth
-        const sendResult = await sendOTPEmail(emailResult.email, lowerUsername);
+        // Generate and store OTP
+        const otp = generateOTP();
+        const storeResult = await storeOTP(lowerUsername, otp);
+        if (!storeResult.success) {
+          showToast('⚠️ Error generating OTP. Please try again.');
+          setOtpSending(false);
+          return;
+        }
+
+        // Send OTP email
+        const sendResult = await sendOTPEmail(emailResult.email, otp, lowerUsername);
         if (!sendResult.success) {
           showToast('⚠️ Error sending OTP email. Please try again.');
           setOtpSending(false);
@@ -196,7 +206,6 @@ function App() {
 
         // Move to OTP verification screen
         setPendingAdminUsername(lowerUsername);
-        setPendingAdminEmail(emailResult.email);
         setView(VIEWS.OTP_VERIFY);
         showToast('✓ OTP sent to your email');
       } catch (error) {
@@ -262,7 +271,7 @@ function App() {
 
     setOtpVerifying(true);
     try {
-      const result = await verifyOTP(pendingAdminEmail, otpCode);
+      const result = await verifyOTP(pendingAdminUsername, otpCode);
       if (result.success) {
         // OTP verified - complete login
         setIsAuthenticated(true);
@@ -279,7 +288,6 @@ function App() {
         // Reset OTP states
         setOtpCode('');
         setPendingAdminUsername(null);
-        setPendingAdminEmail(null);
       } else {
         showToast('⚠️ ' + (result.error || 'Invalid or expired OTP'));
       }
@@ -292,16 +300,21 @@ function App() {
   };
 
   const handleResendOTP = async () => {
-    if (!pendingAdminEmail) return;
+    if (!pendingAdminUsername) return;
 
     setOtpSending(true);
     try {
-      const sendResult = await sendOTPEmail(pendingAdminEmail, pendingAdminUsername);
-      if (sendResult.success) {
-        showToast('✓ New OTP sent to your email');
-      } else {
-        showToast('⚠️ Error resending OTP');
+      const emailResult = await getAdminEmail(pendingAdminUsername);
+      if (!emailResult.success) {
+        showToast('⚠️ Error getting admin email');
+        setOtpSending(false);
+        return;
       }
+
+      const otp = generateOTP();
+      await storeOTP(pendingAdminUsername, otp);
+      await sendOTPEmail(emailResult.email, otp, pendingAdminUsername);
+      showToast('✓ New OTP sent to your email');
     } catch (error) {
       console.error('Error resending OTP:', error);
       showToast('⚠️ Error resending OTP');
@@ -333,8 +346,17 @@ function App() {
         return;
       }
 
-      // Send OTP email for password reset using Supabase built-in auth
-      const sendResult = await sendOTPEmail(emailResult.email, username, true);
+      // Generate and store OTP for password reset
+      const otp = generateOTP();
+      const storeResult = await storeOTP(username, otp);
+      if (!storeResult.success) {
+        showToast('⚠️ Error generating OTP');
+        setPasswordResetLoading(false);
+        return;
+      }
+
+      // Send OTP email for password reset
+      const sendResult = await sendOTPEmail(emailResult.email, otp, username, true);
       if (!sendResult.success) {
         showToast('⚠️ Error sending OTP email');
         setPasswordResetLoading(false);
@@ -343,7 +365,6 @@ function App() {
 
       // Move to OTP verification for password reset
       setPendingAdminUsername(username);
-      setPendingAdminEmail(emailResult.email);
       setForgotPasswordEmail('');
       setView(VIEWS.RESET_PASSWORD);
       showToast('✓ Password reset OTP sent to your email');
@@ -378,8 +399,8 @@ function App() {
 
     setPasswordResetLoading(true);
     try {
-      // Verify OTP using Supabase built-in auth
-      const verifyResult = await verifyOTP(pendingAdminEmail, otpCode);
+      // Verify OTP
+      const verifyResult = await verifyOTP(pendingAdminUsername, otpCode);
       if (!verifyResult.success) {
         showToast('⚠️ ' + (verifyResult.error || 'Invalid or expired OTP'));
         setPasswordResetLoading(false);
@@ -401,7 +422,6 @@ function App() {
       setConfirmPassword('');
       setOtpCode('');
       setPendingAdminUsername(null);
-      setPendingAdminEmail(null);
       setView(VIEWS.LOGIN);
     } catch (error) {
       console.error('Error resetting password:', error);
@@ -412,16 +432,21 @@ function App() {
   };
 
   const handleResendResetOTP = async () => {
-    if (!pendingAdminEmail) return;
+    if (!pendingAdminUsername) return;
 
     setOtpSending(true);
     try {
-      const sendResult = await sendOTPEmail(pendingAdminEmail, pendingAdminUsername, true);
-      if (sendResult.success) {
-        showToast('✓ New password reset OTP sent to your email');
-      } else {
-        showToast('⚠️ Error resending OTP');
+      const emailResult = await getAdminEmail(pendingAdminUsername);
+      if (!emailResult.success) {
+        showToast('⚠️ Error getting admin email');
+        setOtpSending(false);
+        return;
       }
+
+      const otp = generateOTP();
+      await storeOTP(pendingAdminUsername, otp);
+      await sendOTPEmail(emailResult.email, otp, pendingAdminUsername, true);
+      showToast('✓ New password reset OTP sent to your email');
     } catch (error) {
       console.error('Error resending OTP:', error);
       showToast('⚠️ Error resending OTP');

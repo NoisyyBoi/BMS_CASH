@@ -36,16 +36,17 @@ echo "🔗 Linking to project..."
 supabase link --project-ref prjezxbbkqoieockoymh
 
 echo ""
-echo "🔑 Setting up secrets..."
+echo "🔑 Setting up Gmail SMTP credentials..."
 echo ""
-echo "Please enter your Resend API key (starts with re_):"
-read -r RESEND_KEY
-supabase secrets set RESEND_API_KEY="$RESEND_KEY"
+echo "Please enter your Gmail email:"
+read -r GMAIL_EMAIL
+supabase secrets set GMAIL_EMAIL="$GMAIL_EMAIL"
 
 echo ""
-echo "Please enter your app URL (e.g., https://your-app.netlify.app):"
-read -r APP_URL
-supabase secrets set APP_URL="$APP_URL"
+echo "Please enter your Gmail App Password (16 characters, no spaces):"
+echo "Get this from: https://myaccount.google.com/apppasswords"
+read -r GMAIL_PASSWORD
+supabase secrets set GMAIL_APP_PASSWORD="$GMAIL_PASSWORD"
 
 echo ""
 echo "📤 Deploying Edge Functions..."
@@ -55,20 +56,20 @@ echo "Deploying send-otp-email..."
 supabase functions deploy send-otp-email
 
 echo ""
-echo "Deploying send-reset-email..."
-supabase functions deploy send-reset-email
-
-echo ""
 echo "✅ Deployment complete!"
 echo ""
 echo "📋 Deployed functions:"
 supabase functions list
 
 echo ""
-echo "🎉 All done! Your email functions are now live."
+echo "🎉 All done! Your Gmail SMTP OTP system is now live."
 echo ""
 echo "Next steps:"
 echo "1. Update admin emails in Supabase (run supabase-admin-auth-setup.sql)"
 echo "2. Test the login with 2FA"
 echo "3. Test password reset"
+echo ""
+echo "📧 Gmail Setup:"
+echo "   Email: $GMAIL_EMAIL"
+echo "   App Password: [HIDDEN]"
 echo ""
