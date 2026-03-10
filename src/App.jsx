@@ -172,6 +172,34 @@ function App() {
     }
   }, []);
 
+  // Browser back button handler
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (event.state && event.state.view) {
+        setView(event.state.view);
+      } else {
+        // If no state, go to appropriate default view
+        if (isAuthenticated) {
+          setView(VIEWS.HOME);
+        } else {
+          setView(VIEWS.LOGIN);
+        }
+      }
+    };
+
+    // Listen for browser back/forward button
+    window.addEventListener('popstate', handlePopState);
+
+    // Push initial state
+    if (window.history.state === null) {
+      window.history.replaceState({ view: view }, '', window.location.href);
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isAuthenticated, view]);
+
   // Scroll to top whenever view changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -190,7 +218,7 @@ function App() {
       setUserRole('viewer');
       localStorage.setItem('bms_user_role', 'viewer');
       localStorage.removeItem('bms_logged_in_user_id');
-      setView(VIEWS.HOME);
+      navigateToView(VIEWS.HOME);
       loadUsers();
       loadTransactions();
       cleanupOldDeletedTransactions();
@@ -220,7 +248,7 @@ function App() {
         const monthlyTotal = getMonthlyTotal(transactions);
         setUserMonthlyTotal(monthlyTotal);
         
-        setView(VIEWS.USER_HISTORY);
+        navigateToView(VIEWS.USER_HISTORY);
         showToast(`✓ Welcome ${matchedUser.name}`);
         return;
       }
@@ -293,7 +321,7 @@ function App() {
 
         // Move to OTP verification screen
         setPendingAdminUsername(lowerUsername);
-        setView(VIEWS.OTP_VERIFY);
+        navigateToView(VIEWS.OTP_VERIFY);
         showToast('✓ OTP sent to your email');
       } catch (error) {
         console.error('Error in 2FA flow:', error);
@@ -328,7 +356,7 @@ function App() {
         setUserRole(pendingAdminUsername);
         localStorage.setItem('bms_user_role', pendingAdminUsername);
         localStorage.removeItem('bms_logged_in_user_id');
-        setView(VIEWS.HOME);
+        navigateToView(VIEWS.HOME);
         loadUsers();
         loadTransactions();
         cleanupOldDeletedTransactions();
@@ -438,7 +466,7 @@ function App() {
       // Move to OTP verification for password reset
       setPendingAdminUsername(username);
       setForgotPasswordEmail('');
-      setView(VIEWS.RESET_PASSWORD);
+      navigateToView(VIEWS.RESET_PASSWORD);
       showToast('✓ Password reset OTP sent to your email');
     } catch (error) {
       console.error('Error in password reset:', error);
@@ -494,7 +522,7 @@ function App() {
       setConfirmPassword('');
       setOtpCode('');
       setPendingAdminUsername(null);
-      setView(VIEWS.LOGIN);
+      navigateToView(VIEWS.LOGIN);
     } catch (error) {
       console.error('Error resetting password:', error);
       showToast('⚠️ Error resetting password');
@@ -535,7 +563,7 @@ function App() {
     setUserMonthlyTotal(0);
     localStorage.removeItem('bms_user_role');
     localStorage.removeItem('bms_logged_in_user_id');
-    setView(VIEWS.LOGIN);
+    navigateToView(VIEWS.LOGIN);
     setLoginUsername('');
     setLoginPassword('');
     showToast('✓ Logged out');
@@ -619,7 +647,7 @@ function App() {
 
   const openDeletedTransactions = async () => {
     await loadDeletedTransactions();
-    setView(VIEWS.DELETED_TRANSACTIONS);
+    navigateToView(VIEWS.DELETED_TRANSACTIONS);
   };
 
   const showToast = (message) => {
@@ -631,7 +659,7 @@ function App() {
     setSelectedItems({});
     setSiteName('');
     setProjectDate(getTodayFormatted());
-    setView(VIEWS.PROJECT);
+    navigateToView(VIEWS.PROJECT);
   };
 
   const startCreateUser = () => {
@@ -642,7 +670,7 @@ function App() {
     setUserName('');
     setUserPhone('');
     setUserReferral('');
-    setView(VIEWS.CREATE_USER);
+    navigateToView(VIEWS.CREATE_USER);
   };
 
   const startGiveMoney = () => {
@@ -656,7 +684,7 @@ function App() {
     setMoneyPurpose('');
     setCustomPurpose('');
     setShowUserDropdown(false);
-    setView(VIEWS.GIVE_MONEY);
+    navigateToView(VIEWS.GIVE_MONEY);
   };
 
   const startUserTotal = async () => {
@@ -667,13 +695,13 @@ function App() {
     // Reload users to ensure fresh data
     await loadUsers();
     
-    setView(VIEWS.USER_TOTAL);
+    navigateToView(VIEWS.USER_TOTAL);
   };
 
   const openHistory = async () => {
     // Reload transactions to ensure fresh data
     await loadTransactions();
-    setView(VIEWS.HISTORY);
+    navigateToView(VIEWS.HISTORY);
   };
 
   const selectUserForHistory = async (user) => {
@@ -689,7 +717,7 @@ function App() {
     const monthlyTotal = getMonthlyTotal(transactions);
     setUserMonthlyTotal(monthlyTotal);
     
-    setView(VIEWS.USER_HISTORY);
+    navigateToView(VIEWS.USER_HISTORY);
   };
 
   const getFilteredUsersForHistory = () => {
@@ -764,7 +792,7 @@ function App() {
       await saveTransactionToSupabase(transaction);
       await loadTransactions(); // Reload transactions list
       showToast('✓ Transaction saved successfully');
-      setView(VIEWS.HOME);
+      navigateToView(VIEWS.HOME);
     } catch (error) {
       console.error('Error saving transaction:', error);
       showToast('⚠️ Error saving transaction');
@@ -891,7 +919,7 @@ function App() {
     } finally {
       setLoadingSalaryPayments(false);
     }
-    setView(VIEWS.SALARY_PAYMENTS);
+    navigateToView(VIEWS.SALARY_PAYMENTS);
   };
 
   const handleDeleteSalaryPayment = async (paymentId) => {
@@ -1053,7 +1081,7 @@ function App() {
       await saveUserToSupabase(user);
       await loadUsers(); // Reload users list
       showToast('✓ User created successfully');
-      setView(VIEWS.HOME);
+      navigateToView(VIEWS.HOME);
     } catch (error) {
       console.error('Error saving user:', error);
       
@@ -1126,14 +1154,14 @@ function App() {
   };
 
   const continueToCategories = () => {
-    setView(VIEWS.CATEGORIES);
+    navigateToView(VIEWS.CATEGORIES);
   };
 
   const openCategory = (categoryId) => {
     setCurrentCategory(categoryId);
     setSearchQuery('');
     setSizeFilter(null);
-    setView(VIEWS.ITEMS);
+    navigateToView(VIEWS.ITEMS);
   };
 
   const updateQuantity = (materialId, delta) => {
@@ -1288,7 +1316,7 @@ function App() {
     saveList(list);
     setSavedLists(getSavedLists());
     showToast('✓ List saved');
-    setView(VIEWS.HOME);
+    navigateToView(VIEWS.HOME);
     setSelectedItems({});
     setSiteName('');
   };
@@ -1301,7 +1329,7 @@ function App() {
     setSelectedItems(itemsMap);
     setSiteName(list.siteName + ' (Copy)');
     setProjectDate(getTodayFormatted());
-    setView(VIEWS.CATEGORIES);
+    navigateToView(VIEWS.CATEGORIES);
   };
 
   const handleDeleteList = (listId) => {
@@ -1317,22 +1345,35 @@ function App() {
     }
   };
 
+  // Helper function to navigate with browser history
+  const navigateToView = (newView) => {
+    setView(newView);
+    // Push new state to browser history
+    window.history.pushState({ view: newView }, '', window.location.href);
+  };
+
   const goBack = () => {
-    if (view === VIEWS.ITEMS) {
-      setView(VIEWS.CATEGORIES);
-    } else if (view === VIEWS.CATEGORIES) {
-      setView(VIEWS.PROJECT);
-    } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL || view === VIEWS.SALARY_PAYMENTS || view === VIEWS.DELETED_TRANSACTIONS) {
-      setView(VIEWS.HOME);
-    } else if (view === VIEWS.USER_HISTORY) {
-      // If logged in as user, logout instead of going back
-      if (userRole === 'user') {
-        handleLogout();
-      } else {
-        setView(VIEWS.USER_TOTAL);
+    // Use browser back instead of manual navigation
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      // Fallback if no history
+      if (view === VIEWS.ITEMS) {
+        navigateToView(VIEWS.CATEGORIES);
+      } else if (view === VIEWS.CATEGORIES) {
+        navigateToView(VIEWS.PROJECT);
+      } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL || view === VIEWS.SALARY_PAYMENTS || view === VIEWS.DELETED_TRANSACTIONS) {
+        navigateToView(VIEWS.HOME);
+      } else if (view === VIEWS.USER_HISTORY) {
+        // If logged in as user, logout instead of going back
+        if (userRole === 'user') {
+          handleLogout();
+        } else {
+          navigateToView(VIEWS.USER_TOTAL);
+        }
+      } else if (view === VIEWS.REVIEW) {
+        navigateToView(VIEWS.CATEGORIES);
       }
-    } else if (view === VIEWS.REVIEW) {
-      setView(VIEWS.CATEGORIES);
     }
   };
 
@@ -1607,7 +1648,7 @@ function App() {
 
                 <button 
                   className="btn btn-secondary" 
-                  onClick={() => setView(VIEWS.FORGOT_PASSWORD)}
+                  onClick={() => navigateToView(VIEWS.FORGOT_PASSWORD)}
                   style={{ marginTop: '10px' }}
                 >
                   Forgot Password?
@@ -1631,7 +1672,7 @@ function App() {
                 <button 
                   className="btn btn-secondary" 
                   onClick={() => {
-                    setView(VIEWS.LOGIN);
+                    navigateToView(VIEWS.LOGIN);
                     setOtpCode('');
                     setPendingAdminUsername(null);
                   }}
@@ -1690,7 +1731,7 @@ function App() {
                 <button 
                   className="btn btn-secondary" 
                   onClick={() => {
-                    setView(VIEWS.LOGIN);
+                    navigateToView(VIEWS.LOGIN);
                     setForgotPasswordEmail('');
                   }}
                   style={{ marginBottom: '20px', width: 'auto', padding: '8px 16px' }}
@@ -1737,7 +1778,7 @@ function App() {
                 <button 
                   className="btn btn-secondary" 
                   onClick={() => {
-                    setView(VIEWS.FORGOT_PASSWORD);
+                    navigateToView(VIEWS.FORGOT_PASSWORD);
                     setOtpCode('');
                     setNewPassword('');
                     setConfirmPassword('');
@@ -2026,7 +2067,7 @@ function App() {
                         <button 
                           className="btn-link"
                           onClick={() => {
-                            setView(VIEWS.CREATE_USER);
+                            navigateToView(VIEWS.CREATE_USER);
                           }}
                         >
                           Create a new user →
@@ -2161,7 +2202,7 @@ function App() {
                         <button 
                           className="btn-link"
                           onClick={() => {
-                            setView(VIEWS.CREATE_USER);
+                            navigateToView(VIEWS.CREATE_USER);
                           }}
                         >
                           Create a new user →
@@ -3050,7 +3091,7 @@ function App() {
             
             {getSelectedCount() > 0 && (
               <div className="fab-container">
-                <button className="fab" onClick={() => setView(VIEWS.REVIEW)}>
+                <button className="fab" onClick={() => navigateToView(VIEWS.REVIEW)}>
                   View List
                   <span className="fab-badge">{getSelectedCount()}</span>
                 </button>
@@ -3124,7 +3165,7 @@ function App() {
 
             {getSelectedCount() > 0 && (
               <div className="fab-container">
-                <button className="fab" onClick={() => setView(VIEWS.REVIEW)}>
+                <button className="fab" onClick={() => navigateToView(VIEWS.REVIEW)}>
                   View List
                   <span className="fab-badge">{getSelectedCount()}</span>
                 </button>
