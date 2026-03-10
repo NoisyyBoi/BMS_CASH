@@ -1030,25 +1030,11 @@ h3 { font-size: var(--font-size-lg); }
   gap: var(--space-md);
 }
 
-/* Desktop responsive history list */
+/* Desktop responsive history list - single column like salary payments */
 @media (min-width: 768px) {
   .history-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-lg);
-  }
-}
-
-@media (min-width: 1024px) {
-  .history-list {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-xl);
-  }
-}
-
-@media (min-width: 1200px) {
-  .history-list {
-    grid-template-columns: repeat(4, 1fr);
+    /* Keep single column layout like salary payments */
   }
 }
 
@@ -1061,15 +1047,16 @@ h3 { font-size: var(--font-size-lg); }
   transition: all 0.2s;
 }
 
-/* Desktop responsive history cards */
+/* Desktop responsive history cards - larger like salary payment cards */
 @media (min-width: 768px) {
   .history-card {
     padding: var(--space-lg);
+    border: 2px solid var(--border);
   }
   
   .history-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
   }
 }
 
@@ -1083,6 +1070,14 @@ h3 { font-size: var(--font-size-lg); }
   margin-bottom: var(--space-xs);
 }
 
+/* Desktop responsive history date */
+@media (min-width: 768px) {
+  .history-date {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--space-sm);
+  }
+}
+
 .history-project {
   font-size: var(--font-size-lg);
   font-weight: 600;
@@ -1090,9 +1085,24 @@ h3 { font-size: var(--font-size-lg); }
   margin-bottom: var(--space-sm);
 }
 
+/* Desktop responsive history project title */
+@media (min-width: 768px) {
+  .history-project {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--space-md);
+  }
+}
+
 .history-summary {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+}
+
+/* Desktop responsive history summary */
+@media (min-width: 768px) {
+  .history-summary {
+    font-size: var(--font-size-base);
+  }
 }
 
 .history-actions {
