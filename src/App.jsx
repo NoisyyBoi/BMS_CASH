@@ -87,6 +87,7 @@ function App() {
   const [moneyPurpose, setMoneyPurpose] = useState('');
   const [customPurpose, setCustomPurpose] = useState('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [userInputActive, setUserInputActive] = useState(false); // Track if user has tapped input
   const [expandedDates, setExpandedDates] = useState({});
   const [allUsers, setAllUsers] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
@@ -95,6 +96,7 @@ function App() {
   const [selectedUserForHistory, setSelectedUserForHistory] = useState(null);
   const [userHistorySearchQuery, setUserHistorySearchQuery] = useState('');
   const [showUserHistoryDropdown, setShowUserHistoryDropdown] = useState(false);
+  const [userHistoryInputActive, setUserHistoryInputActive] = useState(false); // Track if user has tapped input
   const [totalSalary, setTotalSalary] = useState('');
   const [payingNow, setPayingNow] = useState('');
   const [userTransactionsData, setUserTransactionsData] = useState([]);
@@ -697,14 +699,16 @@ function App() {
     setMoneyAmount('');
     setMoneyPurpose('');
     setCustomPurpose('');
-    setShowUserDropdown(false);
+    setShowUserDropdown(true); // Show dropdown by default
+    setUserInputActive(false); // Reset input interaction state
     navigateToView(VIEWS.GIVE_MONEY);
   };
 
   const startUserTotal = async () => {
     setSelectedUserForHistory(null);
     setUserHistorySearchQuery('');
-    setShowUserHistoryDropdown(false);
+    setShowUserHistoryDropdown(true); // Show dropdown by default
+    setUserHistoryInputActive(false); // Reset input interaction state
     
     // Reload users to ensure fresh data
     await loadUsers();
@@ -2067,6 +2071,7 @@ function App() {
                   className="project-input"
                   placeholder="Type user name or phone..."
                   value={userSearchQuery}
+                  readOnly={!userInputActive}
                   onChange={(e) => {
                     setUserSearchQuery(e.target.value);
                     setShowUserDropdown(true);
@@ -2074,7 +2079,10 @@ function App() {
                       setSelectedUser(null);
                     }
                   }}
-                  onFocus={() => setShowUserDropdown(true)}
+                  onFocus={() => {
+                    setShowUserDropdown(true);
+                    setUserInputActive(true);
+                  }}
                 />
                 
                 {showUserDropdown && (
@@ -2200,11 +2208,15 @@ function App() {
                   className="project-input"
                   placeholder="Type user name or phone..."
                   value={userHistorySearchQuery}
+                  readOnly={!userHistoryInputActive}
                   onChange={(e) => {
                     setUserHistorySearchQuery(e.target.value);
                     setShowUserHistoryDropdown(true);
                   }}
-                  onFocus={() => setShowUserHistoryDropdown(true)}
+                  onFocus={() => {
+                    setShowUserHistoryDropdown(true);
+                    setUserHistoryInputActive(true);
+                  }}
                 />
                 
                 {showUserHistoryDropdown && (
