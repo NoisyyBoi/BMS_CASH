@@ -1644,7 +1644,6 @@ function App() {
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && document.getElementById('password-input').focus()}
-                    autoFocus
                   />
                 </div>
 
@@ -1732,7 +1731,6 @@ function App() {
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     onKeyPress={(e) => e.key === 'Enter' && handleVerifyOTP()}
                     maxLength={6}
-                    autoFocus
                     style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '5px' }}
                   />
                 </div>
@@ -1789,7 +1787,6 @@ function App() {
                     value={forgotPasswordEmail}
                     onChange={(e) => setForgotPasswordEmail(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleForgotPassword()}
-                    autoFocus
                   />
                 </div>
 
@@ -1838,7 +1835,6 @@ function App() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     maxLength={6}
-                    autoFocus
                     style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '5px' }}
                   />
                 </div>
@@ -2011,7 +2007,6 @@ function App() {
                 placeholder="Enter full name"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                autoFocus
               />
             </div>
 
@@ -2080,7 +2075,6 @@ function App() {
                     }
                   }}
                   onFocus={() => setShowUserDropdown(true)}
-                  autoFocus
                 />
                 
                 {showUserDropdown && (
@@ -2211,7 +2205,6 @@ function App() {
                     setShowUserHistoryDropdown(true);
                   }}
                   onFocus={() => setShowUserHistoryDropdown(true)}
-                  autoFocus
                 />
                 
                 {showUserHistoryDropdown && (
@@ -3533,7 +3526,6 @@ function App() {
                 placeholder="Item name (e.g. Rubber Gasket)"
                 value={customItemName}
                 onChange={(e) => setCustomItemName(e.target.value)}
-                autoFocus
               />
               <input
                 type="number"
@@ -3609,7 +3601,6 @@ function App() {
                   value={deleteReasonText}
                   onChange={(e) => setDeleteReasonText(e.target.value)}
                   rows="4"
-                  autoFocus
                 />
               </div>
               
