@@ -50,10 +50,31 @@ export const storeOTP = async (username, otp) => {
       return { success: false, error: error.message };
     }
 
+    // Clean up expired OTPs after storing new one
+    await cleanupExpiredOTPs();
+
     return { success: true };
   } catch (error) {
     console.error('Error in storeOTP:', error);
     return { success: false, error: error.message };
+  }
+};
+
+// Clean up expired OTPs from database
+export const cleanupExpiredOTPs = async () => {
+  try {
+    const { error } = await supabase
+      .from('admin_otp')
+      .delete()
+      .lt('expires_at', new Date().toISOString());
+
+    if (error) {
+      console.error('Error cleaning up expired OTPs:', error);
+    } else {
+      console.log('✓ Expired OTPs cleaned up from database');
+    }
+  } catch (error) {
+    console.error('Error in cleanupExpiredOTPs:', error);
   }
 };
 
@@ -72,6 +93,8 @@ export const verifyOTP = async (username, otpCode) => {
       .single();
 
     if (error || !data) {
+      // Clean up expired OTPs when verification fails
+      await cleanupExpiredOTPs();
       return { success: false, error: 'Invalid or expired OTP' };
     }
 
@@ -81,10 +104,32 @@ export const verifyOTP = async (username, otpCode) => {
       .update({ is_used: true })
       .eq('id', data.id);
 
+    // Clean up expired and used OTPs
+    await cleanupExpiredOTPs();
+    await cleanupUsedOTPs();
+
     return { success: true };
   } catch (error) {
     console.error('Error in verifyOTP:', error);
     return { success: false, error: error.message };
+  }
+};
+
+// Clean up used OTPs from database
+export const cleanupUsedOTPs = async () => {
+  try {
+    const { error } = await supabase
+      .from('admin_otp')
+      .delete()
+      .eq('is_used', true);
+
+    if (error) {
+      console.error('Error cleaning up used OTPs:', error);
+    } else {
+      console.log('✓ Used OTPs cleaned up from database');
+    }
+  } catch (error) {
+    console.error('Error in cleanupUsedOTPs:', error);
   }
 };
 
@@ -107,7 +152,7 @@ export const sendOTPEmail = async (email, otp, username, isPasswordReset = false
   }
 };
 
-// Update admin password in database
+// Update admin password in database and in-memory credentials
 export const updateAdminPassword = async (username, newPassword) => {
   try {
     const { error } = await supabase

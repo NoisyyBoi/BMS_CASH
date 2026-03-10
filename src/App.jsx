@@ -11,7 +11,8 @@ import {
   verifyOTP, 
   updateAdminPassword, 
   getAdminEmail,
-  sendOTPEmail
+  sendOTPEmail,
+  cleanupExpiredOTPs
 } from './utils/adminAuth';
 
 // View constants
@@ -160,6 +161,7 @@ function App() {
         loadTransactions();
         cleanupOldDeletedTransactions();
         cleanupOldSalaryPayments();
+        cleanupExpiredOTPsOnLoad();
       }
     }
   }, []);
@@ -175,89 +177,117 @@ function App() {
 
     // Check admin credentials (case-insensitive username)
     const lowerUsername = username.toLowerCase();
-    if (ADMIN_CREDENTIALS[lowerUsername] === password) {
-      // Admin login - send OTP for 2FA
-      setOtpSending(true);
-      try {
-        // Get admin email
-        const emailResult = await getAdminEmail(lowerUsername);
-        if (!emailResult.success) {
-          showToast('⚠️ Admin email not configured. Please contact support.');
-          setOtpSending(false);
-          return;
-        }
-
-        // Generate and store OTP
-        const otp = generateOTP();
-        const storeResult = await storeOTP(lowerUsername, otp);
-        if (!storeResult.success) {
-          showToast('⚠️ Error generating OTP. Please try again.');
-          setOtpSending(false);
-          return;
-        }
-
-        // Send OTP email
-        const sendResult = await sendOTPEmail(emailResult.email, otp, lowerUsername);
-        if (!sendResult.success) {
-          showToast('⚠️ Error sending OTP email. Please try again.');
-          setOtpSending(false);
-          return;
-        }
-
-        // Move to OTP verification screen
-        setPendingAdminUsername(lowerUsername);
-        setView(VIEWS.OTP_VERIFY);
-        showToast('✓ OTP sent to your email');
-      } catch (error) {
-        console.error('Error in 2FA flow:', error);
-        showToast('⚠️ Error in login process. Please try again.');
-      } finally {
-        setOtpSending(false);
-      }
-      return;
-    }
     
-    // Check viewer credentials
-    if (lowerUsername === 'viewer' && password === 'viewer') {
-      setIsAuthenticated(true);
-      setUserRole('viewer');
-      localStorage.setItem('bms_user_role', 'viewer');
-      localStorage.removeItem('bms_logged_in_user_id');
-      setView(VIEWS.HOME);
-      loadUsers();
-      loadTransactions();
-      cleanupOldDeletedTransactions();
-      cleanupOldSalaryPayments();
-      showToast('✓ Logged in as Viewer');
-      return;
-    }
-    
-    // Check if it's a user login (name + phone number)
-    try {
-      const users = await getUsersFromSupabase();
-      const matchedUser = users.find(user => 
-        user.name.toLowerCase() === lowerUsername && user.phone === password
-      );
-      
-      if (matchedUser) {
+    // First check if username exists in ADMIN_CREDENTIALS (for validation)
+    if (!ADMIN_CREDENTIALS[lowerUsername]) {
+      // Check viewer credentials
+      if (lowerUsername === 'viewer' && password === 'viewer') {
         setIsAuthenticated(true);
-        setUserRole('user');
-        setSelectedUserForHistory(matchedUser);
-        localStorage.setItem('bms_user_role', 'user');
-        localStorage.setItem('bms_logged_in_user_id', matchedUser.id.toString());
+        setUserRole('viewer');
+        localStorage.setItem('bms_user_role', 'viewer');
+        localStorage.removeItem('bms_logged_in_user_id');
+        setView(VIEWS.HOME);
+        loadUsers();
+        loadTransactions();
+        cleanupOldDeletedTransactions();
+        cleanupOldSalaryPayments();
+        showToast('✓ Logged in as Viewer');
+        return;
+      }
+      
+      // Check if it's a user login (name + phone number)
+      try {
+        const users = await getUsersFromSupabase();
+        const matchedUser = users.find(user => 
+          user.name.toLowerCase() === lowerUsername && user.phone === password
+        );
         
-        // Load user's transactions
-        const transactions = await getUserTransactionsFromSupabase(matchedUser.id);
-        setUserTransactionsData(transactions);
-        const monthlyTotal = getMonthlyTotal(transactions);
-        setUserMonthlyTotal(monthlyTotal);
-        
-        setView(VIEWS.USER_HISTORY);
-        showToast(`✓ Welcome ${matchedUser.name}`);
+        if (matchedUser) {
+          setIsAuthenticated(true);
+          setUserRole('user');
+          setSelectedUserForHistory(matchedUser);
+          localStorage.setItem('bms_user_role', 'user');
+          localStorage.setItem('bms_logged_in_user_id', matchedUser.id.toString());
+          
+          // Load user's transactions
+          const transactions = await getUserTransactionsFromSupabase(matchedUser.id);
+          setUserTransactionsData(transactions);
+          const monthlyTotal = getMonthlyTotal(transactions);
+          setUserMonthlyTotal(monthlyTotal);
+          
+          setView(VIEWS.USER_HISTORY);
+          showToast(`✓ Welcome ${matchedUser.name}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking user credentials:', error);
+      }
+      
+      showToast('⚠️ Invalid credentials');
+      return;
+    }
+
+    // For admin users, check password from database first, then fallback to hardcoded
+    try {
+      const { data, error } = await supabase
+        .from('admin_accounts')
+        .select('password_hash')
+        .eq('username', lowerUsername)
+        .single();
+
+      let passwordMatches = false;
+      
+      if (data && data.password_hash) {
+        // Check against database password
+        passwordMatches = (data.password_hash === password);
+      } else {
+        // Fallback to hardcoded credentials if not in database
+        passwordMatches = (ADMIN_CREDENTIALS[lowerUsername] === password);
+      }
+
+      if (passwordMatches) {
+        // Admin login - send OTP for 2FA
+        setOtpSending(true);
+        try {
+          // Get admin email
+          const emailResult = await getAdminEmail(lowerUsername);
+          if (!emailResult.success) {
+            showToast('⚠️ Admin email not configured. Please contact support.');
+            setOtpSending(false);
+            return;
+          }
+
+          // Generate and store OTP
+          const otp = generateOTP();
+          const storeResult = await storeOTP(lowerUsername, otp);
+          if (!storeResult.success) {
+            showToast('⚠️ Error generating OTP. Please try again.');
+            setOtpSending(false);
+            return;
+          }
+
+          // Send OTP email
+          const sendResult = await sendOTPEmail(emailResult.email, otp, lowerUsername);
+          if (!sendResult.success) {
+            showToast('⚠️ Error sending OTP email. Please try again.');
+            setOtpSending(false);
+            return;
+          }
+
+          // Move to OTP verification screen
+          setPendingAdminUsername(lowerUsername);
+          setView(VIEWS.OTP_VERIFY);
+          showToast('✓ OTP sent to your email');
+        } catch (error) {
+          console.error('Error in 2FA flow:', error);
+          showToast('⚠️ Error in login process. Please try again.');
+        } finally {
+          setOtpSending(false);
+        }
         return;
       }
     } catch (error) {
-      console.error('Error checking user credentials:', error);
+      console.error('Error checking admin credentials:', error);
     }
     
     showToast('⚠️ Invalid credentials');
@@ -283,6 +313,7 @@ function App() {
         loadTransactions();
         cleanupOldDeletedTransactions();
         cleanupOldSalaryPayments();
+        cleanupExpiredOTPsOnLoad();
         showToast('✓ Login successful');
         
         // Reset OTP states
@@ -511,6 +542,15 @@ function App() {
     } catch (error) {
       // Silently fail if there's an error
       console.error('Error cleaning up old salary payments:', error);
+    }
+  };
+
+  const cleanupExpiredOTPsOnLoad = async () => {
+    try {
+      await cleanupExpiredOTPs();
+    } catch (error) {
+      // Silently fail if there's an error
+      console.error('Error cleaning up expired OTPs:', error);
     }
   };
 
