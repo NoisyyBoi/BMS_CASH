@@ -494,8 +494,8 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .home-actions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-md);
   padding: 0 var(--space-md);
 }
@@ -503,18 +503,15 @@ h3 { font-size: var(--font-size-lg); }
 /* Desktop responsive home actions */
 @media (min-width: 768px) {
   .home-actions {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-lg);
     padding: 0 var(--space-xl);
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
   }
 }
 
 @media (min-width: 1024px) {
   .home-actions {
-    grid-template-columns: repeat(3, 1fr);
     gap: var(--space-xl);
     padding: 0 40px;
     max-width: 1000px;
@@ -523,7 +520,6 @@ h3 { font-size: var(--font-size-lg); }
 
 @media (min-width: 1200px) {
   .home-actions {
-    grid-template-columns: repeat(4, 1fr);
     max-width: 1200px;
   }
 }
@@ -542,25 +538,25 @@ h3 { font-size: var(--font-size-lg); }
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 64px;
+  min-height: 80px; /* Increased from 64px for larger buttons */
   position: relative;
 }
 
-/* Desktop responsive buttons - smaller and more compact */
+/* Desktop responsive buttons - larger for 3x2 grid */
 @media (min-width: 768px) {
   .btn {
-    padding: var(--space-md) var(--space-lg);
-    font-size: var(--font-size-base);
-    min-height: 48px;
-    gap: var(--space-sm);
+    padding: var(--space-lg) var(--space-xl);
+    font-size: var(--font-size-lg);
+    min-height: 72px; /* Increased from 48px */
+    gap: var(--space-md);
   }
 }
 
 @media (min-width: 1024px) {
   .btn {
-    padding: 12px 20px;
-    font-size: 15px;
-    min-height: 44px;
+    padding: 20px 24px; /* Increased padding */
+    font-size: 16px; /* Increased font size */
+    min-height: 68px; /* Increased from 44px */
   }
 }
 
@@ -664,19 +660,19 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .btn-icon {
-  font-size: 28px;
+  font-size: 32px; /* Increased from 28px for larger buttons */
 }
 
-/* Desktop responsive button icons - smaller */
+/* Desktop responsive button icons - larger for 3x2 grid */
 @media (min-width: 768px) {
   .btn-icon {
-    font-size: 22px;
+    font-size: 28px; /* Increased from 22px */
   }
 }
 
 @media (min-width: 1024px) {
   .btn-icon {
-    font-size: 20px;
+    font-size: 26px; /* Increased from 20px */
   }
 }
 
@@ -707,14 +703,14 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .btn-kannada {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-lg); /* Increased from base size */
   opacity: 0.9;
 }
 
 /* Desktop responsive Kannada text */
 @media (min-width: 768px) {
   .btn-kannada {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base); /* Increased from sm */
   }
 }
 
