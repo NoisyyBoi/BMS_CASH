@@ -178,70 +178,74 @@ function App() {
     // Check admin credentials (case-insensitive username)
     const lowerUsername = username.toLowerCase();
     
-    // First check if username exists in ADMIN_CREDENTIALS (for validation)
-    if (!ADMIN_CREDENTIALS[lowerUsername]) {
-      // Check viewer credentials
-      if (lowerUsername === 'viewer' && password === 'viewer') {
-        setIsAuthenticated(true);
-        setUserRole('viewer');
-        localStorage.setItem('bms_user_role', 'viewer');
-        localStorage.removeItem('bms_logged_in_user_id');
-        setView(VIEWS.HOME);
-        loadUsers();
-        loadTransactions();
-        cleanupOldDeletedTransactions();
-        cleanupOldSalaryPayments();
-        showToast('✓ Logged in as Viewer');
-        return;
-      }
-      
-      // Check if it's a user login (name + phone number)
-      try {
-        const users = await getUsersFromSupabase();
-        const matchedUser = users.find(user => 
-          user.name.toLowerCase() === lowerUsername && user.phone === password
-        );
-        
-        if (matchedUser) {
-          setIsAuthenticated(true);
-          setUserRole('user');
-          setSelectedUserForHistory(matchedUser);
-          localStorage.setItem('bms_user_role', 'user');
-          localStorage.setItem('bms_logged_in_user_id', matchedUser.id.toString());
-          
-          // Load user's transactions
-          const transactions = await getUserTransactionsFromSupabase(matchedUser.id);
-          setUserTransactionsData(transactions);
-          const monthlyTotal = getMonthlyTotal(transactions);
-          setUserMonthlyTotal(monthlyTotal);
-          
-          setView(VIEWS.USER_HISTORY);
-          showToast(`✓ Welcome ${matchedUser.name}`);
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking user credentials:', error);
-      }
-      
-      showToast('⚠️ Invalid credentials');
+    // Check viewer credentials first
+    if (lowerUsername === 'viewer' && password === 'viewer') {
+      setIsAuthenticated(true);
+      setUserRole('viewer');
+      localStorage.setItem('bms_user_role', 'viewer');
+      localStorage.removeItem('bms_logged_in_user_id');
+      setView(VIEWS.HOME);
+      loadUsers();
+      loadTransactions();
+      cleanupOldDeletedTransactions();
+      cleanupOldSalaryPayments();
+      cleanupExpiredOTPsOnLoad();
+      showToast('✓ Logged in as Viewer');
       return;
     }
-
-    // For admin users, check password from database first, then fallback to hardcoded
+    
+    // Check if it's a user login (name + phone number)
     try {
-      const { data, error } = await supabase
-        .from('admin_accounts')
-        .select('password_hash')
-        .eq('username', lowerUsername)
-        .single();
+      const users = await getUsersFromSupabase();
+      const matchedUser = users.find(user => 
+        user.name.toLowerCase() === lowerUsername && user.phone === password
+      );
+      
+      if (matchedUser) {
+        setIsAuthenticated(true);
+        setUserRole('user');
+        setSelectedUserForHistory(matchedUser);
+        localStorage.setItem('bms_user_role', 'user');
+        localStorage.setItem('bms_logged_in_user_id', matchedUser.id.toString());
+        
+        // Load user's transactions
+        const transactions = await getUserTransactionsFromSupabase(matchedUser.id);
+        setUserTransactionsData(transactions);
+        const monthlyTotal = getMonthlyTotal(transactions);
+        setUserMonthlyTotal(monthlyTotal);
+        
+        setView(VIEWS.USER_HISTORY);
+        showToast(`✓ Welcome ${matchedUser.name}`);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking user credentials:', error);
+    }
 
+    // Check if username exists in ADMIN_CREDENTIALS (for admin validation)
+    if (ADMIN_CREDENTIALS[lowerUsername]) {
+      // For admin users, check password from database first, then fallback to hardcoded
       let passwordMatches = false;
       
-      if (data && data.password_hash) {
-        // Check against database password
-        passwordMatches = (data.password_hash === password);
-      } else {
-        // Fallback to hardcoded credentials if not in database
+      try {
+        const { data, error } = await supabase
+          .from('admin_accounts')
+          .select('password_hash')
+          .eq('username', lowerUsername)
+          .single();
+
+        if (!error && data && data.password_hash) {
+          // Check against database password (after reset)
+          passwordMatches = (data.password_hash === password);
+          console.log('✓ Checking database password for:', lowerUsername);
+        } else {
+          // Fallback to hardcoded credentials if not in database or error
+          passwordMatches = (ADMIN_CREDENTIALS[lowerUsername] === password);
+          console.log('✓ Using hardcoded password for:', lowerUsername, error ? '(DB error)' : '(no DB record)');
+        }
+      } catch (dbError) {
+        console.error('Database error, using hardcoded credentials:', dbError);
+        // Fallback to hardcoded credentials if database fails
         passwordMatches = (ADMIN_CREDENTIALS[lowerUsername] === password);
       }
 
@@ -285,11 +289,15 @@ function App() {
           setOtpSending(false);
         }
         return;
+      } else {
+        console.log('❌ Password does not match for admin:', lowerUsername);
+        showToast('⚠️ Invalid credentials');
+        return;
       }
-    } catch (error) {
-      console.error('Error checking admin credentials:', error);
     }
     
+    // If we get here, it's not a valid admin, viewer, or user
+    console.log('❌ No valid credentials found for:', lowerUsername);
     showToast('⚠️ Invalid credentials');
   };
 
