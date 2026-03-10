@@ -2233,6 +2233,18 @@ function App() {
                     </div>
                   </div>
                   
+                  {/* Monthly Total Card - Moved here after user info */}
+                  <div className="monthly-total-card">
+                    <div className="monthly-total-header">
+                      <span className="monthly-total-icon">📅</span>
+                      <span className="monthly-total-month">{monthName}</span>
+                    </div>
+                    <div className="monthly-total-amount">
+                      <span className="monthly-total-label">Total Amount Given:</span>
+                      <span className="monthly-total-value">{formatIndianCurrency(monthlyTotal)}</span>
+                    </div>
+                  </div>
+                  
                   {/* Transaction Filter Dropdown */}
                   <div className="filter-section">
                     <label className="filter-label">
@@ -2296,17 +2308,6 @@ function App() {
                     ))}
                   </div>
                   )}
-                  
-                  <div className="monthly-total-card">
-                    <div className="monthly-total-header">
-                      <span className="monthly-total-icon">📅</span>
-                      <span className="monthly-total-month">{monthName}</span>
-                    </div>
-                    <div className="monthly-total-amount">
-                      <span className="monthly-total-label">Total Amount Given:</span>
-                      <span className="monthly-total-value">{formatIndianCurrency(monthlyTotal)}</span>
-                    </div>
-                  </div>
                   
                   {/* Download and Share Buttons */}
                   <div className="transaction-actions">
