@@ -176,13 +176,29 @@ function App() {
   useEffect(() => {
     const handlePopState = (event) => {
       if (event.state && event.state.view) {
+        // Prevent going back to login if authenticated
+        if (event.state.view === VIEWS.LOGIN && isAuthenticated) {
+          // Stay on current view and replace history
+          window.history.replaceState({ view: view }, '', window.location.href);
+          return;
+        }
+        
+        // Prevent going to authenticated views if not authenticated
+        if (event.state.view !== VIEWS.LOGIN && !isAuthenticated) {
+          setView(VIEWS.LOGIN);
+          window.history.replaceState({ view: VIEWS.LOGIN }, '', window.location.href);
+          return;
+        }
+        
         setView(event.state.view);
       } else {
         // If no state, go to appropriate default view
         if (isAuthenticated) {
           setView(VIEWS.HOME);
+          window.history.replaceState({ view: VIEWS.HOME }, '', window.location.href);
         } else {
           setView(VIEWS.LOGIN);
+          window.history.replaceState({ view: VIEWS.LOGIN }, '', window.location.href);
         }
       }
     };
@@ -190,10 +206,8 @@ function App() {
     // Listen for browser back/forward button
     window.addEventListener('popstate', handlePopState);
 
-    // Push initial state
-    if (window.history.state === null) {
-      window.history.replaceState({ view: view }, '', window.location.href);
-    }
+    // Set initial state based on current view
+    window.history.replaceState({ view: view }, '', window.location.href);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
@@ -218,7 +232,7 @@ function App() {
       setUserRole('viewer');
       localStorage.setItem('bms_user_role', 'viewer');
       localStorage.removeItem('bms_logged_in_user_id');
-      navigateToView(VIEWS.HOME);
+      navigateToView(VIEWS.HOME, true);
       loadUsers();
       loadTransactions();
       cleanupOldDeletedTransactions();
@@ -248,7 +262,7 @@ function App() {
         const monthlyTotal = getMonthlyTotal(transactions);
         setUserMonthlyTotal(monthlyTotal);
         
-        navigateToView(VIEWS.USER_HISTORY);
+        navigateToView(VIEWS.USER_HISTORY, true);
         showToast(`✓ Welcome ${matchedUser.name}`);
         return;
       }
@@ -356,7 +370,7 @@ function App() {
         setUserRole(pendingAdminUsername);
         localStorage.setItem('bms_user_role', pendingAdminUsername);
         localStorage.removeItem('bms_logged_in_user_id');
-        navigateToView(VIEWS.HOME);
+        navigateToView(VIEWS.HOME, true);
         loadUsers();
         loadTransactions();
         cleanupOldDeletedTransactions();
@@ -522,7 +536,7 @@ function App() {
       setConfirmPassword('');
       setOtpCode('');
       setPendingAdminUsername(null);
-      navigateToView(VIEWS.LOGIN);
+      navigateToView(VIEWS.LOGIN, true);
     } catch (error) {
       console.error('Error resetting password:', error);
       showToast('⚠️ Error resetting password');
@@ -563,7 +577,7 @@ function App() {
     setUserMonthlyTotal(0);
     localStorage.removeItem('bms_user_role');
     localStorage.removeItem('bms_logged_in_user_id');
-    navigateToView(VIEWS.LOGIN);
+    navigateToView(VIEWS.LOGIN, true);
     setLoginUsername('');
     setLoginPassword('');
     showToast('✓ Logged out');
@@ -1346,18 +1360,36 @@ function App() {
   };
 
   // Helper function to navigate with browser history
-  const navigateToView = (newView) => {
+  const navigateToView = (newView, replace = false) => {
     setView(newView);
-    // Push new state to browser history
-    window.history.pushState({ view: newView }, '', window.location.href);
+    
+    // Use replaceState for authentication flows to avoid unwanted history entries
+    const authViews = [VIEWS.LOGIN, VIEWS.OTP_VERIFY, VIEWS.FORGOT_PASSWORD, VIEWS.RESET_PASSWORD];
+    const isAuthFlow = authViews.includes(newView) || authViews.includes(view);
+    
+    if (replace || isAuthFlow) {
+      // Replace current history entry
+      window.history.replaceState({ view: newView }, '', window.location.href);
+    } else {
+      // Push new history entry for normal navigation
+      window.history.pushState({ view: newView }, '', window.location.href);
+    }
   };
 
   const goBack = () => {
-    // Use browser back instead of manual navigation
-    if (window.history.length > 1) {
+    // Check if we can safely go back without hitting login
+    const canGoBack = window.history.length > 1;
+    
+    if (canGoBack) {
+      // Check if going back would take us to login while authenticated
+      // In that case, go to home instead
+      if (isAuthenticated && view === VIEWS.HOME) {
+        // If we're at home and authenticated, don't go back to login
+        return;
+      }
       window.history.back();
     } else {
-      // Fallback if no history
+      // Fallback navigation logic
       if (view === VIEWS.ITEMS) {
         navigateToView(VIEWS.CATEGORIES);
       } else if (view === VIEWS.CATEGORIES) {
@@ -1373,6 +1405,9 @@ function App() {
         }
       } else if (view === VIEWS.REVIEW) {
         navigateToView(VIEWS.CATEGORIES);
+      } else if (isAuthenticated && view !== VIEWS.HOME) {
+        // If authenticated and not at home, go to home
+        navigateToView(VIEWS.HOME);
       }
     }
   };
@@ -1648,7 +1683,7 @@ function App() {
 
                 <button 
                   className="btn btn-secondary" 
-                  onClick={() => navigateToView(VIEWS.FORGOT_PASSWORD)}
+                  onClick={() => navigateToView(VIEWS.FORGOT_PASSWORD, true)}
                   style={{ marginTop: '10px' }}
                 >
                   Forgot Password?
@@ -1672,7 +1707,7 @@ function App() {
                 <button 
                   className="btn btn-secondary" 
                   onClick={() => {
-                    navigateToView(VIEWS.LOGIN);
+                    navigateToView(VIEWS.LOGIN, true);
                     setOtpCode('');
                     setPendingAdminUsername(null);
                   }}
@@ -1731,7 +1766,7 @@ function App() {
                 <button 
                   className="btn btn-secondary" 
                   onClick={() => {
-                    navigateToView(VIEWS.LOGIN);
+                    navigateToView(VIEWS.LOGIN, true);
                     setForgotPasswordEmail('');
                   }}
                   style={{ marginBottom: '20px', width: 'auto', padding: '8px 16px' }}
@@ -1778,7 +1813,7 @@ function App() {
                 <button 
                   className="btn btn-secondary" 
                   onClick={() => {
-                    navigateToView(VIEWS.FORGOT_PASSWORD);
+                    navigateToView(VIEWS.FORGOT_PASSWORD, true);
                     setOtpCode('');
                     setNewPassword('');
                     setConfirmPassword('');
