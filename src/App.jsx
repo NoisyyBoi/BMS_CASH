@@ -120,6 +120,11 @@ function App() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
 
+  // Password visibility states
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   useEffect(() => {
     setSavedLists(getSavedLists());
     
@@ -1482,7 +1487,7 @@ function App() {
   return (
     <div className="app">
       {/* Header */}
-      {view !== VIEWS.HOME && view !== VIEWS.LOGIN && (
+      {view !== VIEWS.HOME && view !== VIEWS.LOGIN && view !== VIEWS.OTP_VERIFY && view !== VIEWS.FORGOT_PASSWORD && view !== VIEWS.RESET_PASSWORD && (
         <header className="header">
           <div className="header-content">
             <button className="back-btn" onClick={goBack} aria-label="Go back">
@@ -1543,15 +1548,25 @@ function App() {
                   <label className="project-label">
                     <span>Password</span>
                   </label>
-                  <input
-                    id="password-input"
-                    type="password"
-                    className="project-input"
-                    placeholder="Enter password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                  />
+                  <div className="password-input-container">
+                    <input
+                      id="password-input"
+                      type={showLoginPassword ? "text" : "password"}
+                      className="project-input"
+                      placeholder="Enter password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                    >
+                      {showLoginPassword ? "🙈" : "👁️"}
+                    </button>
+                  </div>
                 </div>
 
                 <button 
@@ -1585,6 +1600,18 @@ function App() {
           <div className="login-screen">
             <div className="login-container">
               <div className="login-form">
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setView(VIEWS.LOGIN);
+                    setOtpCode('');
+                    setPendingAdminUsername(null);
+                  }}
+                  style={{ marginBottom: '20px', width: 'auto', padding: '8px 16px' }}
+                >
+                  ← Back to Login
+                </button>
+                
                 <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>
                   Enter the 6-digit code sent to your email
                 </p>
@@ -1632,6 +1659,17 @@ function App() {
           <div className="login-screen">
             <div className="login-container">
               <div className="login-form">
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setView(VIEWS.LOGIN);
+                    setForgotPasswordEmail('');
+                  }}
+                  style={{ marginBottom: '20px', width: 'auto', padding: '8px 16px' }}
+                >
+                  ← Back to Login
+                </button>
+                
                 <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>
                   Enter your username to receive a password reset link
                 </p>
@@ -1668,6 +1706,19 @@ function App() {
           <div className="login-screen">
             <div className="login-container">
               <div className="login-form">
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setView(VIEWS.FORGOT_PASSWORD);
+                    setOtpCode('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  }}
+                  style={{ marginBottom: '20px', width: 'auto', padding: '8px 16px' }}
+                >
+                  ← Back to Username
+                </button>
+                
                 <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>
                   Enter the 6-digit OTP sent to your email and set your new password
                 </p>
@@ -1692,27 +1743,47 @@ function App() {
                   <label className="project-label">
                     <span>New Password</span>
                   </label>
-                  <input
-                    type="password"
-                    className="project-input"
-                    placeholder="Enter new password (min 8 characters)"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
+                  <div className="password-input-container">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      className="project-input"
+                      placeholder="Enter new password (min 8 characters)"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      aria-label={showNewPassword ? "Hide password" : "Show password"}
+                    >
+                      {showNewPassword ? "🙈" : "👁️"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="project-section">
                   <label className="project-label">
                     <span>Confirm Password</span>
                   </label>
-                  <input
-                    type="password"
-                    className="project-input"
-                    placeholder="Confirm new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleVerifyOTPAndResetPassword()}
-                  />
+                  <div className="password-input-container">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      className="project-input"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleVerifyOTPAndResetPassword()}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? "🙈" : "👁️"}
+                    </button>
+                  </div>
                 </div>
 
                 <button 
@@ -1730,14 +1801,6 @@ function App() {
                   style={{ marginTop: '10px' }}
                 >
                   {otpSending ? 'Sending...' : 'Resend OTP'}
-                </button>
-
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => setView(VIEWS.FORGOT_PASSWORD)}
-                  style={{ marginTop: '10px' }}
-                >
-                  ← Back to Username
                 </button>
               </div>
             </div>
