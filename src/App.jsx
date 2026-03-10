@@ -228,78 +228,84 @@ function App() {
       console.error('Error checking user credentials:', error);
     }
 
-    // Check if username exists in ADMIN_CREDENTIALS (for admin validation)
-    if (ADMIN_CREDENTIALS[lowerUsername]) {
-      // For admin users, check password from database first, then fallback to hardcoded
-      let passwordMatches = false;
-      
-      try {
-        const { data, error } = await supabase
-          .from('admin_accounts')
-          .select('password_hash')
-          .eq('username', lowerUsername)
-          .single();
+    // Check if username exists in database admin_accounts table
+    let passwordMatches = false;
+    let isValidAdmin = false;
+    
+    try {
+      const { data, error } = await supabase
+        .from('admin_accounts')
+        .select('username, password_hash')
+        .eq('username', lowerUsername)
+        .single();
 
-        if (!error && data && data.password_hash) {
-          // Check against database password (after reset)
-          passwordMatches = (data.password_hash === password);
-          console.log('✓ Checking database password for:', lowerUsername);
-        } else {
-          // Fallback to hardcoded credentials if not in database or error
-          passwordMatches = (ADMIN_CREDENTIALS[lowerUsername] === password);
-          console.log('✓ Using hardcoded password for:', lowerUsername, error ? '(DB error)' : '(no DB record)');
-        }
-      } catch (dbError) {
-        console.error('Database error, using hardcoded credentials:', dbError);
-        // Fallback to hardcoded credentials if database fails
-        passwordMatches = (ADMIN_CREDENTIALS[lowerUsername] === password);
-      }
-
-      if (passwordMatches) {
-        // Admin login - send OTP for 2FA
-        setOtpSending(true);
-        try {
-          // Get admin email
-          const emailResult = await getAdminEmail(lowerUsername);
-          if (!emailResult.success) {
-            showToast('⚠️ Admin email not configured. Please contact support.');
-            setOtpSending(false);
-            return;
-          }
-
-          // Generate and store OTP
-          const otp = generateOTP();
-          const storeResult = await storeOTP(lowerUsername, otp);
-          if (!storeResult.success) {
-            showToast('⚠️ Error generating OTP. Please try again.');
-            setOtpSending(false);
-            return;
-          }
-
-          // Send OTP email
-          const sendResult = await sendOTPEmail(emailResult.email, otp, lowerUsername);
-          if (!sendResult.success) {
-            showToast('⚠️ Error sending OTP email. Please try again.');
-            setOtpSending(false);
-            return;
-          }
-
-          // Move to OTP verification screen
-          setPendingAdminUsername(lowerUsername);
-          setView(VIEWS.OTP_VERIFY);
-          showToast('✓ OTP sent to your email');
-        } catch (error) {
-          console.error('Error in 2FA flow:', error);
-          showToast('⚠️ Error in login process. Please try again.');
-        } finally {
-          setOtpSending(false);
-        }
-        return;
+      if (!error && data) {
+        // User exists in database
+        isValidAdmin = true;
+        passwordMatches = (data.password_hash === password);
+        console.log('✓ Checking database admin for:', lowerUsername);
       } else {
-        console.log('❌ Password does not match for admin:', lowerUsername);
-        showToast('⚠️ Invalid credentials');
-        return;
+        // Check if username exists in hardcoded ADMIN_CREDENTIALS as fallback
+        if (ADMIN_CREDENTIALS[lowerUsername]) {
+          isValidAdmin = true;
+          passwordMatches = (ADMIN_CREDENTIALS[lowerUsername] === password);
+          console.log('✓ Using hardcoded admin credentials for:', lowerUsername, '(not in database)');
+        }
       }
+    } catch (dbError) {
+      console.error('Database error, checking hardcoded credentials:', dbError);
+      // Fallback to hardcoded credentials if database fails
+      if (ADMIN_CREDENTIALS[lowerUsername]) {
+        isValidAdmin = true;
+        passwordMatches = (ADMIN_CREDENTIALS[lowerUsername] === password);
+        console.log('✓ Using hardcoded admin credentials for:', lowerUsername, '(database error)');
+      }
+    }
+
+    if (isValidAdmin && passwordMatches) {
+      // Admin login - send OTP for 2FA
+      setOtpSending(true);
+      try {
+        // Get admin email
+        const emailResult = await getAdminEmail(lowerUsername);
+        if (!emailResult.success) {
+          showToast('⚠️ Admin email not configured. Please contact support.');
+          setOtpSending(false);
+          return;
+        }
+
+        // Generate and store OTP
+        const otp = generateOTP();
+        const storeResult = await storeOTP(lowerUsername, otp);
+        if (!storeResult.success) {
+          showToast('⚠️ Error generating OTP. Please try again.');
+          setOtpSending(false);
+          return;
+        }
+
+        // Send OTP email
+        const sendResult = await sendOTPEmail(emailResult.email, otp, lowerUsername);
+        if (!sendResult.success) {
+          showToast('⚠️ Error sending OTP email. Please try again.');
+          setOtpSending(false);
+          return;
+        }
+
+        // Move to OTP verification screen
+        setPendingAdminUsername(lowerUsername);
+        setView(VIEWS.OTP_VERIFY);
+        showToast('✓ OTP sent to your email');
+      } catch (error) {
+        console.error('Error in 2FA flow:', error);
+        showToast('⚠️ Error in login process. Please try again.');
+      } finally {
+        setOtpSending(false);
+      }
+      return;
+    } else if (isValidAdmin && !passwordMatches) {
+      console.log('❌ Password does not match for admin:', lowerUsername);
+      showToast('⚠️ Invalid credentials');
+      return;
     }
     
     // If we get here, it's not a valid admin, viewer, or user
@@ -375,8 +381,29 @@ function App() {
       return;
     }
 
-    // Check if username exists in admin credentials
-    if (!ADMIN_CREDENTIALS[username]) {
+    // Check if username exists in database or hardcoded credentials
+    let isValidAdmin = false;
+    
+    try {
+      const { data, error } = await supabase
+        .from('admin_accounts')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+      if (!error && data) {
+        isValidAdmin = true;
+      } else if (ADMIN_CREDENTIALS[username]) {
+        isValidAdmin = true;
+      }
+    } catch (dbError) {
+      // Fallback to hardcoded credentials if database fails
+      if (ADMIN_CREDENTIALS[username]) {
+        isValidAdmin = true;
+      }
+    }
+
+    if (!isValidAdmin) {
       showToast('⚠️ Username not found');
       return;
     }
@@ -515,8 +542,9 @@ function App() {
   };
 
   const isAdmin = () => {
-    // Check if userRole exists in ADMIN_CREDENTIALS (any admin account)
-    return userRole && ADMIN_CREDENTIALS.hasOwnProperty(userRole);
+    // Check if userRole exists and is not 'viewer' or 'user'
+    // Any authenticated admin from database or hardcoded credentials is considered admin
+    return userRole && userRole !== 'viewer' && userRole !== 'user';
   };
 
   const loadUsers = async () => {
