@@ -17,10 +17,11 @@ RETURNS TABLE(
 ) AS $$
 DECLARE
     cleanup_count INTEGER := 0;
+    current_cleanup_time TIMESTAMP WITH TIME ZONE := NOW();
 BEGIN
     -- Log the cleanup attempt
     INSERT INTO user_cleanup_log (cleanup_date, inactive_days_threshold, dry_run)
-    VALUES (NOW(), inactive_days, dry_run);
+    VALUES (current_cleanup_time, inactive_days, dry_run);
     
     -- Find and return inactive users
     RETURN QUERY
@@ -29,15 +30,15 @@ BEGIN
             u.id,
             u.name,
             u.phone,
-            u.created_at,
+            u."createdAt",
             GREATEST(
-                COALESCE(MAX(t.created_at), u.created_at),
-                COALESCE(MAX(sp.created_at), u.created_at)
+                COALESCE(MAX(t."createdAt"), u."createdAt"),
+                COALESCE(MAX(sp."createdAt"), u."createdAt")
             ) as last_activity
         FROM users u
-        LEFT JOIN transactions t ON u.id = t.user_id
-        LEFT JOIN salary_payments sp ON u.id = sp.user_id
-        GROUP BY u.id, u.name, u.phone, u.created_at
+        LEFT JOIN transactions t ON u.id = t."userId"
+        LEFT JOIN salary_payments sp ON u.id = sp."userId"
+        GROUP BY u.id, u.name, u.phone, u."createdAt"
     ),
     inactive_users AS (
         SELECT 
@@ -56,7 +57,7 @@ BEGIN
         iu.phone,
         iu.last_activity,
         iu.days_since_activity,
-        NOW()
+        current_cleanup_time
     FROM inactive_users iu;
     
     -- Get count for logging
@@ -69,15 +70,15 @@ BEGIN
                 u.id,
                 u.name,
                 u.phone,
-                u.created_at,
+                u."createdAt",
                 GREATEST(
-                    COALESCE(MAX(t.created_at), u.created_at),
-                    COALESCE(MAX(sp.created_at), u.created_at)
+                    COALESCE(MAX(t."createdAt"), u."createdAt"),
+                    COALESCE(MAX(sp."createdAt"), u."createdAt")
                 ) as last_activity
             FROM users u
-            LEFT JOIN transactions t ON u.id = t.user_id
-            LEFT JOIN salary_payments sp ON u.id = sp.user_id
-            GROUP BY u.id, u.name, u.phone, u.created_at
+            LEFT JOIN transactions t ON u.id = t."userId"
+            LEFT JOIN salary_payments sp ON u.id = sp."userId"
+            GROUP BY u.id, u.name, u.phone, u."createdAt"
         ),
         inactive_users AS (
             SELECT id
@@ -88,10 +89,10 @@ BEGIN
         WHERE id IN (SELECT id FROM inactive_users);
     END IF;
     
-    -- Update the log with results
+    -- Update the log with results (using explicit table reference)
     UPDATE user_cleanup_log 
     SET users_cleaned = cleanup_count
-    WHERE cleanup_date = (SELECT MAX(cleanup_date) FROM user_cleanup_log);
+    WHERE user_cleanup_log.cleanup_date = current_cleanup_time;
     
 END;
 $$ LANGUAGE plpgsql;
@@ -111,19 +112,20 @@ CREATE OR REPLACE FUNCTION cleanup_inactive_users_simple()
 RETURNS INTEGER AS $$
 DECLARE
     cleanup_count INTEGER := 0;
+    current_cleanup_time TIMESTAMP WITH TIME ZONE := NOW();
 BEGIN
     -- Delete users inactive for more than 120 days
     WITH user_last_activity AS (
         SELECT 
             u.id,
             GREATEST(
-                COALESCE(MAX(t.created_at), u.created_at),
-                COALESCE(MAX(sp.created_at), u.created_at)
+                COALESCE(MAX(t."createdAt"), u."createdAt"),
+                COALESCE(MAX(sp."createdAt"), u."createdAt")
             ) as last_activity
         FROM users u
-        LEFT JOIN transactions t ON u.id = t.user_id
-        LEFT JOIN salary_payments sp ON u.id = sp.user_id
-        GROUP BY u.id, u.created_at
+        LEFT JOIN transactions t ON u.id = t."userId"
+        LEFT JOIN salary_payments sp ON u.id = sp."userId"
+        GROUP BY u.id, u."createdAt"
     ),
     inactive_users AS (
         SELECT id
@@ -137,7 +139,7 @@ BEGIN
     
     -- Log the cleanup
     INSERT INTO user_cleanup_log (cleanup_date, inactive_days_threshold, users_cleaned)
-    VALUES (NOW(), 120, cleanup_count);
+    VALUES (current_cleanup_time, 120, cleanup_count);
     
     RETURN cleanup_count;
 END;
