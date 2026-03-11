@@ -2551,22 +2551,20 @@ function App() {
                           </div>
                           <div className="calculator-row subtract">
                             <span className="calculator-row-label">
-                              {monthlyTotal < 0 ? '⚠️ Employee Owes (From Last Month):' : '💸 Money Given This Month:'}
+                              {userOutstandingBalance > 0 ? '⚠️ Outstanding Balance (Total Debt):' : '💸 Money Given This Month:'}
                             </span>
                             <span className="calculator-row-value">
-                              {monthlyTotal < 0 ? '' : '- '}{formatIndianCurrency(Math.abs(monthlyTotal))}
+                              - {formatIndianCurrency(userOutstandingBalance > 0 ? userOutstandingBalance : monthlyTotal)}
                             </span>
                           </div>
                         </div>
                         
                         {(() => {
                           const salary = parseFloat(totalSalary);
-                          // If monthlyTotal is negative, employee owes money, so subtract it from salary
-                          // If monthlyTotal is positive, money was given, so subtract it from salary
-                          const balance = monthlyTotal < 0 
-                            ? salary + monthlyTotal  // monthlyTotal is already negative, so this subtracts
-                            : salary - monthlyTotal;
-                          const isNegative = balance < 0;
+                          // Use outstanding balance (includes previous months) instead of just monthly total
+                          const totalDebt = userOutstandingBalance > 0 ? userOutstandingBalance : monthlyTotal;
+                          const balance = salary - totalDebt;
+                          const isNegative = totalDebt > 0; // Employee owes if there's outstanding balance
                           const absBalance = Math.abs(balance);
                           
                           return (
@@ -2576,7 +2574,7 @@ function App() {
                                   {isNegative ? '⚠️ Employee Owes:' : '✅ Salary Remaining:'}
                                 </span>
                                 <span className="calculator-final-value">
-                                  {isNegative ? formatIndianCurrency(monthlyTotal) : formatIndianCurrency(absBalance)}
+                                  {isNegative ? formatIndianCurrency(totalDebt) : formatIndianCurrency(absBalance)}
                                 </span>
                               </div>
                               
@@ -2587,7 +2585,7 @@ function App() {
                                     <div className="info-content">
                                       <div className="info-title">Employee Owes Money</div>
                                       <div className="info-text">
-                                        Employee owes you {formatIndianCurrency(monthlyTotal)} from money you gave them. 
+                                        Employee owes you {formatIndianCurrency(totalDebt)} from money you gave them. 
                                         Decide how much cash to give them for personal expenses. The rest of their salary will go toward debt repayment.
                                       </div>
                                     </div>
@@ -2614,14 +2612,14 @@ function App() {
                                     const cashToEmployee = parseFloat(payingNow) || 0;
                                     // Remaining salary after giving cash goes toward debt repayment
                                     const debtRepayment = salary - cashToEmployee;
-                                    const remainingDebt = Math.max(0, monthlyTotal - debtRepayment);
+                                    const remainingDebt = Math.max(0, totalDebt - debtRepayment);
                                     
                                     return (
                                       <>
                                         <div className="payment-breakdown">
                                           <div className="payment-row">
                                             <span>Total Money Employee Owes You:</span>
-                                            <span>{formatIndianCurrency(monthlyTotal)}</span>
+                                            <span>{formatIndianCurrency(totalDebt)}</span>
                                           </div>
                                           <div className="payment-row">
                                             <span>Monthly Salary Available:</span>
