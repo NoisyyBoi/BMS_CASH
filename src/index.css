@@ -3614,12 +3614,6 @@ h3 { font-size: var(--font-size-lg); }
   }
 }
 
-@media (min-width: 1200px) {
-  .salary-user-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
 .salary-user-card {
   display: flex;
   align-items: center;
