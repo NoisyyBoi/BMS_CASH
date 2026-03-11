@@ -806,6 +806,21 @@ function App() {
     try {
       // Get all transactions for this user
       const transactions = await getUserTransactionsFromSupabase(userId);
+      
+      // Check if there are any carry-forward debt transactions
+      const carryForwardTransactions = transactions.filter(t => 
+        t.purpose && t.purpose.includes('Debt Carried Forward') && t.amount > 0
+      );
+      
+      // If there are carry-forward transactions, use the most recent one as the outstanding balance
+      if (carryForwardTransactions.length > 0) {
+        const mostRecentCarryForward = carryForwardTransactions.sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        )[0];
+        return mostRecentCarryForward.amount;
+      }
+      
+      // Otherwise, calculate from all transactions minus debt repayments
       const totalGiven = transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
       
       // Get all salary payments for this user
@@ -2840,6 +2855,21 @@ function App() {
                     try {
                       // Get all transactions for this user
                       const userTransactions = allTransactions.filter(t => t.userId === user.id);
+                      
+                      // Check if there are any carry-forward debt transactions
+                      const carryForwardTransactions = userTransactions.filter(t => 
+                        t.purpose && t.purpose.includes('Debt Carried Forward') && t.amount > 0
+                      );
+                      
+                      // If there are carry-forward transactions, use the most recent one as the outstanding balance
+                      if (carryForwardTransactions.length > 0) {
+                        const mostRecentCarryForward = carryForwardTransactions.sort((a, b) => 
+                          new Date(b.createdAt) - new Date(a.createdAt)
+                        )[0];
+                        return mostRecentCarryForward.amount;
+                      }
+                      
+                      // Otherwise, calculate from all transactions minus debt repayments
                       const totalGiven = userTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
                       
                       // Get all salary payments for this user
