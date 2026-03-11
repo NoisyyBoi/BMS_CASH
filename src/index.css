@@ -76,6 +76,8 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 0;
 }
 
 /* Typography */
@@ -110,7 +112,7 @@ h3 { font-size: var(--font-size-lg); }
   margin: 0 auto;
   width: 100%;
   background: var(--bg);
-  padding-top: 0;
+  padding: 0;
 }
 
 /* Responsive Design */
