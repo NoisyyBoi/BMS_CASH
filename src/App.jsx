@@ -820,21 +820,9 @@ function App() {
         return mostRecentCarryForward.amount;
       }
       
-      // Otherwise, calculate from all transactions minus debt repayments
-      const totalGiven = transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-      
-      // Get all salary payments for this user
-      const allSalaryPayments = await getSalaryPaymentsFromSupabase();
-      const userSalaryPayments = allSalaryPayments.filter(sp => sp.userId === userId);
-      
-      // Calculate total debt repayment (deductedAmount represents money used to pay back debt)
-      const totalDebtRepayment = userSalaryPayments.reduce((sum, sp) => {
-        return sum + (sp.deductedAmount || 0);
-      }, 0);
-      
-      // Outstanding balance = Total given - Total debt repayment
-      const outstandingBalance = totalGiven - totalDebtRepayment;
-      return Math.max(0, outstandingBalance); // Don't show negative balances
+      // If no carry-forward transactions exist, there's no outstanding balance from previous months
+      // (Current month's transactions are handled separately in the monthly total)
+      return 0;
     } catch (error) {
       console.error('Error calculating outstanding balance:', error);
       return 0;
@@ -2867,20 +2855,8 @@ function App() {
                         return mostRecentCarryForward.amount;
                       }
                       
-                      // Otherwise, calculate from all transactions minus debt repayments
-                      const totalGiven = userTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-                      
-                      // Get all salary payments for this user
-                      const userSalaryPayments = salaryPayments.filter(sp => sp.userId === user.id);
-                      
-                      // Calculate total debt repayment (deductedAmount represents money used to pay back debt)
-                      const totalDebtRepayment = userSalaryPayments.reduce((sum, sp) => {
-                        return sum + (sp.deductedAmount || 0);
-                      }, 0);
-                      
-                      // Outstanding balance = Total given - Total debt repayment
-                      const outstandingBalance = totalGiven - totalDebtRepayment;
-                      return Math.max(0, outstandingBalance); // Don't show negative balances
+                      // If no carry-forward transactions exist, there's no outstanding balance from previous months
+                      return 0;
                     } catch (error) {
                       console.error('Error calculating outstanding balance for user:', user.name, error);
                       return 0;
