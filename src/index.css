@@ -3716,23 +3716,31 @@ h3 { font-size: var(--font-size-lg); }
   flex-direction: column;
   align-items: flex-end;
   margin-left: var(--space-md);
+  min-width: 120px;
+  text-align: right;
 }
 
 .salary-user-total-label {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   font-weight: 500;
-  margin-bottom: var(--space-xs);
+  margin-bottom: 4px;
+  white-space: nowrap;
 }
 
 .salary-user-total-amount {
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--primary);
+  white-space: nowrap;
 }
 
 /* Desktop responsive salary user total */
 @media (min-width: 768px) {
+  .salary-user-total {
+    min-width: 150px;
+  }
+  
   .salary-user-total-label {
     font-size: var(--font-size-base);
   }
