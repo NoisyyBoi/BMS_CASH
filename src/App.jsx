@@ -811,10 +811,14 @@ function App() {
       // Get all salary payments for this user
       const allSalaryPayments = await getSalaryPaymentsFromSupabase();
       const userSalaryPayments = allSalaryPayments.filter(sp => sp.userId === userId);
-      const totalPaid = userSalaryPayments.reduce((sum, sp) => sum + (sp.paidToEmployee || 0), 0);
       
-      // Outstanding balance = Total given - Total paid
-      const outstandingBalance = totalGiven - totalPaid;
+      // Calculate total debt repayment (deductedAmount represents money used to pay back debt)
+      const totalDebtRepayment = userSalaryPayments.reduce((sum, sp) => {
+        return sum + (sp.deductedAmount || 0);
+      }, 0);
+      
+      // Outstanding balance = Total given - Total debt repayment
+      const outstandingBalance = totalGiven - totalDebtRepayment;
       return Math.max(0, outstandingBalance); // Don't show negative balances
     } catch (error) {
       console.error('Error calculating outstanding balance:', error);
@@ -889,34 +893,12 @@ function App() {
     }
 
     const salary = parseFloat(totalSalary);
-    const balance = salary - userMonthlyTotal;
-    const isNegative = balance < 0;
-    const absBalance = Math.abs(balance);
-    const payAmount = parseFloat(payingNow) || (isNegative ? 0 : balance);
+    const cashToEmployee = parseFloat(payingNow) || 0;
+    const debtRepayment = salary - cashToEmployee;
     
-    let paidToEmployee, remainingBalance, deductedAmount;
-    
-    if (isNegative) {
-      // Employee owes money
-      deductedAmount = Math.min(payAmount, salary);
-      paidToEmployee = salary - deductedAmount;
-      remainingBalance = absBalance - deductedAmount;
-    } else {
-      // Employee has salary remaining
-      const difference = payAmount - balance;
-      
-      if (difference > 0) {
-        // Overpayment - employee owes money back
-        paidToEmployee = payAmount;
-        remainingBalance = difference; // This is what employee owes
-        deductedAmount = null;
-      } else {
-        // Normal payment or underpayment
-        paidToEmployee = payAmount;
-        remainingBalance = Math.abs(difference); // Carry forward credit
-        deductedAmount = null;
-      }
-    }
+    // For the new logic: employee owes the full amount given to them
+    const totalOwed = userMonthlyTotal; // This is the total money given this month
+    const remainingDebt = Math.max(0, totalOwed - debtRepayment);
     
     const now = new Date();
     const monthName = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
@@ -929,9 +911,9 @@ function App() {
       monthlySalary: salary,
       moneyGiven: userMonthlyTotal,
       paidSalary: null,
-      deductedAmount: deductedAmount,
-      paidToEmployee: paidToEmployee,
-      remainingBalance: remainingBalance > 0 ? remainingBalance : null,
+      deductedAmount: debtRepayment, // Amount used for debt repayment
+      paidToEmployee: cashToEmployee, // Cash given to employee for expenses
+      remainingBalance: remainingDebt > 0 ? remainingDebt : null,
       month: monthName,
       createdBy: userRole, // Track which admin created this
       createdAt: new Date().toISOString(),
@@ -941,26 +923,34 @@ function App() {
       // Save salary payment
       await saveSalaryPaymentToSupabase(salaryPayment);
       
-      // Delete all old transactions for this user
-      await deleteUserTransactionsFromSupabase(selectedUserForHistory.id);
-      
-      // If there's a remaining balance (debt or credit), create a transaction
-      if (remainingBalance > 0) {
-        const difference = payAmount - balance;
-        const isDebt = difference > 0; // Employee owes money (overpayment)
-        
+      // Create a transaction for the remaining debt if any
+      if (remainingDebt > 0) {
         const balanceTransaction = {
           id: Date.now() + 1,
           userId: selectedUserForHistory.id,
           userName: selectedUserForHistory.name,
           userPhone: selectedUserForHistory.phone,
-          amount: -remainingBalance, // Negative amount (shows in red)
-          purpose: isDebt 
-            ? `Owes from Overpayment (${monthName})` 
-            : isNegative 
-              ? `Balance Carried Forward - Advance (${monthName})`
-              : `Balance Carried Forward - Credit (${monthName})`,
-          createdBy: userRole, // Track which admin created this
+          amount: remainingDebt, // Positive amount (debt carried forward)
+          purpose: `Debt Carried Forward (${monthName})`,
+          createdBy: userRole,
+          createdAt: new Date().toISOString(),
+        };
+        await saveTransactionToSupabase(balanceTransaction);
+      }
+      
+      // Delete all old transactions for this user (except the new carry-forward one)
+      await deleteUserTransactionsFromSupabase(selectedUserForHistory.id);
+      
+      // Re-add the carry-forward transaction if there's remaining debt
+      if (remainingDebt > 0) {
+        const balanceTransaction = {
+          id: Date.now() + 2,
+          userId: selectedUserForHistory.id,
+          userName: selectedUserForHistory.name,
+          userPhone: selectedUserForHistory.phone,
+          amount: remainingDebt,
+          purpose: `Debt Carried Forward (${monthName})`,
+          createdBy: userRole,
           createdAt: new Date().toISOString(),
         };
         await saveTransactionToSupabase(balanceTransaction);
@@ -977,6 +967,10 @@ function App() {
       setUserTransactionsData(transactions);
       const monthlyTotal = getMonthlyTotal(transactions);
       setUserMonthlyTotal(monthlyTotal);
+      
+      // Recalculate outstanding balance
+      const outstandingBalance = await calculateOutstandingBalance(selectedUserForHistory.id);
+      setUserOutstandingBalance(outstandingBalance);
       
       // Reset fields
       setTotalSalary('');
@@ -2567,7 +2561,7 @@ function App() {
                                   {isNegative ? '⚠️ Employee Owes:' : '✅ Salary Remaining:'}
                                 </span>
                                 <span className="calculator-final-value">
-                                  {formatIndianCurrency(absBalance)}
+                                  {isNegative ? formatIndianCurrency(monthlyTotal) : formatIndianCurrency(absBalance)}
                                 </span>
                               </div>
                               
@@ -2578,7 +2572,7 @@ function App() {
                                     <div className="info-content">
                                       <div className="info-title">Employee Owes Money</div>
                                       <div className="info-text">
-                                        Employee owes you {formatIndianCurrency(absBalance)} from money you gave them. 
+                                        Employee owes you {formatIndianCurrency(monthlyTotal)} from money you gave them. 
                                         Decide how much cash to give them for personal expenses. The rest of their salary will go toward debt repayment.
                                       </div>
                                     </div>
@@ -2605,14 +2599,14 @@ function App() {
                                     const cashToEmployee = parseFloat(payingNow) || 0;
                                     // Remaining salary after giving cash goes toward debt repayment
                                     const debtRepayment = salary - cashToEmployee;
-                                    const remainingDebt = Math.max(0, absBalance - debtRepayment);
+                                    const remainingDebt = Math.max(0, monthlyTotal - debtRepayment);
                                     
                                     return (
                                       <>
                                         <div className="payment-breakdown">
                                           <div className="payment-row">
                                             <span>Total Money Employee Owes You:</span>
-                                            <span>{formatIndianCurrency(absBalance)}</span>
+                                            <span>{formatIndianCurrency(monthlyTotal)}</span>
                                           </div>
                                           <div className="payment-row">
                                             <span>Monthly Salary Available:</span>
@@ -2850,10 +2844,14 @@ function App() {
                       
                       // Get all salary payments for this user
                       const userSalaryPayments = salaryPayments.filter(sp => sp.userId === user.id);
-                      const totalPaid = userSalaryPayments.reduce((sum, sp) => sum + (sp.paidToEmployee || 0), 0);
                       
-                      // Outstanding balance = Total given - Total paid
-                      const outstandingBalance = totalGiven - totalPaid;
+                      // Calculate total debt repayment (deductedAmount represents money used to pay back debt)
+                      const totalDebtRepayment = userSalaryPayments.reduce((sum, sp) => {
+                        return sum + (sp.deductedAmount || 0);
+                      }, 0);
+                      
+                      // Outstanding balance = Total given - Total debt repayment
+                      const outstandingBalance = totalGiven - totalDebtRepayment;
                       return Math.max(0, outstandingBalance); // Don't show negative balances
                     } catch (error) {
                       console.error('Error calculating outstanding balance for user:', user.name, error);
