@@ -2885,6 +2885,16 @@ h3 { font-size: var(--font-size-lg); }
   font-weight: 600;
 }
 
+.salary-row.positive {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.salary-row.paid {
+  color: var(--primary);
+  font-weight: 600;
+}
+
 .salary-row.total {
   border-top: 2px solid var(--border);
   margin-top: var(--space-sm);
