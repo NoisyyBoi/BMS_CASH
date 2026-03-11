@@ -2889,6 +2889,10 @@ function App() {
                     }
                   })();
 
+                  // Calculate total amount given to this user
+                  const userTransactions = allTransactions.filter(t => t.userId === user.id);
+                  const totalGiven = userTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
                   return (
                     <button
                       key={user.id}
@@ -2905,7 +2909,10 @@ function App() {
                           </div>
                         )}
                       </div>
-                      <div className="salary-user-arrow">→</div>
+                      <div className="salary-user-total">
+                        <div className="salary-user-total-label">Total Given</div>
+                        <div className="salary-user-total-amount">{formatIndianCurrency(totalGiven)}</div>
+                      </div>
                     </button>
                   );
                 })}
