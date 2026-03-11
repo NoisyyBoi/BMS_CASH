@@ -2451,11 +2451,6 @@ function App() {
                     <button className="share-btn pdf" onClick={handleDownloadUserPDF}>
                       📄 Download PDF
                     </button>
-                    {userRole === 'user' && (
-                      <button className="share-btn logout-btn-main" onClick={handleLogout}>
-                        🚪 Logout
-                      </button>
-                    )}
                   </div>
                   
                   <div className="salary-calculator-card">

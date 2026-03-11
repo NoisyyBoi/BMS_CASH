@@ -1029,18 +1029,6 @@ h3 { font-size: var(--font-size-lg); }
   border: 2px solid var(--border);
 }
 
-.share-btn.logout-btn-main {
-  background: linear-gradient(135deg, #C62828 0%, #D32F2F 100%);
-  color: white;
-  font-weight: 700;
-  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.3);
-}
-
-.share-btn.logout-btn-main:active {
-  background: linear-gradient(135deg, #B71C1C 0%, #C62828 100%);
-  transform: scale(0.96);
-}
-
 .share-btn:active {
   transform: scale(0.98);
 }
