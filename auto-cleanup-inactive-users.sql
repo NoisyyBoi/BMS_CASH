@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION auto_cleanup_inactive_users(
     dry_run BOOLEAN DEFAULT FALSE
 )
 RETURNS TABLE(
-    action TEXT,
+    action TEXT,        
     user_id BIGINT,
     user_name TEXT,
     user_phone TEXT,

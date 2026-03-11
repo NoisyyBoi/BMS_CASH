@@ -178,8 +178,14 @@ function App() {
   // Browser back button handler
   useEffect(() => {
     const handlePopState = (event) => {
+      // Special handling for users - any back navigation should logout
+      if (userRole === 'user') {
+        handleLogout();
+        return;
+      }
+      
       if (event.state && event.state.view) {
-        // Prevent going back to login if authenticated
+        // Prevent going back to login if authenticated (admin/viewer only)
         if (event.state.view === VIEWS.LOGIN && isAuthenticated) {
           // Stay on current view and replace history
           window.history.replaceState({ view: view }, '', window.location.href);
@@ -197,8 +203,13 @@ function App() {
       } else {
         // If no state, go to appropriate default view
         if (isAuthenticated) {
-          setView(VIEWS.HOME);
-          window.history.replaceState({ view: VIEWS.HOME }, '', window.location.href);
+          // Users should only see their history, admins see home
+          if (userRole === 'user') {
+            handleLogout();
+          } else {
+            setView(VIEWS.HOME);
+            window.history.replaceState({ view: VIEWS.HOME }, '', window.location.href);
+          }
         } else {
           setView(VIEWS.LOGIN);
           window.history.replaceState({ view: VIEWS.LOGIN }, '', window.location.href);
@@ -266,7 +277,7 @@ function App() {
         const monthlyTotal = getMonthlyTotal(transactions);
         setUserMonthlyTotal(monthlyTotal);
         
-        navigateToView(VIEWS.USER_HISTORY, true);
+        navigateToView(VIEWS.USER_HISTORY, true); // Use replace to prevent back navigation
         showToast(`✓ Welcome ${matchedUser.name}`);
         return;
       }
@@ -1393,17 +1404,26 @@ function App() {
     const authViews = [VIEWS.LOGIN, VIEWS.OTP_VERIFY, VIEWS.FORGOT_PASSWORD, VIEWS.RESET_PASSWORD];
     const isAuthFlow = authViews.includes(newView) || authViews.includes(view);
     
-    if (replace || isAuthFlow) {
+    // Always use replaceState for users to prevent back navigation
+    const shouldReplace = replace || isAuthFlow || userRole === 'user';
+    
+    if (shouldReplace) {
       // Replace current history entry
       window.history.replaceState({ view: newView }, '', window.location.href);
     } else {
-      // Push new history entry for normal navigation
+      // Push new history entry for normal navigation (admin/viewer only)
       window.history.pushState({ view: newView }, '', window.location.href);
     }
   };
 
   const goBack = () => {
-    // Check if we can safely go back without hitting login
+    // Special handling for users - they should only go back to login
+    if (userRole === 'user') {
+      handleLogout();
+      return;
+    }
+    
+    // Admin/viewer navigation logic
     const canGoBack = window.history.length > 1;
     
     if (canGoBack) {
@@ -1415,7 +1435,7 @@ function App() {
       }
       window.history.back();
     } else {
-      // Fallback navigation logic
+      // Fallback navigation logic for admins/viewers only
       if (view === VIEWS.ITEMS) {
         navigateToView(VIEWS.CATEGORIES);
       } else if (view === VIEWS.CATEGORIES) {
@@ -1432,7 +1452,7 @@ function App() {
       } else if (view === VIEWS.REVIEW) {
         navigateToView(VIEWS.CATEGORIES);
       } else if (isAuthenticated && view !== VIEWS.HOME) {
-        // If authenticated and not at home, go to home
+        // If authenticated and not at home, go to home (admin/viewer only)
         navigateToView(VIEWS.HOME);
       }
     }
@@ -1620,8 +1640,8 @@ function App() {
       {view !== VIEWS.HOME && view !== VIEWS.LOGIN && view !== VIEWS.OTP_VERIFY && view !== VIEWS.FORGOT_PASSWORD && view !== VIEWS.RESET_PASSWORD && (
         <header className="header">
           <div className="header-content">
-            <button className="back-btn" onClick={goBack} aria-label="Go back">
-              ←
+            <button className="back-btn" onClick={goBack} aria-label={userRole === 'user' ? 'Logout' : 'Go back'}>
+              {userRole === 'user' ? '🚪 Logout' : '←'}
             </button>
             <div className="header-center">
               <img src="/logo.png" alt="BMS Diesel Systems" className="header-logo" />
