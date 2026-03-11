@@ -2539,20 +2539,22 @@ function App() {
                           </div>
                           <div className="calculator-row subtract">
                             <span className="calculator-row-label">
-                              {userOutstandingBalance > 0 ? '⚠️ Outstanding Balance (Total Debt):' : '💸 Money Given This Month:'}
+                              ⚠️ Outstanding Balance (Total Debt):
                             </span>
                             <span className="calculator-row-value">
-                              - {formatIndianCurrency(userOutstandingBalance > 0 ? userOutstandingBalance : monthlyTotal)}
+                              - {formatIndianCurrency(userTransactionsData.reduce((sum, t) => sum + Math.abs(t.amount), 0))}
                             </span>
                           </div>
                         </div>
                         
                         {(() => {
                           const salary = parseFloat(totalSalary);
-                          // Use outstanding balance (includes previous months) instead of just monthly total
-                          const totalDebt = userOutstandingBalance > 0 ? userOutstandingBalance : monthlyTotal;
+                          // Calculate total amount given to this user (all time)
+                          const totalAmountGiven = userTransactionsData.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                          // Use total amount given as the debt
+                          const totalDebt = totalAmountGiven;
                           const balance = salary - totalDebt;
-                          const isNegative = totalDebt > 0; // Employee owes if there's outstanding balance
+                          const isNegative = balance < 0; // Employee owes if salary can't cover the debt
                           const absBalance = Math.abs(balance);
                           
                           return (
