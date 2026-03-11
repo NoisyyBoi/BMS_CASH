@@ -28,6 +28,7 @@ const VIEWS = {
   USER_TOTAL: 'user_total',
   USER_HISTORY: 'user_history',
   SALARY_PAYMENTS: 'salary_payments',
+  USER_SALARY_HISTORY: 'user_salary_history',
   DELETED_TRANSACTIONS: 'deleted_transactions',
   PROJECT: 'project',
   CATEGORIES: 'categories',
@@ -101,9 +102,12 @@ function App() {
   const [payingNow, setPayingNow] = useState('');
   const [userTransactionsData, setUserTransactionsData] = useState([]);
   const [userMonthlyTotal, setUserMonthlyTotal] = useState(0);
+  const [userOutstandingBalance, setUserOutstandingBalance] = useState(0); // Total balance across all time
   const [transactionFilter, setTransactionFilter] = useState('all');
   const [salaryPayments, setSalaryPayments] = useState([]);
   const [loadingSalaryPayments, setLoadingSalaryPayments] = useState(false);
+  const [selectedUserForSalaryHistory, setSelectedUserForSalaryHistory] = useState(null);
+  const [userSalaryHistory, setUserSalaryHistory] = useState([]);
   const [showMonthlySummary, setShowMonthlySummary] = useState(false);
   const [expandedSalaryMonths, setExpandedSalaryMonths] = useState({});
   const [deletedTransactions, setDeletedTransactions] = useState([]);
@@ -768,6 +772,10 @@ function App() {
     const monthlyTotal = getMonthlyTotal(transactions);
     setUserMonthlyTotal(monthlyTotal);
     
+    // Calculate outstanding balance
+    const outstandingBalance = await calculateOutstandingBalance(user.id);
+    setUserOutstandingBalance(outstandingBalance);
+    
     navigateToView(VIEWS.USER_HISTORY);
   };
 
@@ -792,6 +800,26 @@ function App() {
         return transDate.getMonth() === currentMonth && transDate.getFullYear() === currentYear;
       })
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  };
+
+  const calculateOutstandingBalance = async (userId) => {
+    try {
+      // Get all transactions for this user
+      const transactions = await getUserTransactionsFromSupabase(userId);
+      const totalGiven = transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+      // Get all salary payments for this user
+      const allSalaryPayments = await getSalaryPaymentsFromSupabase();
+      const userSalaryPayments = allSalaryPayments.filter(sp => sp.userId === userId);
+      const totalPaid = userSalaryPayments.reduce((sum, sp) => sum + (sp.paidToEmployee || 0), 0);
+      
+      // Outstanding balance = Total given - Total paid
+      const outstandingBalance = totalGiven - totalPaid;
+      return Math.max(0, outstandingBalance); // Don't show negative balances
+    } catch (error) {
+      console.error('Error calculating outstanding balance:', error);
+      return 0;
+    }
   };
 
   const getFilteredUsers = () => {
@@ -971,6 +999,19 @@ function App() {
       setLoadingSalaryPayments(false);
     }
     navigateToView(VIEWS.SALARY_PAYMENTS);
+  };
+
+  const viewUserSalaryHistory = async (user) => {
+    setSelectedUserForSalaryHistory(user);
+    try {
+      const allPayments = await getSalaryPaymentsFromSupabase();
+      const userPayments = allPayments.filter(payment => payment.userId === user.id);
+      setUserSalaryHistory(userPayments);
+      navigateToView(VIEWS.USER_SALARY_HISTORY);
+    } catch (error) {
+      console.error('Error loading user salary history:', error);
+      setUserSalaryHistory([]);
+    }
   };
 
   const handleDeleteSalaryPayment = async (paymentId) => {
@@ -1442,6 +1483,8 @@ function App() {
         navigateToView(VIEWS.PROJECT);
       } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL || view === VIEWS.SALARY_PAYMENTS || view === VIEWS.DELETED_TRANSACTIONS) {
         navigateToView(VIEWS.HOME);
+      } else if (view === VIEWS.USER_SALARY_HISTORY) {
+        navigateToView(VIEWS.SALARY_PAYMENTS);
       } else if (view === VIEWS.USER_HISTORY) {
         // If logged in as user, logout instead of going back
         if (userRole === 'user') {
@@ -1664,6 +1707,7 @@ function App() {
                   {view === VIEWS.USER_TOTAL && 'User Total'}
                   {view === VIEWS.USER_HISTORY && 'User History'}
                   {view === VIEWS.SALARY_PAYMENTS && 'Salary Payments'}
+                  {view === VIEWS.USER_SALARY_HISTORY && 'Salary History'}
                   {view === VIEWS.DELETED_TRANSACTIONS && 'Deleted Transactions'}
                   {view === VIEWS.CATEGORIES && 'Select Category'}
                   {view === VIEWS.ITEMS && categories.find(c => c.id === currentCategory)?.name}
@@ -2379,6 +2423,23 @@ function App() {
                     </div>
                   </div>
                   
+                  {/* Outstanding Balance Card */}
+                  {userOutstandingBalance > 0 && (
+                    <div className="outstanding-balance-card">
+                      <div className="outstanding-balance-header">
+                        <span className="outstanding-balance-icon">⚠️</span>
+                        <span className="outstanding-balance-title">Outstanding Balance</span>
+                      </div>
+                      <div className="outstanding-balance-amount">
+                        <span className="outstanding-balance-label">Total Amount Pending:</span>
+                        <span className="outstanding-balance-value">{formatIndianCurrency(userOutstandingBalance)}</span>
+                      </div>
+                      <div className="outstanding-balance-note">
+                        This is the total unpaid amount across all months
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Transaction Filter Dropdown */}
                   <div className="filter-section">
                     <label className="filter-label">
@@ -2782,6 +2843,58 @@ function App() {
         {/* Salary Payments History Screen */}
         {view === VIEWS.SALARY_PAYMENTS && (
           <div className="salary-payments-screen">
+            {/* User Selection for Individual Salary History */}
+            <div className="salary-user-selection">
+              <h3>View Individual User Salary History</h3>
+              <div className="salary-user-grid">
+                {allUsers.map(user => {
+                  // Calculate outstanding balance for this user
+                  const userOutstanding = (() => {
+                    try {
+                      // Get all transactions for this user
+                      const userTransactions = allTransactions.filter(t => t.userId === user.id);
+                      const totalGiven = userTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                      
+                      // Get all salary payments for this user
+                      const userSalaryPayments = salaryPayments.filter(sp => sp.userId === user.id);
+                      const totalPaid = userSalaryPayments.reduce((sum, sp) => sum + (sp.paidToEmployee || 0), 0);
+                      
+                      // Outstanding balance = Total given - Total paid
+                      const outstandingBalance = totalGiven - totalPaid;
+                      return Math.max(0, outstandingBalance); // Don't show negative balances
+                    } catch (error) {
+                      console.error('Error calculating outstanding balance for user:', user.name, error);
+                      return 0;
+                    }
+                  })();
+
+                  return (
+                    <button
+                      key={user.id}
+                      className="salary-user-card"
+                      onClick={() => viewUserSalaryHistory(user)}
+                    >
+                      <div className="salary-user-info">
+                        <div className="salary-user-name">{user.name}</div>
+                        <div className="salary-user-phone">{user.phone}</div>
+                        {userOutstanding > 0 && (
+                          <div className="salary-user-balance">
+                            <span className="balance-label">Outstanding:</span>
+                            <span className="balance-amount">{formatIndianCurrency(userOutstanding)}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="salary-user-arrow">→</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="section-divider">
+              <h3>All Salary Payments</h3>
+            </div>
+            
             {loadingSalaryPayments ? (
               <div className="empty-state">
                 <div className="empty-icon">⏳</div>
@@ -2861,6 +2974,149 @@ function App() {
                                 )}
                               </div>
                               
+                              <div className="payment-card-body">
+                                <div className="payment-detail-row">
+                                  <span className="payment-detail-label">💰 Monthly Salary:</span>
+                                  <span className="payment-detail-value">{formatIndianCurrency(payment.monthlySalary)}</span>
+                                </div>
+                                <div className="payment-detail-row">
+                                  <span className="payment-detail-label">💸 Money Given:</span>
+                                  <span className="payment-detail-value subtract">{formatIndianCurrency(payment.moneyGiven)}</span>
+                                </div>
+                                {payment.paidSalary && (
+                                  <div className="payment-detail-row">
+                                    <span className="payment-detail-label">💳 Paid Salary:</span>
+                                    <span className="payment-detail-value positive">{formatIndianCurrency(payment.paidSalary)}</span>
+                                  </div>
+                                )}
+                                {payment.deductedAmount && (
+                                  <div className="payment-detail-row">
+                                    <span className="payment-detail-label">📉 Deducted:</span>
+                                    <span className="payment-detail-value subtract">{formatIndianCurrency(payment.deductedAmount)}</span>
+                                  </div>
+                                )}
+                                <div className="payment-detail-row total">
+                                  <span className="payment-detail-label">💵 Paid to Employee:</span>
+                                  <span className="payment-detail-value">{formatIndianCurrency(payment.paidToEmployee)}</span>
+                                </div>
+                                {payment.remainingBalance && payment.remainingBalance > 0 && (
+                                  <div className="payment-detail-row remaining">
+                                    <span className="payment-detail-label">⚠️ Remaining Balance:</span>
+                                    <span className="payment-detail-value">{formatIndianCurrency(payment.remainingBalance)}</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="payment-card-footer">
+                                <span className="payment-date">
+                                  {new Date(payment.createdAt).toLocaleDateString('en-IN', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                  {payment.createdBy && (
+                                    <span className="transaction-admin"> • by {payment.createdBy}</span>
+                                  )}
+                                </span>
+                                {(() => {
+                                  const createdDate = new Date(payment.createdAt);
+                                  const now = new Date();
+                                  const daysElapsed = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+                                  const daysRemaining = 120 - daysElapsed;
+                                  
+                                  if (daysRemaining <= 30 && daysRemaining > 0) {
+                                    return (
+                                      <div className="auto-delete-warning">
+                                        <span className="warning-icon">⏰</span>
+                                        <span className="warning-text">Auto-deletes in {daysRemaining} days</span>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* User Salary History Screen */}
+        {view === VIEWS.USER_SALARY_HISTORY && selectedUserForSalaryHistory && (
+          <div className="user-salary-history-screen">
+            <div className="user-info-card">
+              <div className="user-info-header">
+                <div className="user-info-icon">👤</div>
+                <div>
+                  <div className="user-info-name">{selectedUserForSalaryHistory.name}</div>
+                  <div className="user-info-phone">{selectedUserForSalaryHistory.phone}</div>
+                </div>
+              </div>
+            </div>
+
+            {userSalaryHistory.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">💰</div>
+                <p>No salary payments for this user</p>
+                <p>ಈ ಬಳಕೆದಾರರಿಗೆ ಯಾವುದೇ ಸಂಬಳ ಪಾವತಿಗಳಿಲ್ಲ</p>
+              </div>
+            ) : (
+              <div className="user-salary-history-list">
+                {(() => {
+                  // Sort payments by date (newest first)
+                  const sortedPayments = [...userSalaryHistory].sort((a, b) => 
+                    new Date(b.createdAt) - new Date(a.createdAt)
+                  );
+                  
+                  // Group by month
+                  const groupedByMonth = {};
+                  sortedPayments.forEach(payment => {
+                    const month = payment.month;
+                    if (!groupedByMonth[month]) {
+                      groupedByMonth[month] = {
+                        payments: [],
+                        total: 0
+                      };
+                    }
+                    groupedByMonth[month].payments.push(payment);
+                    groupedByMonth[month].total += payment.paidToEmployee;
+                  });
+                  
+                  return Object.entries(groupedByMonth).map(([month, data]) => (
+                    <div key={month} className="history-date-group">
+                      <div 
+                        className="daily-summary"
+                        onClick={() => toggleSalaryMonthExpansion(month)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="daily-summary-date">
+                          <span className="daily-summary-icon">📅</span>
+                          {month}
+                          <span className="daily-summary-count">({data.payments.length})</span>
+                        </div>
+                        <div className="daily-summary-right">
+                          <div className="daily-summary-total">
+                            <span className="daily-summary-label">Total Paid:</span>
+                            <span className="daily-summary-amount">{formatIndianCurrency(data.total)}</span>
+                          </div>
+                          <span className={`expand-icon ${expandedSalaryMonths[month] ? 'expanded' : ''}`}>
+                            ▼
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {expandedSalaryMonths[month] && (
+                        <div className="transactions-container">
+                          {data.payments.map(payment => (
+                            <div key={payment.id} className="salary-payment-card">
                               <div className="payment-card-body">
                                 <div className="payment-detail-row">
                                   <span className="payment-detail-label">💰 Monthly Salary:</span>
