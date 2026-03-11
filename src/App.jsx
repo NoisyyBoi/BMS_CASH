@@ -1640,8 +1640,19 @@ function App() {
       {view !== VIEWS.HOME && view !== VIEWS.LOGIN && view !== VIEWS.OTP_VERIFY && view !== VIEWS.FORGOT_PASSWORD && view !== VIEWS.RESET_PASSWORD && (
         <header className="header">
           <div className="header-content">
-            <button className="back-btn" onClick={goBack} aria-label={userRole === 'user' ? 'Logout' : 'Go back'}>
-              {userRole === 'user' ? '🚪 Logout' : '←'}
+            <button 
+              className={`back-btn ${userRole === 'user' ? 'logout-btn' : ''}`} 
+              onClick={goBack} 
+              aria-label={userRole === 'user' ? 'Logout' : 'Go back'}
+            >
+              {userRole === 'user' ? (
+                <>
+                  <span className="logout-icon">🚪</span>
+                  <span className="logout-text">Logout</span>
+                </>
+              ) : (
+                '←'
+              )}
             </button>
             <div className="header-center">
               <img src="/logo.png" alt="BMS Diesel Systems" className="header-logo" />
@@ -2440,6 +2451,11 @@ function App() {
                     <button className="share-btn pdf" onClick={handleDownloadUserPDF}>
                       📄 Download PDF
                     </button>
+                    {userRole === 'user' && (
+                      <button className="share-btn logout-btn-main" onClick={handleLogout}>
+                        🚪 Logout
+                      </button>
+                    )}
                   </div>
                   
                   <div className="salary-calculator-card">

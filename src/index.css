@@ -214,6 +214,32 @@ h3 { font-size: var(--font-size-lg); }
   background: rgba(21, 101, 192, 0.25);
 }
 
+/* Logout button variant for users */
+.back-btn.logout-btn {
+  width: auto;
+  min-width: 80px;
+  padding: 0 var(--space-md);
+  background: linear-gradient(135deg, #C62828 0%, #D32F2F 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  gap: var(--space-xs);
+}
+
+.back-btn.logout-btn:active {
+  background: linear-gradient(135deg, #B71C1C 0%, #C62828 100%);
+}
+
+.logout-icon {
+  font-size: 16px;
+}
+
+.logout-text {
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* Main Content */
 .main-content {
   flex: 1;
@@ -494,27 +520,21 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .home-actions {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: var(--space-md);
   padding: 0 var(--space-md);
 }
 
-/* Desktop responsive home actions */
-@media (min-width: 768px) {
+/* Desktop responsive home actions - 3 columns only on desktop */
+@media (min-width: 1024px) {
   .home-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--space-lg);
     padding: 0 var(--space-xl);
     max-width: 900px;
     margin: 0 auto;
-  }
-}
-
-@media (min-width: 1024px) {
-  .home-actions {
-    gap: var(--space-xl);
-    padding: 0 40px;
-    max-width: 1000px;
   }
 }
 
@@ -538,16 +558,16 @@ h3 { font-size: var(--font-size-lg); }
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 80px; /* Increased from 64px for larger buttons */
+  min-height: 64px; /* Original mobile height */
   position: relative;
 }
 
-/* Desktop responsive buttons - larger for 3x2 grid */
-@media (min-width: 768px) {
+/* Desktop responsive buttons - larger only on desktop */
+@media (min-width: 1024px) {
   .btn {
     padding: var(--space-lg) var(--space-xl);
     font-size: var(--font-size-lg);
-    min-height: 72px; /* Increased from 48px */
+    min-height: 72px;
     gap: var(--space-md);
   }
 }
@@ -660,19 +680,13 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .btn-icon {
-  font-size: 32px; /* Increased from 28px for larger buttons */
+  font-size: 28px; /* Original mobile size */
 }
 
-/* Desktop responsive button icons - larger for 3x2 grid */
-@media (min-width: 768px) {
-  .btn-icon {
-    font-size: 28px; /* Increased from 22px */
-  }
-}
-
+/* Desktop responsive button icons - larger only on desktop */
 @media (min-width: 1024px) {
   .btn-icon {
-    font-size: 26px; /* Increased from 20px */
+    font-size: 26px;
   }
 }
 
@@ -703,14 +717,14 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .btn-kannada {
-  font-size: var(--font-size-lg); /* Increased from base size */
+  font-size: var(--font-size-base); /* Original mobile size */
   opacity: 0.9;
 }
 
 /* Desktop responsive Kannada text */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .btn-kannada {
-    font-size: var(--font-size-base); /* Increased from sm */
+    font-size: var(--font-size-lg);
   }
 }
 
@@ -1013,6 +1027,18 @@ h3 { font-size: var(--font-size-lg); }
   background: var(--bg-card);
   color: var(--text-primary);
   border: 2px solid var(--border);
+}
+
+.share-btn.logout-btn-main {
+  background: linear-gradient(135deg, #C62828 0%, #D32F2F 100%);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.3);
+}
+
+.share-btn.logout-btn-main:active {
+  background: linear-gradient(135deg, #B71C1C 0%, #C62828 100%);
+  transform: scale(0.96);
 }
 
 .share-btn:active {
