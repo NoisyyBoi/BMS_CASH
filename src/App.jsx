@@ -82,6 +82,9 @@ function App() {
   const [userReferral, setUserReferral] = useState('');
   const [userValidationErrors, setUserValidationErrors] = useState([]);
 
+  // Give money validation states
+  const [giveMoneyValidationErrors, setGiveMoneyValidationErrors] = useState([]);
+
   // Give money states
   const [selectedUser, setSelectedUser] = useState(null);
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -738,6 +741,7 @@ function App() {
     setMoneyAmount('');
     setMoneyPurpose('');
     setCustomPurpose('');
+    setGiveMoneyValidationErrors([]);
     setShowUserDropdown(true); // Show dropdown by default
     setUserInputActive(false); // Reset input interaction state
     navigateToView(VIEWS.GIVE_MONEY);
@@ -845,23 +849,13 @@ function App() {
     setSelectedUser(user);
     setUserSearchQuery(user.name);
     setShowUserDropdown(false);
+    if (giveMoneyValidationErrors.length > 0) {
+      setGiveMoneyValidationErrors([]);
+    }
   };
 
   const handleSaveTransaction = async () => {
-    if (!selectedUser) {
-      showToast('⚠️ Please select a user');
-      return;
-    }
-    if (!moneyAmount.trim() || parseFloat(moneyAmount) <= 0) {
-      showToast('⚠️ Please enter a valid amount');
-      return;
-    }
-    if (!moneyPurpose) {
-      showToast('⚠️ Please select a purpose');
-      return;
-    }
-    if (moneyPurpose === 'others' && !customPurpose.trim()) {
-      showToast('⚠️ Please specify the purpose');
+    if (!validateGiveMoneyForm()) {
       return;
     }
 
@@ -1172,6 +1166,29 @@ function App() {
     }
     
     setUserValidationErrors(errors);
+    return errors.length === 0;
+  };
+
+  const validateGiveMoneyForm = () => {
+    const errors = [];
+    
+    if (!selectedUser) {
+      errors.push('Please select a user');
+    }
+    
+    if (!moneyAmount.trim()) {
+      errors.push('Amount is required');
+    } else if (parseFloat(moneyAmount) <= 0) {
+      errors.push('Amount must be greater than 0');
+    }
+    
+    if (!moneyPurpose) {
+      errors.push('Please select a purpose');
+    } else if (moneyPurpose === 'others' && !customPurpose.trim()) {
+      errors.push('Please specify the purpose');
+    }
+    
+    setGiveMoneyValidationErrors(errors);
     return errors.length === 0;
   };
 
@@ -2251,6 +2268,9 @@ function App() {
                     if (!e.target.value.trim()) {
                       setSelectedUser(null);
                     }
+                    if (giveMoneyValidationErrors.length > 0) {
+                      setGiveMoneyValidationErrors([]);
+                    }
                   }}
                   onFocus={() => {
                     setShowUserDropdown(true);
@@ -2302,7 +2322,12 @@ function App() {
                   className="project-input"
                   placeholder="Enter amount"
                   value={moneyAmount}
-                  onChange={(e) => setMoneyAmount(e.target.value)}
+                  onChange={(e) => {
+                    setMoneyAmount(e.target.value);
+                    if (giveMoneyValidationErrors.length > 0) {
+                      setGiveMoneyValidationErrors([]);
+                    }
+                  }}
                   min="0"
                   step="0.01"
                 />
@@ -2332,6 +2357,9 @@ function App() {
                   if (e.target.value !== 'others') {
                     setCustomPurpose('');
                   }
+                  if (giveMoneyValidationErrors.length > 0) {
+                    setGiveMoneyValidationErrors([]);
+                  }
                 }}
               >
                 <option value="">Select purpose...</option>
@@ -2356,7 +2384,12 @@ function App() {
                     className="project-input"
                     placeholder="Enter purpose"
                     value={customPurpose}
-                    onChange={(e) => setCustomPurpose(e.target.value)}
+                    onChange={(e) => {
+                      setCustomPurpose(e.target.value);
+                      if (giveMoneyValidationErrors.length > 0) {
+                        setGiveMoneyValidationErrors([]);
+                      }
+                    }}
                   />
                   {customPurpose && (
                     <button 
@@ -2367,6 +2400,17 @@ function App() {
                     </button>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Validation Errors */}
+            {giveMoneyValidationErrors.length > 0 && (
+              <div className="validation-errors">
+                {giveMoneyValidationErrors.map((error, index) => (
+                  <div key={index} className="validation-error">
+                    ⚠️ {error}
+                  </div>
+                ))}
               </div>
             )}
 
