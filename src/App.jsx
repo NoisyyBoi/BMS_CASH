@@ -131,28 +131,9 @@ function App() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // PWA Install prompt state
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
-
   useEffect(() => {
     setSavedLists(getSavedLists());
     
-    // PWA Install prompt handler
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallButton(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Hide install button if already installed
-    window.addEventListener('appinstalled', () => {
-      setShowInstallButton(false);
-      setDeferredPrompt(null);
-    });
-
     // Check for stored session
     const storedRole = localStorage.getItem('bms_user_role');
     const storedUserId = localStorage.getItem('bms_logged_in_user_id');
@@ -196,10 +177,6 @@ function App() {
         cleanupInactiveUsersOnLoad();
       }
     }
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
   }, []);
 
   // Browser back button handler
@@ -610,19 +587,6 @@ function App() {
     } finally {
       setOtpSending(false);
     }
-  };
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      setShowInstallButton(false);
-    }
-    
-    setDeferredPrompt(null);
   };
 
   const handleLogout = () => {
@@ -2114,17 +2078,6 @@ function App() {
                   <span className="btn-kannada">ಅಳಿಸಿದ ವಹಿವಾಟುಗಳು</span>
                 </span>
               </button>
-
-              {/* Install App Button */}
-              {showInstallButton && (
-                <button className="btn btn-primary" onClick={handleInstallClick}>
-                  <span className="btn-icon">📱</span>
-                  <span className="btn-content">
-                    <span>Install App</span>
-                    <span className="btn-kannada">ಆ್ಯಪ್ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ</span>
-                  </span>
-                </button>
-              )}
             </div>
             
             {/* Logout Button at Bottom */}
