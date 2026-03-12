@@ -106,6 +106,7 @@ function App() {
   const [transactionFilter, setTransactionFilter] = useState('all');
   const [salaryPayments, setSalaryPayments] = useState([]);
   const [loadingSalaryPayments, setLoadingSalaryPayments] = useState(false);
+  const [salaryUserSearchQuery, setSalaryUserSearchQuery] = useState('');
   const [selectedUserForSalaryHistory, setSelectedUserForSalaryHistory] = useState(null);
   const [userSalaryHistory, setUserSalaryHistory] = useState([]);
   const [showMonthlySummary, setShowMonthlySummary] = useState(false);
@@ -2836,8 +2837,35 @@ function App() {
             {/* User Selection for Individual Salary History */}
             <div className="salary-user-selection">
               <h3>View Individual User Salary History</h3>
+              
+              {/* Search Bar */}
+              <div className="search-container">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search by name or phone..."
+                  value={salaryUserSearchQuery}
+                  onChange={(e) => setSalaryUserSearchQuery(e.target.value)}
+                />
+                {salaryUserSearchQuery && (
+                  <button 
+                    className="clear-btn"
+                    onClick={() => setSalaryUserSearchQuery('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              
               <div className="salary-user-grid">
-                {allUsers.map(user => {
+                {allUsers
+                  .filter(user => {
+                    if (!salaryUserSearchQuery.trim()) return true;
+                    const query = salaryUserSearchQuery.toLowerCase();
+                    return user.name.toLowerCase().includes(query) || 
+                           user.phone.includes(query);
+                  })
+                  .map(user => {
                   // Calculate outstanding balance for this user
                   const userOutstanding = (() => {
                     try {
