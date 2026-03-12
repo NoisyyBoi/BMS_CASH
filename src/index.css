@@ -172,9 +172,16 @@ h3 { font-size: var(--font-size-lg); }
 
 .header-logo {
   width: auto;
-  height: 80px;
+  height: 60px;
   max-width: 100%;
   object-fit: contain;
+}
+
+/* Desktop responsive header logo */
+@media (min-width: 768px) {
+  .header-logo {
+    height: 80px;
+  }
 }
 
 .header-text {
