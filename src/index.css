@@ -172,16 +172,9 @@ h3 { font-size: var(--font-size-lg); }
 
 .header-logo {
   width: auto;
-  height: 60px;
+  height: 80px;
   max-width: 100%;
   object-fit: contain;
-}
-
-/* Desktop responsive header logo */
-@media (min-width: 768px) {
-  .header-logo {
-    height: 80px;
-  }
 }
 
 .header-text {
@@ -518,10 +511,19 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .company-logo {
-  width: 390px;
+  width: 100%;
+  max-width: 280px;
   height: auto;
-  max-height: 300px;
+  max-height: 200px;
   object-fit: contain;
+}
+
+/* Desktop responsive company logo */
+@media (min-width: 768px) {
+  .company-logo {
+    max-width: 390px;
+    max-height: 300px;
+  }
 }
 
 .home-hero h2 {
