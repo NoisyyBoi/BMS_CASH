@@ -3664,7 +3664,8 @@ h3 { font-size: var(--font-size-lg); }
   position: relative;
 }
 
-.input-container .project-input {
+.input-container .project-input,
+.input-container .calculator-input {
   padding-right: 50px;
 }
 

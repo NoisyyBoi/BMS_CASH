@@ -1154,8 +1154,15 @@ function App() {
   };
 
   const handleSaveUser = async () => {
-    if (!userName.trim() || !userPhone.trim()) {
-      showToast('⚠️ Name and Phone are required');
+    if (!userName.trim() || userPhone.length !== 10) {
+      showToast('⚠️ Name is required and phone must be exactly 10 digits');
+      return;
+    }
+
+    // Check if phone number already exists
+    const phoneExists = allUsers.some(user => user.phone === userPhone.trim());
+    if (phoneExists) {
+      showToast('⚠️ This phone number is already registered');
       return;
     }
 
@@ -2100,13 +2107,23 @@ function App() {
                 <span className="project-label-kannada">ಹೆಸರು</span>
                 <span className="required-mark">*</span>
               </label>
-              <input
-                type="text"
-                className="project-input"
-                placeholder="Enter full name"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-              />
+              <div className="input-container">
+                <input
+                  type="text"
+                  className="project-input"
+                  placeholder="Enter full name"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                />
+                {userName && (
+                  <button 
+                    className="clear-btn"
+                    onClick={() => setUserName('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="project-section">
@@ -2115,14 +2132,29 @@ function App() {
                 <span className="project-label-kannada">ಫೋನ್ ಸಂಖ್ಯೆ</span>
                 <span className="required-mark">*</span>
               </label>
-              <input
-                type="tel"
-                className="project-input"
-                placeholder="Enter phone number"
-                value={userPhone}
-                onChange={(e) => setUserPhone(e.target.value)}
-                maxLength="10"
-              />
+              <div className="input-container">
+                <input
+                  type="tel"
+                  className="project-input"
+                  placeholder="Enter 10-digit phone number"
+                  value={userPhone}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); // Only digits
+                    if (value.length <= 10) {
+                      setUserPhone(value);
+                    }
+                  }}
+                  maxLength="10"
+                />
+                {userPhone && (
+                  <button 
+                    className="clear-btn"
+                    onClick={() => setUserPhone('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="project-section">
@@ -2130,19 +2162,29 @@ function App() {
                 <span>Referral (Optional)</span>
                 <span className="project-label-kannada">ಉಲ್ಲೇಖ</span>
               </label>
-              <input
-                type="text"
-                className="project-input"
-                placeholder="Enter referral code or name"
-                value={userReferral}
-                onChange={(e) => setUserReferral(e.target.value)}
-              />
+              <div className="input-container">
+                <input
+                  type="text"
+                  className="project-input"
+                  placeholder="Enter referral code or name"
+                  value={userReferral}
+                  onChange={(e) => setUserReferral(e.target.value)}
+                />
+                {userReferral && (
+                  <button 
+                    className="clear-btn"
+                    onClick={() => setUserReferral('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             <button 
               className="btn btn-success project-continue" 
               onClick={handleSaveUser}
-              disabled={!userName.trim() || !userPhone.trim()}
+              disabled={!userName.trim() || userPhone.length !== 10}
             >
               Save User →
               <span className="btn-kannada">ಉಳಿಸಿ</span>
@@ -2218,15 +2260,25 @@ function App() {
                 <span className="project-label-kannada">ಮೊತ್ತ</span>
                 <span className="required-mark">*</span>
               </label>
-              <input
-                type="number"
-                className="project-input"
-                placeholder="Enter amount"
-                value={moneyAmount}
-                onChange={(e) => setMoneyAmount(e.target.value)}
-                min="0"
-                step="0.01"
-              />
+              <div className="input-container">
+                <input
+                  type="number"
+                  className="project-input"
+                  placeholder="Enter amount"
+                  value={moneyAmount}
+                  onChange={(e) => setMoneyAmount(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+                {moneyAmount && (
+                  <button 
+                    className="clear-btn"
+                    onClick={() => setMoneyAmount('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Purpose Dropdown */}
@@ -2262,13 +2314,23 @@ function App() {
                   <span className="project-label-kannada">ಉದ್ದೇಶವನ್ನು ನಮೂದಿಸಿ</span>
                   <span className="required-mark">*</span>
                 </label>
-                <input
-                  type="text"
-                  className="project-input"
-                  placeholder="Enter purpose"
-                  value={customPurpose}
-                  onChange={(e) => setCustomPurpose(e.target.value)}
-                />
+                <div className="input-container">
+                  <input
+                    type="text"
+                    className="project-input"
+                    placeholder="Enter purpose"
+                    value={customPurpose}
+                    onChange={(e) => setCustomPurpose(e.target.value)}
+                  />
+                  {customPurpose && (
+                    <button 
+                      className="clear-btn"
+                      onClick={() => setCustomPurpose('')}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -2520,15 +2582,25 @@ function App() {
                     
                     <div className="calculator-input-group">
                       <label className="calculator-label">Monthly Salary (₹)</label>
-                      <input
-                        type="number"
-                        className="calculator-input"
-                        placeholder="Enter monthly salary"
-                        value={totalSalary}
-                        onChange={(e) => setTotalSalary(e.target.value)}
-                        min="0"
-                        step="100"
-                      />
+                      <div className="input-container">
+                        <input
+                          type="number"
+                          className="calculator-input"
+                          placeholder="Enter monthly salary"
+                          value={totalSalary}
+                          onChange={(e) => setTotalSalary(e.target.value)}
+                          min="0"
+                          step="100"
+                        />
+                        {totalSalary && (
+                          <button 
+                            className="clear-btn"
+                            onClick={() => setTotalSalary('')}
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
                     </div>
                     
                     {totalSalary && parseFloat(totalSalary) > 0 && (
