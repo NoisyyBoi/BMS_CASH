@@ -2417,13 +2417,6 @@ function App() {
             <button 
               className="btn btn-success project-continue" 
               onClick={handleSaveTransaction}
-              disabled={
-                !selectedUser || 
-                !moneyAmount.trim() || 
-                parseFloat(moneyAmount) <= 0 || 
-                !moneyPurpose ||
-                (moneyPurpose === 'others' && !customPurpose.trim())
-              }
             >
               Save Transaction →
               <span className="btn-kannada">ಉಳಿಸಿ</span>
