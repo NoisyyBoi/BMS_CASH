@@ -2434,7 +2434,14 @@ h3 { font-size: var(--font-size-lg); }
 .user-info-total-label {
   font-size: var(--font-size-sm);
   color: white;
-  opacity: 0.9;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.user-info-total-sublabel {
+  font-size: var(--font-size-sm);
+  color: white;
+  opacity: 0.8;
   margin-bottom: var(--space-xs);
 }
 
