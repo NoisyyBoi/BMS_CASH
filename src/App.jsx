@@ -767,7 +767,7 @@ function App() {
 
   const selectUserForHistory = async (user) => {
     setSelectedUserForHistory(user);
-    setUserHistorySearchQuery(formatUserNameWithReferral(user));
+    setUserHistorySearchQuery(getUserNameWithReferralText(user));
     setShowUserHistoryDropdown(false);
     setTotalSalary('');
     
@@ -849,7 +849,7 @@ function App() {
 
   const selectUser = (user) => {
     setSelectedUser(user);
-    setUserSearchQuery(formatUserNameWithReferral(user));
+    setUserSearchQuery(getUserNameWithReferralText(user));
     setShowUserDropdown(false);
     if (giveMoneyValidationErrors.length > 0) {
       setGiveMoneyValidationErrors([]);
@@ -1151,6 +1151,17 @@ function App() {
   };
 
   const formatUserNameWithReferral = (user) => {
+    if (user.referral && user.referral.trim()) {
+      return (
+        <>
+          {user.name} <span className="referral-name">({user.referral})</span>
+        </>
+      );
+    }
+    return user.name;
+  };
+
+  const getUserNameWithReferralText = (user) => {
     if (user.referral && user.referral.trim()) {
       return `${user.name} (${user.referral})`;
     }

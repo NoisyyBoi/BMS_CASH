@@ -3934,3 +3934,16 @@ h3 { font-size: var(--font-size-lg); }
     padding: var(--space-md) var(--space-lg);
   }
 }
+/* Referral Name Styling */
+.referral-name {
+  color: var(--text-muted);
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* Desktop responsive referral name */
+@media (min-width: 768px) {
+  .referral-name {
+    opacity: 0.8;
+  }
+}
