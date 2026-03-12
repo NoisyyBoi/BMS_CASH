@@ -3906,3 +3906,31 @@ h3 { font-size: var(--font-size-lg); }
     gap: var(--space-xl);
   }
 }
+/* Validation Errors */
+.validation-errors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.validation-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(198, 40, 40, 0.1);
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+/* Desktop responsive validation errors */
+@media (min-width: 768px) {
+  .validation-error {
+    font-size: var(--font-size-base);
+    padding: var(--space-md) var(--space-lg);
+  }
+}

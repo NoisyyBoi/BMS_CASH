@@ -80,6 +80,7 @@ function App() {
   const [userName, setUserName] = useState('');
   const [userPhone, setUserPhone] = useState('');
   const [userReferral, setUserReferral] = useState('');
+  const [userValidationErrors, setUserValidationErrors] = useState([]);
 
   // Give money states
   const [selectedUser, setSelectedUser] = useState(null);
@@ -1153,16 +1154,29 @@ function App() {
     }));
   };
 
-  const handleSaveUser = async () => {
-    if (!userName.trim() || userPhone.length !== 10) {
-      showToast('⚠️ Name is required and phone must be exactly 10 digits');
-      return;
+  const validateUserForm = () => {
+    const errors = [];
+    
+    if (!userName.trim()) {
+      errors.push('Name is required');
     }
+    
+    if (!userPhone.trim()) {
+      errors.push('Phone number is required');
+    } else if (userPhone.length !== 10) {
+      errors.push('Phone number must be exactly 10 digits');
+    } else if (!/^\d+$/.test(userPhone)) {
+      errors.push('Phone number must contain only digits');
+    } else if (allUsers.some(user => user.phone === userPhone.trim())) {
+      errors.push('This phone number is already registered');
+    }
+    
+    setUserValidationErrors(errors);
+    return errors.length === 0;
+  };
 
-    // Check if phone number already exists
-    const phoneExists = allUsers.some(user => user.phone === userPhone.trim());
-    if (phoneExists) {
-      showToast('⚠️ This phone number is already registered');
+  const handleSaveUser = async () => {
+    if (!validateUserForm()) {
       return;
     }
 
@@ -1178,6 +1192,10 @@ function App() {
       await saveUserToSupabase(user);
       await loadUsers(); // Reload users list
       showToast('✓ User created successfully');
+      setUserName('');
+      setUserPhone('');
+      setUserReferral('');
+      setUserValidationErrors([]);
       navigateToView(VIEWS.HOME);
     } catch (error) {
       console.error('Error saving user:', error);
@@ -2113,7 +2131,12 @@ function App() {
                   className="project-input"
                   placeholder="Enter full name"
                   value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
+                  onChange={(e) => {
+                    setUserName(e.target.value);
+                    if (userValidationErrors.length > 0) {
+                      setUserValidationErrors([]);
+                    }
+                  }}
                 />
                 {userName && (
                   <button 
@@ -2142,6 +2165,9 @@ function App() {
                     const value = e.target.value.replace(/\D/g, ''); // Only digits
                     if (value.length <= 10) {
                       setUserPhone(value);
+                      if (userValidationErrors.length > 0) {
+                        setUserValidationErrors([]);
+                      }
                     }
                   }}
                   maxLength="10"
@@ -2181,10 +2207,20 @@ function App() {
               </div>
             </div>
 
+            {/* Validation Errors */}
+            {userValidationErrors.length > 0 && (
+              <div className="validation-errors">
+                {userValidationErrors.map((error, index) => (
+                  <div key={index} className="validation-error">
+                    ⚠️ {error}
+                  </div>
+                ))}
+              </div>
+            )}
+
             <button 
               className="btn btn-success project-continue" 
               onClick={handleSaveUser}
-              disabled={!userName.trim() || userPhone.length !== 10}
             >
               Save User →
               <span className="btn-kannada">ಉಳಿಸಿ</span>
