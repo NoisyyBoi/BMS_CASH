@@ -1703,7 +1703,7 @@ function App() {
                   {view === VIEWS.GIVE_MONEY && 'Give Money'}
                   {view === VIEWS.USER_TOTAL && 'User Total'}
                   {view === VIEWS.USER_HISTORY && 'User History'}
-                  {view === VIEWS.SALARY_PAYMENTS && 'Salary History / Dues'}
+                  {view === VIEWS.SALARY_PAYMENTS && 'Salary Payments'}
                   {view === VIEWS.USER_SALARY_HISTORY && 'Salary History'}
                   {view === VIEWS.DELETED_TRANSACTIONS && 'Deleted Transactions'}
                   {view === VIEWS.CATEGORIES && 'Select Category'}
@@ -2058,8 +2058,8 @@ function App() {
               <button className="btn btn-lilac" onClick={openSalaryPayments}>
                 <span className="btn-icon">💵</span>
                 <span className="btn-content">
-                  <span>Salary History / Dues</span>
-                  <span className="btn-kannada">ಸಂಬಳ ಇತಿಹಾಸ / ಬಾಕಿ</span>
+                  <span>Salary Payments</span>
+                  <span className="btn-kannada">ಸಂಬಳ ಪಾವತಿಗಳು</span>
                 </span>
               </button>
               
