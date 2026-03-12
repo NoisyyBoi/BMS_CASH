@@ -2382,6 +2382,11 @@ h3 { font-size: var(--font-size-lg); }
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  justify-content: space-between;
+}
+
+.user-info-details {
+  flex: 1;
 }
 
 .user-info-icon {
@@ -2394,6 +2399,7 @@ h3 { font-size: var(--font-size-lg); }
   justify-content: center;
   font-size: 32px;
   box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
 }
 
 /* Desktop responsive user info icon */
@@ -2416,6 +2422,33 @@ h3 { font-size: var(--font-size-lg); }
   font-size: var(--font-size-base);
   color: white;
   opacity: 0.9;
+}
+
+.user-info-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.user-info-total-label {
+  font-size: var(--font-size-sm);
+  color: white;
+  opacity: 0.9;
+  margin-bottom: var(--space-xs);
+}
+
+.user-info-total-amount {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: white;
+}
+
+/* Desktop responsive user info total */
+@media (min-width: 768px) {
+  .user-info-total-amount {
+    font-size: 32px;
+  }
 }
 
 .transactions-list {

@@ -2401,22 +2401,14 @@ function App() {
                           '👤'
                         )}
                       </div>
-                      <div>
+                      <div className="user-info-details">
                         <div className="user-info-name">{selectedUserForHistory.name}</div>
                         <div className="user-info-phone">{selectedUserForHistory.phone}</div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  {/* Monthly Total Card - Moved here after user info */}
-                  <div className="monthly-total-card">
-                    <div className="monthly-total-header">
-                      <span className="monthly-total-icon">📅</span>
-                      <span className="monthly-total-month">{monthName}</span>
-                    </div>
-                    <div className="monthly-total-amount">
-                      <span className="monthly-total-label">Total Amount Given:</span>
-                      <span className="monthly-total-value">{formatIndianCurrency(monthlyTotal)}</span>
+                      <div className="user-info-total">
+                        <div className="user-info-total-label">{monthName}</div>
+                        <div className="user-info-total-amount">{formatIndianCurrency(monthlyTotal)}</div>
+                      </div>
                     </div>
                   </div>
                   
