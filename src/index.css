@@ -2382,11 +2382,6 @@ h3 { font-size: var(--font-size-lg); }
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  justify-content: space-between;
-}
-
-.user-info-details {
-  flex: 1;
 }
 
 .user-info-icon {
@@ -2399,7 +2394,6 @@ h3 { font-size: var(--font-size-lg); }
   justify-content: center;
   font-size: 32px;
   box-shadow: var(--shadow-sm);
-  flex-shrink: 0;
 }
 
 /* Desktop responsive user info icon */
