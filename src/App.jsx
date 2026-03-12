@@ -767,7 +767,7 @@ function App() {
 
   const selectUserForHistory = async (user) => {
     setSelectedUserForHistory(user);
-    setUserHistorySearchQuery(user.name);
+    setUserHistorySearchQuery(formatUserNameWithReferral(user));
     setShowUserHistoryDropdown(false);
     setTotalSalary('');
     
@@ -791,7 +791,8 @@ function App() {
     const query = userHistorySearchQuery.toLowerCase();
     return allUsers.filter(user => 
       user.name.toLowerCase().includes(query) || 
-      user.phone.includes(query)
+      user.phone.includes(query) ||
+      (user.referral && user.referral.toLowerCase().includes(query))
     );
   };
 
@@ -841,13 +842,14 @@ function App() {
     const query = userSearchQuery.toLowerCase();
     return allUsers.filter(user => 
       user.name.toLowerCase().includes(query) || 
-      user.phone.includes(query)
+      user.phone.includes(query) ||
+      (user.referral && user.referral.toLowerCase().includes(query))
     );
   };
 
   const selectUser = (user) => {
     setSelectedUser(user);
-    setUserSearchQuery(user.name);
+    setUserSearchQuery(formatUserNameWithReferral(user));
     setShowUserDropdown(false);
     if (giveMoneyValidationErrors.length > 0) {
       setGiveMoneyValidationErrors([]);
@@ -1146,6 +1148,13 @@ function App() {
       ...prev,
       [month]: !prev[month]
     }));
+  };
+
+  const formatUserNameWithReferral = (user) => {
+    if (user.referral && user.referral.trim()) {
+      return `${user.name} (${user.referral})`;
+    }
+    return user.name;
   };
 
   const validateUserForm = () => {
@@ -2287,7 +2296,7 @@ function App() {
                           className="user-dropdown-item"
                           onClick={() => selectUser(user)}
                         >
-                          <div className="user-dropdown-name">{user.name}</div>
+                          <div className="user-dropdown-name">{formatUserNameWithReferral(user)}</div>
                           <div className="user-dropdown-phone">{user.phone}</div>
                         </div>
                       ))
@@ -2462,7 +2471,7 @@ function App() {
                           className="user-dropdown-item"
                           onClick={() => selectUserForHistory(user)}
                         >
-                          <div className="user-dropdown-name">{user.name}</div>
+                          <div className="user-dropdown-name">{formatUserNameWithReferral(user)}</div>
                           <div className="user-dropdown-phone">{user.phone}</div>
                         </div>
                       ))
@@ -3008,7 +3017,8 @@ function App() {
                     if (!salaryUserSearchQuery.trim()) return true;
                     const query = salaryUserSearchQuery.toLowerCase();
                     return user.name.toLowerCase().includes(query) || 
-                           user.phone.includes(query);
+                           user.phone.includes(query) ||
+                           (user.referral && user.referral.toLowerCase().includes(query));
                   })
                   .map(user => {
                   // Calculate outstanding balance for this user
@@ -3049,7 +3059,7 @@ function App() {
                       onClick={() => viewUserSalaryHistory(user)}
                     >
                       <div className="salary-user-info">
-                        <div className="salary-user-name">{user.name}</div>
+                        <div className="salary-user-name">{formatUserNameWithReferral(user)}</div>
                         <div className="salary-user-phone">{user.phone}</div>
                         {userOutstanding > 0 && (
                           <div className="salary-user-balance">
