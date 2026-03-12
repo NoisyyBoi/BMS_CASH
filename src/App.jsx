@@ -131,9 +131,37 @@ function App() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // PWA Install prompt state
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
   useEffect(() => {
     setSavedLists(getSavedLists());
     
+    // PWA Install prompt handler - capture the event
+    const handleBeforeInstallPrompt = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      setDeferredPrompt(e);
+      
+      // Automatically show the install prompt after a short delay
+      setTimeout(() => {
+        if (e && e.prompt) {
+          e.prompt();
+          e.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('User accepted the install prompt');
+            } else {
+              console.log('User dismissed the install prompt');
+            }
+            setDeferredPrompt(null);
+          });
+        }
+      }, 2000); // Show prompt 2 seconds after page load
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
     // Check for stored session
     const storedRole = localStorage.getItem('bms_user_role');
     const storedUserId = localStorage.getItem('bms_logged_in_user_id');
@@ -177,6 +205,10 @@ function App() {
         cleanupInactiveUsersOnLoad();
       }
     }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   // Browser back button handler
