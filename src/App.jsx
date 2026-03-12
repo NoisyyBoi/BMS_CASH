@@ -2406,8 +2406,7 @@ function App() {
                         <div className="user-info-phone">{selectedUserForHistory.phone}</div>
                       </div>
                       <div className="user-info-total">
-                        <div className="user-info-total-label">Total Money</div>
-                        <div className="user-info-total-sublabel">{monthName}</div>
+                        <div className="user-info-total-label">{monthName}</div>
                         <div className="user-info-total-amount">{formatIndianCurrency(monthlyTotal)}</div>
                       </div>
                     </div>
