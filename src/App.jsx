@@ -294,22 +294,39 @@ function App() {
       console.error('Error checking user credentials:', error);
     }
 
-    // Check if username exists in database admin_accounts table
+    // Check if username exists in database admin_accounts table (by username or email)
     let passwordMatches = false;
     let isValidAdmin = false;
+    let adminUsername = lowerUsername; // Store the actual username for later use
     
     try {
-      const { data, error } = await supabase
+      // First try to find by username
+      let { data, error } = await supabase
         .from('admin_accounts')
-        .select('username, password_hash')
+        .select('username, password_hash, email')
         .eq('username', lowerUsername)
         .single();
+
+      // If not found by username, try to find by email
+      if (error && username.includes('@')) {
+        const emailResult = await supabase
+          .from('admin_accounts')
+          .select('username, password_hash, email')
+          .eq('email', lowerUsername)
+          .single();
+        
+        if (!emailResult.error && emailResult.data) {
+          data = emailResult.data;
+          error = null;
+          adminUsername = emailResult.data.username; // Use the actual username
+        }
+      }
 
       if (!error && data) {
         // User exists in database
         isValidAdmin = true;
         passwordMatches = (data.password_hash === password);
-        console.log('✓ Checking database admin for:', lowerUsername);
+        console.log('✓ Checking database admin for:', adminUsername);
       } else {
         // Check if username exists in hardcoded ADMIN_CREDENTIALS as fallback
         if (ADMIN_CREDENTIALS[lowerUsername]) {
@@ -332,17 +349,17 @@ function App() {
       // Admin login - send OTP for 2FA
       setOtpSending(true);
       try {
-        // Get admin email
-        const emailResult = await getAdminEmail(lowerUsername);
+        // Get admin email (use the actual username, not the email if they logged in with email)
+        const emailResult = await getAdminEmail(adminUsername);
         if (!emailResult.success) {
           showToast('⚠️ Admin email not configured. Please contact support.');
           setOtpSending(false);
           return;
         }
 
-        // Generate and store OTP
+        // Generate and store OTP (use the actual username)
         const otp = generateOTP();
-        const storeResult = await storeOTP(lowerUsername, otp);
+        const storeResult = await storeOTP(adminUsername, otp);
         if (!storeResult.success) {
           showToast('⚠️ Error generating OTP. Please try again.');
           setOtpSending(false);
@@ -350,15 +367,15 @@ function App() {
         }
 
         // Send OTP email
-        const sendResult = await sendOTPEmail(emailResult.email, otp, lowerUsername);
+        const sendResult = await sendOTPEmail(emailResult.email, otp, adminUsername);
         if (!sendResult.success) {
           showToast('⚠️ Error sending OTP email. Please try again.');
           setOtpSending(false);
           return;
         }
 
-        // Move to OTP verification screen
-        setPendingAdminUsername(lowerUsername);
+        // Move to OTP verification screen (use the actual username)
+        setPendingAdminUsername(adminUsername);
         navigateToView(VIEWS.OTP_VERIFY);
         showToast('✓ OTP sent to your email');
       } catch (error) {
@@ -444,19 +461,36 @@ function App() {
   const handleForgotPassword = async () => {
     const username = forgotPasswordEmail.trim().toLowerCase();
     if (!username) {
-      showToast('⚠️ Please enter your username');
+      showToast('⚠️ Please enter your username or email');
       return;
     }
 
-    // Check if username exists in database or hardcoded credentials
+    // Check if username exists in database or hardcoded credentials (by username or email)
     let isValidAdmin = false;
+    let adminUsername = username; // Store the actual username
     
     try {
-      const { data, error } = await supabase
+      // First try to find by username
+      let { data, error } = await supabase
         .from('admin_accounts')
-        .select('username')
+        .select('username, email')
         .eq('username', username)
         .single();
+
+      // If not found by username, try to find by email
+      if (error && username.includes('@')) {
+        const emailResult = await supabase
+          .from('admin_accounts')
+          .select('username, email')
+          .eq('email', username)
+          .single();
+        
+        if (!emailResult.error && emailResult.data) {
+          data = emailResult.data;
+          error = null;
+          adminUsername = emailResult.data.username; // Use the actual username
+        }
+      }
 
       if (!error && data) {
         isValidAdmin = true;
@@ -471,39 +505,39 @@ function App() {
     }
 
     if (!isValidAdmin) {
-      showToast('⚠️ Username not found');
+      showToast('⚠️ Username or email not found');
       return;
     }
 
     setPasswordResetLoading(true);
     try {
-      // Get admin email
-      const emailResult = await getAdminEmail(username);
+      // Get admin email (use the actual username)
+      const emailResult = await getAdminEmail(adminUsername);
       if (!emailResult.success) {
         showToast('⚠️ Email not configured for this account');
         setPasswordResetLoading(false);
         return;
       }
 
-      // Generate and store OTP for password reset
+      // Generate and store OTP for password reset (use the actual username)
       const otp = generateOTP();
-      const storeResult = await storeOTP(username, otp);
+      const storeResult = await storeOTP(adminUsername, otp);
       if (!storeResult.success) {
         showToast('⚠️ Error generating OTP');
         setPasswordResetLoading(false);
         return;
       }
 
-      // Send OTP email for password reset
-      const sendResult = await sendOTPEmail(emailResult.email, otp, username, true);
+      // Send OTP email for password reset (use the actual username)
+      const sendResult = await sendOTPEmail(emailResult.email, otp, adminUsername, true);
       if (!sendResult.success) {
         showToast('⚠️ Error sending OTP email');
         setPasswordResetLoading(false);
         return;
       }
 
-      // Move to OTP verification for password reset
-      setPendingAdminUsername(username);
+      // Move to OTP verification for password reset (use the actual username)
+      setPendingAdminUsername(adminUsername);
       setForgotPasswordEmail('');
       navigateToView(VIEWS.RESET_PASSWORD);
       showToast('✓ Password reset OTP sent to your email');
@@ -1796,12 +1830,12 @@ function App() {
               <div className="login-form">
                 <div className="project-section">
                   <label className="project-label">
-                    <span>Username</span>
+                    <span>Username or Email</span>
                   </label>
                   <input
                     type="text"
                     className="project-input"
-                    placeholder="Enter username"
+                    placeholder="Enter username or email"
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && document.getElementById('password-input').focus()}
@@ -1934,17 +1968,17 @@ function App() {
                 </button>
                 
                 <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>
-                  Enter your username to receive a password reset link
+                  Enter your username or email to receive a password reset link
                 </p>
 
                 <div className="project-section">
                   <label className="project-label">
-                    <span>Username</span>
+                    <span>Username or Email</span>
                   </label>
                   <input
                     type="text"
                     className="project-input"
-                    placeholder="Enter your username"
+                    placeholder="Enter your username or email"
                     value={forgotPasswordEmail}
                     onChange={(e) => setForgotPasswordEmail(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleForgotPassword()}
