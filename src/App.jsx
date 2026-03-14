@@ -18,6 +18,7 @@ import {
 
 // View constants
 const VIEWS = {
+  LANDING: 'landing',
   HOME: 'home',
   LOGIN: 'login',
   OTP_VERIFY: 'otp_verify',
@@ -180,7 +181,7 @@ function App() {
         restoreUserSession();
       } else {
         // Admin or viewer session
-        setView(VIEWS.HOME);
+        setView(VIEWS.LANDING);
         loadUsers();
         loadTransactions();
         cleanupOldDeletedTransactions();
@@ -223,8 +224,8 @@ function App() {
           if (userRole === 'user') {
             handleLogout();
           } else {
-            setView(VIEWS.HOME);
-            window.history.replaceState({ view: VIEWS.HOME }, '', window.location.href);
+            setView(VIEWS.LANDING);
+            window.history.replaceState({ view: VIEWS.LANDING }, '', window.location.href);
           }
         } else {
           setView(VIEWS.LOGIN);
@@ -262,7 +263,7 @@ function App() {
       setUserRole('viewer');
       localStorage.setItem('bms_user_role', 'viewer');
       localStorage.removeItem('bms_logged_in_user_id');
-      navigateToView(VIEWS.HOME, true);
+      navigateToView(VIEWS.LANDING, true);
       loadUsers();
       loadTransactions();
       cleanupOldDeletedTransactions();
@@ -418,7 +419,7 @@ function App() {
         setUserRole(pendingAdminUsername);
         localStorage.setItem('bms_user_role', pendingAdminUsername);
         localStorage.removeItem('bms_logged_in_user_id');
-        navigateToView(VIEWS.HOME, true);
+        navigateToView(VIEWS.LANDING, true);
         loadUsers();
         loadTransactions();
         cleanupOldDeletedTransactions();
@@ -1640,7 +1641,12 @@ function App() {
       // Check if going back would take us to login while authenticated
       // In that case, go to home instead
       if (isAuthenticated && view === VIEWS.HOME) {
-        // If we're at home and authenticated, don't go back to login
+        // If we're at home, go back to landing
+        navigateToView(VIEWS.LANDING);
+        return;
+      }
+      if (isAuthenticated && view === VIEWS.LANDING) {
+        // If we're at landing, don't go back
         return;
       }
       window.history.back();
@@ -1652,6 +1658,8 @@ function App() {
         navigateToView(VIEWS.PROJECT);
       } else if (view === VIEWS.PROJECT || view === VIEWS.HISTORY || view === VIEWS.CREATE_USER || view === VIEWS.GIVE_MONEY || view === VIEWS.USER_TOTAL || view === VIEWS.SALARY_PAYMENTS || view === VIEWS.DELETED_TRANSACTIONS) {
         navigateToView(VIEWS.HOME);
+      } else if (view === VIEWS.HOME) {
+        navigateToView(VIEWS.LANDING);
       } else if (view === VIEWS.USER_SALARY_HISTORY) {
         navigateToView(VIEWS.SALARY_PAYMENTS);
       } else if (view === VIEWS.USER_HISTORY) {
@@ -1663,9 +1671,8 @@ function App() {
         }
       } else if (view === VIEWS.REVIEW) {
         navigateToView(VIEWS.CATEGORIES);
-      } else if (isAuthenticated && view !== VIEWS.HOME) {
-        // If authenticated and not at home, go to home (admin/viewer only)
-        navigateToView(VIEWS.HOME);
+      } else if (isAuthenticated && view !== VIEWS.LANDING) {
+        navigateToView(VIEWS.LANDING);
       }
     }
   };
@@ -1849,7 +1856,7 @@ function App() {
   return (
     <div className="app">
       {/* Header */}
-      {view !== VIEWS.HOME && view !== VIEWS.LOGIN && view !== VIEWS.OTP_VERIFY && view !== VIEWS.FORGOT_PASSWORD && view !== VIEWS.RESET_PASSWORD && (
+      {view !== VIEWS.LANDING && view !== VIEWS.HOME && view !== VIEWS.LOGIN && view !== VIEWS.OTP_VERIFY && view !== VIEWS.FORGOT_PASSWORD && view !== VIEWS.RESET_PASSWORD && (
         <header className="header">
           <div className="header-content">
             <button 
@@ -2173,6 +2180,39 @@ function App() {
                   {otpSending ? 'Sending...' : 'Resend OTP'}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Landing Screen */}
+        {view === VIEWS.LANDING && (
+          <div className="landing-screen">
+            <div className="landing-logo">
+              <img src="/bmscash.png" alt="BMS CASH" className="landing-logo-img" />
+            </div>
+            <div className="landing-buttons">
+              <button
+                className="landing-btn landing-btn-bms"
+                onClick={() => navigateToView(VIEWS.HOME)}
+              >
+                <span className="landing-btn-icon">💼</span>
+                <span className="landing-btn-label">BMS</span>
+                <span className="landing-btn-sub">Cash Management</span>
+              </button>
+              <button
+                className="landing-btn landing-btn-others"
+                onClick={() => navigateToView(VIEWS.HISTORY)}
+              >
+                <span className="landing-btn-icon">📋</span>
+                <span className="landing-btn-label">Others</span>
+                <span className="landing-btn-sub">Project Lists</span>
+              </button>
+            </div>
+            <div className="landing-logout">
+              <button className="btn-logout-bottom" onClick={handleLogout}>
+                <span className="logout-icon">🚪</span>
+                Logout
+              </button>
             </div>
           </div>
         )}
