@@ -3947,3 +3947,96 @@ h3 { font-size: var(--font-size-lg); }
     opacity: 0.8;
   }
 }
+
+/* Edit Transaction */
+.transaction-edit-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: var(--space-xs);
+  opacity: 0.6;
+}
+
+.edit-history {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.edit-history-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  font-size: 12px;
+}
+
+.edit-history-icon {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.edit-history-text {
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.edit-history-reason {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.edit-history-meta {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* Edit Modal */
+.edit-modal-purpose {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg);
+  border-radius: var(--radius-md);
+}
+
+.edit-modal-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.edit-modal-value {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.edit-modal-amounts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(198, 40, 40, 0.06);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(198, 40, 40, 0.15);
+}
+
+.edit-modal-old {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.edit-modal-old-amount {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--danger);
+  text-decoration: line-through;
+  opacity: 0.7;
+}

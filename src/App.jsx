@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp } from './utils/storage';
-import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase, cleanupInactiveUsersFromSupabase } from './utils/supabaseStorage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, updateTransactionInSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase, cleanupInactiveUsersFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 import { supabase } from './supabaseClient';
 
@@ -120,6 +120,12 @@ function App() {
   const [showDeleteReasonModal, setShowDeleteReasonModal] = useState(false);
   const [deleteReasonText, setDeleteReasonText] = useState('');
   const [transactionToDelete, setTransactionToDelete] = useState(null);
+
+  // Edit transaction modal states
+  const [showEditTransactionModal, setShowEditTransactionModal] = useState(false);
+  const [transactionToEdit, setTransactionToEdit] = useState(null);
+  const [editNewAmount, setEditNewAmount] = useState('');
+  const [editReason, setEditReason] = useState('');
 
   // OTP and Password Reset states
   const [pendingAdminUsername, setPendingAdminUsername] = useState(null);
@@ -1167,6 +1173,68 @@ function App() {
       } else {
         showToast('⚠️ Error deleting');
       }
+    }
+  };
+
+  const handleOpenEditTransaction = (transaction) => {
+    if (!isAdmin()) {
+      showToast('⚠️ Only admins can edit transactions');
+      return;
+    }
+    setTransactionToEdit(transaction);
+    setEditNewAmount(String(Math.abs(transaction.amount)));
+    setEditReason('');
+    setShowEditTransactionModal(true);
+  };
+
+  const handleConfirmEditTransaction = async () => {
+    if (!editNewAmount.trim() || parseFloat(editNewAmount) <= 0) {
+      showToast('⚠️ Please enter a valid amount');
+      return;
+    }
+    if (!editReason.trim()) {
+      showToast('⚠️ Please provide a reason for editing');
+      return;
+    }
+
+    const oldAmount = Math.abs(transactionToEdit.amount);
+    const newAmount = parseFloat(editNewAmount);
+
+    if (oldAmount === newAmount) {
+      showToast('⚠️ Amount is the same, no changes made');
+      return;
+    }
+
+    try {
+      const editEntry = {
+        oldAmount,
+        newAmount,
+        reason: editReason.trim(),
+        editedBy: userRole,
+        editedAt: new Date().toISOString(),
+      };
+
+      const existingHistory = transactionToEdit.editHistory || [];
+      const updatedHistory = [...existingHistory, editEntry];
+
+      await updateTransactionInSupabase(transactionToEdit.id, {
+        amount: transactionToEdit.amount < 0 ? -newAmount : newAmount,
+        editHistory: updatedHistory,
+      });
+
+      showToast('✓ Transaction updated');
+      setShowEditTransactionModal(false);
+      setTransactionToEdit(null);
+      setEditNewAmount('');
+      setEditReason('');
+
+      const transactions = await getUserTransactionsFromSupabase(selectedUserForHistory.id);
+      setUserTransactionsData(transactions);
+      setUserMonthlyTotal(getMonthlyTotal(transactions));
+      await loadTransactions();
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      showToast('⚠️ Error updating transaction');
     }
   };
 
@@ -2654,7 +2722,12 @@ function App() {
                   ) : (
                     <div className="transactions-list">
                       {sortedTransactions.map(transaction => (
-                      <div key={transaction.id} className="history-card transaction-card">
+                      <div
+                        key={transaction.id}
+                        className="history-card transaction-card"
+                        onClick={() => isAdmin() && handleOpenEditTransaction(transaction)}
+                        style={{ cursor: isAdmin() ? 'pointer' : 'default' }}
+                      >
                         <div className="transaction-header">
                           <div className="transaction-info">
                             <div className="transaction-purpose-main">{transaction.purpose}</div>
@@ -2678,7 +2751,7 @@ function App() {
                             {isAdmin() && (
                               <button 
                                 className="delete-btn-small"
-                                onClick={() => handleDeleteTransaction(transaction.id)}
+                                onClick={(e) => { e.stopPropagation(); handleDeleteTransaction(transaction.id); }}
                                 title="Delete transaction"
                               >
                                 🗑️
@@ -2686,6 +2759,26 @@ function App() {
                             )}
                           </div>
                         </div>
+
+                        {/* Edit history */}
+                        {transaction.editHistory && transaction.editHistory.length > 0 && (
+                          <div className="edit-history">
+                            {transaction.editHistory.map((edit, i) => (
+                              <div key={i} className="edit-history-entry">
+                                <span className="edit-history-icon">✏️</span>
+                                <span className="edit-history-text">
+                                  {formatIndianCurrency(edit.oldAmount)} → {formatIndianCurrency(edit.newAmount)}
+                                  <span className="edit-history-reason"> "{edit.reason}"</span>
+                                  <span className="edit-history-meta"> • {edit.editedBy} • {new Date(edit.editedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {isAdmin() && (
+                          <div className="transaction-edit-hint">Tap to edit amount</div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -4176,6 +4269,61 @@ function App() {
                   {transactionToDelete?.type === 'salary_payment' ? 'Delete Payment' : 'Delete Transaction'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Transaction Modal */}
+      {showEditTransactionModal && transactionToEdit && (
+        <div className="modal-overlay" onClick={() => setShowEditTransactionModal(false)}>
+          <div className="modal-content delete-reason-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>✏️ Edit Transaction</h3>
+            <button className="modal-close" onClick={() => setShowEditTransactionModal(false)}>✕</button>
+
+            <div className="edit-modal-purpose">
+              <span className="edit-modal-label">Purpose:</span>
+              <span className="edit-modal-value">{transactionToEdit.purpose}</span>
+            </div>
+
+            <div className="edit-modal-amounts">
+              <div className="edit-modal-old">
+                <span className="edit-modal-label">Current Amount:</span>
+                <span className="edit-modal-old-amount">{formatIndianCurrency(Math.abs(transactionToEdit.amount))}</span>
+              </div>
+            </div>
+
+            <div className="project-section" style={{ marginTop: '16px' }}>
+              <label className="project-label">New Amount (₹)</label>
+              <input
+                type="number"
+                className="project-input"
+                placeholder="Enter new amount"
+                value={editNewAmount}
+                onChange={(e) => setEditNewAmount(e.target.value)}
+                min="0"
+                autoFocus
+              />
+            </div>
+
+            <div className="project-section">
+              <label className="project-label">Reason for Edit <span className="required-mark">*</span></label>
+              <input
+                type="text"
+                className="project-input"
+                placeholder="Why is the amount being changed?"
+                value={editReason}
+                onChange={(e) => setEditReason(e.target.value)}
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn btn-success" onClick={handleConfirmEditTransaction}>
+                ✓ Confirm Edit
+              </button>
+              <button className="btn btn-secondary" onClick={() => setShowEditTransactionModal(false)}>
+                Cancel
+              </button>
             </div>
           </div>
         </div>

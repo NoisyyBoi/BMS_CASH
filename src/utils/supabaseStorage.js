@@ -169,6 +169,23 @@ export const deleteSalaryPaymentFromSupabase = async (paymentId) => {
 
 // ===== DELETE SINGLE TRANSACTION =====
 
+export const updateTransactionInSupabase = async (transactionId, updates) => {
+  try {
+    const { data, error } = await supabase
+      .from('transactions')
+      .update(updates)
+      .eq('id', transactionId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating transaction:', error);
+    throw error;
+  }
+};
+
 export const deleteTransactionFromSupabase = async (transactionId) => {
   try {
     const { error } = await supabase
