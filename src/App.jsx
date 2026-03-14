@@ -3189,30 +3189,6 @@ function App() {
             <div className="salary-user-selection">
               <h3>View Individual User Salary History</h3>
 
-              {/* Download All Salary Payments */}
-              {salaryPayments.length > 0 && (
-                <div className="transaction-actions" style={{ marginBottom: 'var(--space-md)' }}>
-                  <button
-                    className="share-btn whatsapp"
-                    onClick={() => {
-                      const message = formatAllSalaryPaymentsForWhatsApp(salaryPayments, formatIndianCurrency);
-                      shareViaWhatsApp(message);
-                    }}
-                  >
-                    📱 WhatsApp All
-                  </button>
-                  <button
-                    className="share-btn pdf"
-                    onClick={async () => {
-                      await generateAllSalaryPaymentsPDF(salaryPayments, formatIndianCurrency);
-                      showToast('✓ PDF downloaded');
-                    }}
-                  >
-                    📄 Download All PDF
-                  </button>
-                </div>
-              )}
-              
               {/* Search Bar */}
               <div className="search-container">
                 <input
@@ -3359,6 +3335,28 @@ function App() {
                         </div>
                       </div>
                       
+                      {/* Per-month download buttons */}
+                      <div className="transaction-actions" style={{ padding: '0 var(--space-sm) var(--space-sm)' }} onClick={e => e.stopPropagation()}>
+                        <button
+                          className="share-btn whatsapp"
+                          onClick={() => {
+                            const message = formatAllSalaryPaymentsForWhatsApp(data.payments, formatIndianCurrency);
+                            shareViaWhatsApp(message);
+                          }}
+                        >
+                          📱 WhatsApp
+                        </button>
+                        <button
+                          className="share-btn pdf"
+                          onClick={async () => {
+                            await generateAllSalaryPaymentsPDF(data.payments, formatIndianCurrency);
+                            showToast('✓ PDF downloaded');
+                          }}
+                        >
+                          📄 PDF
+                        </button>
+                      </div>
+
                       {expandedSalaryMonths[month] && (
                         <div className="transactions-container">
                           {data.payments.map(payment => (
