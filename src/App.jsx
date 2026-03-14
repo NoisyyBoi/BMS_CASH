@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
-import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp } from './utils/storage';
+import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp, generateSalaryHistoryPDF, formatSalaryHistoryForWhatsApp } from './utils/storage';
 import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, updateTransactionInSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase, cleanupInactiveUsersFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 import { supabase } from './supabaseClient';
@@ -2626,11 +2626,79 @@ function App() {
               
               if (userTransactions.length === 0) {
                 return (
-                  <div className="empty-state">
-                    <div className="empty-icon">💰</div>
-                    <p>No transactions for this user</p>
-                    <p>ಈ ಬಳಕೆದಾರರಿಗೆ ಯಾವುದೇ ವಹಿವಾಟುಗಳಿಲ್ಲ</p>
-                  </div>
+                  <>
+                    <div className="user-info-card">
+                      <div className="user-info-header">
+                        <div className="user-info-icon">👤</div>
+                        <div>
+                          <div className="user-info-name">{selectedUserForHistory.name}</div>
+                          <div className="user-info-phone">{selectedUserForHistory.phone}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="monthly-total-card">
+                      <div className="monthly-total-header">
+                        <span className="monthly-total-icon">📅</span>
+                        <span className="monthly-total-month">{monthName}</span>
+                      </div>
+                      <div className="monthly-total-amount">
+                        <span className="monthly-total-label">Total Amount Given:</span>
+                        <span className="monthly-total-value">{formatIndianCurrency(0)}</span>
+                      </div>
+                    </div>
+
+                    <div className="empty-state" style={{ marginBottom: 0 }}>
+                      <div className="empty-icon">💰</div>
+                      <p>No transactions for this user</p>
+                      <p>ಈ ಬಳಕೆದಾರರಿಗೆ ಯಾವುದೇ ವಹಿವಾಟುಗಳಿಲ್ಲ</p>
+                    </div>
+
+                    {/* Salary Calculator for zero-transaction users */}
+                    <div className="salary-calculator-card">
+                      <div className="calculator-header">
+                        <span className="calculator-icon">🧮</span>
+                        <span className="calculator-title">Salary & Balance Calculator</span>
+                      </div>
+                      <div className="calculator-input-group">
+                        <label className="calculator-label">Monthly Salary (₹)</label>
+                        <div className="input-container">
+                          <input
+                            type="number"
+                            className="calculator-input"
+                            placeholder="Enter monthly salary"
+                            value={totalSalary}
+                            onChange={(e) => setTotalSalary(e.target.value)}
+                            min="0"
+                            step="100"
+                          />
+                          {totalSalary && (
+                            <button className="clear-btn" onClick={() => setTotalSalary('')}>✕</button>
+                          )}
+                        </div>
+                      </div>
+                      {totalSalary && parseFloat(totalSalary) > 0 && (
+                        <div className="calculator-result">
+                          <div className="calculator-row">
+                            <span className="calculator-row-label">💰 Monthly Salary:</span>
+                            <span className="calculator-row-value">{formatIndianCurrency(parseFloat(totalSalary))}</span>
+                          </div>
+                          <div className="calculator-final positive">
+                            <span className="calculator-final-label">✅ Full Salary Available</span>
+                            <span className="calculator-final-value">{formatIndianCurrency(parseFloat(totalSalary))}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {isAdmin() && totalSalary && parseFloat(totalSalary) > 0 && (
+                      <div className="save-payment-container">
+                        <button className="btn btn-success save-salary-btn" onClick={handleSaveSalaryPayment}>
+                          💾 Save Salary Payment
+                        </button>
+                      </div>
+                    )}
+                  </>
                 );
               }
               
@@ -3393,6 +3461,29 @@ function App() {
                 </div>
               </div>
             </div>
+
+            {userSalaryHistory.length > 0 && (
+              <div className="transaction-actions">
+                <button
+                  className="share-btn whatsapp"
+                  onClick={() => {
+                    const message = formatSalaryHistoryForWhatsApp(selectedUserForSalaryHistory, userSalaryHistory, formatIndianCurrency);
+                    shareViaWhatsApp(message);
+                  }}
+                >
+                  📱 WhatsApp
+                </button>
+                <button
+                  className="share-btn pdf"
+                  onClick={async () => {
+                    await generateSalaryHistoryPDF(selectedUserForSalaryHistory, userSalaryHistory, formatIndianCurrency);
+                    showToast('✓ PDF downloaded');
+                  }}
+                >
+                  📄 Download PDF
+                </button>
+              </div>
+            )}
 
             {userSalaryHistory.length === 0 ? (
               <div className="empty-state">
