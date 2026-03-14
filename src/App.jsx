@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
-import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp, generateSalaryHistoryPDF, formatSalaryHistoryForWhatsApp } from './utils/storage';
+import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp, generateSalaryHistoryPDF, formatSalaryHistoryForWhatsApp, generateAllSalaryPaymentsPDF, formatAllSalaryPaymentsForWhatsApp } from './utils/storage';
 import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, updateTransactionInSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase, cleanupInactiveUsersFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 import { supabase } from './supabaseClient';
@@ -3204,6 +3204,30 @@ function App() {
             {/* User Selection for Individual Salary History */}
             <div className="salary-user-selection">
               <h3>View Individual User Salary History</h3>
+
+              {/* Download All Salary Payments */}
+              {salaryPayments.length > 0 && (
+                <div className="transaction-actions" style={{ marginBottom: 'var(--space-md)' }}>
+                  <button
+                    className="share-btn whatsapp"
+                    onClick={() => {
+                      const message = formatAllSalaryPaymentsForWhatsApp(salaryPayments, formatIndianCurrency);
+                      shareViaWhatsApp(message);
+                    }}
+                  >
+                    📱 WhatsApp All
+                  </button>
+                  <button
+                    className="share-btn pdf"
+                    onClick={async () => {
+                      await generateAllSalaryPaymentsPDF(salaryPayments, formatIndianCurrency);
+                      showToast('✓ PDF downloaded');
+                    }}
+                  >
+                    📄 Download All PDF
+                  </button>
+                </div>
+              )}
               
               {/* Search Bar */}
               <div className="search-container">

@@ -971,3 +971,118 @@ export const formatSalaryHistoryForWhatsApp = (user, salaryPayments, formatCurre
   message += `_BMS DIESEL SYSTEMS INDIA PVT LTD_`;
   return message;
 };
+
+// Generate All Salary Payments PDF (grouped by month)
+export const generateAllSalaryPaymentsPDF = async (salaryPayments, formatCurrency) => {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  let y = 15;
+
+  // Logo
+  try {
+    const logoImg = new Image();
+    logoImg.src = '/icons/icon-512.png';
+    await new Promise((resolve, reject) => {
+      logoImg.onload = resolve;
+      logoImg.onerror = reject;
+      setTimeout(reject, 2000);
+    });
+    doc.addImage(logoImg, 'PNG', margin, y, 20, 20);
+  } catch (e) {}
+
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BMS DIESEL SYSTEMS INDIA PVT LTD', pageWidth / 2, y + 8, { align: 'center' });
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text('All Salary Payments', pageWidth / 2, y + 15, { align: 'center' });
+  doc.setFontSize(9);
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, pageWidth / 2, y + 21, { align: 'center' });
+  y += 30;
+
+  doc.setDrawColor(200);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 8;
+
+  const sorted = [...salaryPayments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const grouped = {};
+  sorted.forEach(p => {
+    if (!grouped[p.month]) grouped[p.month] = { payments: [], total: 0 };
+    grouped[p.month].payments.push(p);
+    grouped[p.month].total += p.paidToEmployee;
+  });
+
+  Object.entries(grouped).forEach(([month, data]) => {
+    if (y > 250) { doc.addPage(); y = 20; }
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(month, margin, y);
+    doc.text(`Total: ${formatCurrency(data.total)}`, pageWidth - margin, y, { align: 'right' });
+    y += 2;
+    doc.setDrawColor(180);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 5;
+
+    data.payments.forEach(payment => {
+      if (y > 265) { doc.addPage(); y = 20; }
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(payment.userName, margin + 2, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(payment.userPhone, margin + 2, y + 4);
+      doc.text(`Salary: ${formatCurrency(payment.monthlySalary)}`, pageWidth / 2, y, { align: 'center' });
+      doc.text(`Paid: ${formatCurrency(payment.paidToEmployee)}`, pageWidth - margin, y, { align: 'right' });
+      if (payment.remainingBalance > 0) {
+        doc.text(`Balance: ${formatCurrency(payment.remainingBalance)}`, pageWidth - margin, y + 4, { align: 'right' });
+      }
+      y += 10;
+      doc.setDrawColor(230);
+      doc.line(margin + 2, y, pageWidth - margin, y);
+      y += 4;
+    });
+    y += 4;
+  });
+
+  const grandTotal = sorted.reduce((s, p) => s + p.paidToEmployee, 0);
+  if (y > 265) { doc.addPage(); y = 20; }
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Grand Total Paid:', margin, y);
+  doc.text(formatCurrency(grandTotal), pageWidth - margin, y, { align: 'right' });
+
+  doc.save(`All_Salary_Payments_${new Date().toLocaleDateString('en-IN').replace(/\//g, '-')}.pdf`);
+};
+
+// Format All Salary Payments for WhatsApp
+export const formatAllSalaryPaymentsForWhatsApp = (salaryPayments, formatCurrency) => {
+  const sorted = [...salaryPayments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const grouped = {};
+  sorted.forEach(p => {
+    if (!grouped[p.month]) grouped[p.month] = { payments: [], total: 0 };
+    grouped[p.month].payments.push(p);
+    grouped[p.month].total += p.paidToEmployee;
+  });
+
+  const grandTotal = sorted.reduce((s, p) => s + p.paidToEmployee, 0);
+
+  let message = `*All Salary Payments*\n`;
+  message += `📅 ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}\n`;
+  message += `💰 *Grand Total: ${formatCurrency(grandTotal)}*\n`;
+  message += `\n━━━━━━━━━━━━━━━━━━\n\n`;
+
+  Object.entries(grouped).forEach(([month, data]) => {
+    message += `*📅 ${month}* — ${formatCurrency(data.total)}\n\n`;
+    data.payments.forEach(p => {
+      message += `  👤 ${p.userName} (${p.userPhone})\n`;
+      message += `  💰 Salary: ${formatCurrency(p.monthlySalary)} | 💵 Paid: ${formatCurrency(p.paidToEmployee)}\n`;
+      if (p.remainingBalance > 0) message += `  ⚠️ Balance: ${formatCurrency(p.remainingBalance)}\n`;
+      message += `\n`;
+    });
+    message += `━━━━━━━━━━━━━━━━━━\n\n`;
+  });
+
+  message += `_BMS DIESEL SYSTEMS INDIA PVT LTD_`;
+  return message;
+};
