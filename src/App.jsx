@@ -126,6 +126,7 @@ function App() {
   const [transactionToEdit, setTransactionToEdit] = useState(null);
   const [editNewAmount, setEditNewAmount] = useState('');
   const [editReason, setEditReason] = useState('');
+  const [editReasonType, setEditReasonType] = useState('');
 
   // OTP and Password Reset states
   const [pendingAdminUsername, setPendingAdminUsername] = useState(null);
@@ -1184,6 +1185,7 @@ function App() {
     setTransactionToEdit(transaction);
     setEditNewAmount(String(Math.abs(transaction.amount)));
     setEditReason('');
+    setEditReasonType('');
     setShowEditTransactionModal(true);
   };
 
@@ -1192,8 +1194,12 @@ function App() {
       showToast('⚠️ Please enter a valid amount');
       return;
     }
-    if (!editReason.trim()) {
-      showToast('⚠️ Please provide a reason for editing');
+    if (!editReasonType) {
+      showToast('⚠️ Please select a reason');
+      return;
+    }
+    if (editReasonType === 'other' && !editReason.trim()) {
+      showToast('⚠️ Please specify the reason');
       return;
     }
 
@@ -1209,7 +1215,7 @@ function App() {
       const editEntry = {
         oldAmount,
         newAmount,
-        reason: editReason.trim(),
+        reason: editReasonType === 'other' ? editReason.trim() : editReasonType,
         editedBy: userRole,
         editedAt: new Date().toISOString(),
       };
@@ -1227,6 +1233,7 @@ function App() {
       setTransactionToEdit(null);
       setEditNewAmount('');
       setEditReason('');
+      setEditReasonType('');
 
       const transactions = await getUserTransactionsFromSupabase(selectedUserForHistory.id);
       setUserTransactionsData(transactions);
@@ -4308,14 +4315,34 @@ function App() {
 
             <div className="project-section">
               <label className="project-label">Reason for Edit <span className="required-mark">*</span></label>
-              <input
-                type="text"
-                className="project-input"
-                placeholder="Why is the amount being changed?"
-                value={editReason}
-                onChange={(e) => setEditReason(e.target.value)}
-              />
+              <select
+                className="project-input project-select"
+                value={editReasonType}
+                onChange={(e) => {
+                  setEditReasonType(e.target.value);
+                  setEditReason('');
+                }}
+              >
+                <option value="">Select reason...</option>
+                <option value="Returned Cash">Returned Cash</option>
+                <option value="Paying More">Paying More</option>
+                <option value="Wrong Entry">Wrong Entry</option>
+                <option value="other">Other</option>
+              </select>
             </div>
+
+            {editReasonType === 'other' && (
+              <div className="project-section">
+                <label className="project-label">Specify Reason <span className="required-mark">*</span></label>
+                <input
+                  type="text"
+                  className="project-input"
+                  placeholder="Enter reason..."
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                />
+              </div>
+            )}
 
             <div className="modal-actions">
               <button className="btn btn-success" onClick={handleConfirmEditTransaction}>
