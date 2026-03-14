@@ -49,11 +49,6 @@ export const deleteList = (listId) => {
 };
 
 // Get a single list by ID
-export const getListById = (listId) => {
-  const lists = getSavedLists();
-  return lists.find(l => l.id === listId);
-};
-
 // Get unique site names from saved list history
 export const getUsedSiteNames = () => {
   const lists = getSavedLists();
@@ -175,85 +170,13 @@ export const generatePDF = (items, siteName = '', date = '') => {
   doc.save(filename);
 };
 
-// Format date for display (DD-MM-YYYY)
-export const formatDate = (date) => {
-  const d = new Date(date);
+// Get today's date formatted
+export const getTodayFormatted = () => {
+  const d = new Date();
   const day = String(d.getDate()).padStart(2, '0');
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const year = d.getFullYear();
   return `${day}-${month}-${year}`;
-};
-
-// Get today's date formatted
-export const getTodayFormatted = () => {
-  return formatDate(new Date());
-};
-
-// ===== USER MANAGEMENT =====
-const USERS_KEY = 'bms_users';
-
-export const getUsers = () => {
-  try {
-    const data = localStorage.getItem(USERS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error('Error loading users:', e);
-    return [];
-  }
-};
-
-export const saveUser = (user) => {
-  try {
-    const users = getUsers();
-    const newUser = {
-      ...user,
-      id: user.id || Date.now(),
-      createdAt: user.createdAt || new Date().toISOString(),
-    };
-    
-    const updatedUsers = [...users, newUser];
-    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
-    return newUser;
-  } catch (e) {
-    console.error('Error saving user:', e);
-    return null;
-  }
-};
-
-// ===== TRANSACTION MANAGEMENT =====
-const TRANSACTIONS_KEY = 'bms_transactions';
-
-export const getTransactions = () => {
-  try {
-    const data = localStorage.getItem(TRANSACTIONS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error('Error loading transactions:', e);
-    return [];
-  }
-};
-
-export const saveTransaction = (transaction) => {
-  try {
-    const transactions = getTransactions();
-    const newTransaction = {
-      ...transaction,
-      id: transaction.id || Date.now(),
-      createdAt: transaction.createdAt || new Date().toISOString(),
-    };
-    
-    const updatedTransactions = [...transactions, newTransaction];
-    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
-    return newTransaction;
-  } catch (e) {
-    console.error('Error saving transaction:', e);
-    return null;
-  }
-};
-
-export const getUserTransactions = (userId) => {
-  const transactions = getTransactions();
-  return transactions.filter(t => t.userId === userId);
 };
 
 // ===== TRANSACTION PDF & SHARING =====

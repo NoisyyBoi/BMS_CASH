@@ -1358,22 +1358,6 @@ function App() {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('⚠️ Image size should be less than 5MB');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUserImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleDownloadUserPDF = () => {
     generateUserTransactionsPDF(
       selectedUserForHistory,

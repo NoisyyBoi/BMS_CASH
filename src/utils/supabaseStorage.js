@@ -115,21 +115,6 @@ export const saveSalaryPaymentToSupabase = async (payment) => {
   }
 };
 
-export const getUserSalaryPaymentsFromSupabase = async (userId) => {
-  try {
-    const { data, error } = await supabase
-      .from('salary_payments')
-      .select('*')
-      .eq('userId', userId)
-      .order('createdAt', { ascending: false});
-    
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching user salary payments:', error);
-    throw error;
-  }
-};
 
 
 // ===== DELETE USER TRANSACTIONS =====
@@ -272,20 +257,6 @@ export const deleteOldSalaryPaymentsFromSupabase = async () => {
   }
 };
 
-export const permanentlyDeleteTransactionFromSupabase = async (deletedTransactionId) => {
-  try {
-    const { error } = await supabase
-      .from('deleted_transactions')
-      .delete()
-      .eq('id', deletedTransactionId);
-    
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('Error permanently deleting transaction:', error);
-    throw error;
-  }
-};
 // ===== USER CLEANUP MANAGEMENT =====
 
 export const cleanupInactiveUsersFromSupabase = async (inactiveDays = 120, dryRun = false) => {
@@ -391,21 +362,5 @@ const manualCleanupInactiveUsers = async (inactiveDays = 120, dryRun = false) =>
   } catch (error) {
     console.error('Error in manual cleanup:', error);
     throw error;
-  }
-};
-
-export const getCleanupLogFromSupabase = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('user_cleanup_log')
-      .select('*')
-      .order('cleanup_date', { ascending: false })
-      .limit(50);
-    
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching cleanup log:', error);
-    return [];
   }
 };
