@@ -255,14 +255,14 @@ export const deleteOldDeletedTransactionsFromSupabase = async () => {
 
 export const deleteOldSalaryPaymentsFromSupabase = async () => {
   try {
-    // Calculate date 120 days ago
-    const oneHundredTwentyDaysAgo = new Date();
-    oneHundredTwentyDaysAgo.setDate(oneHundredTwentyDaysAgo.getDate() - 120);
+    // Calculate date 150 days ago
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 150);
     
     const { error } = await supabase
       .from('salary_payments')
       .delete()
-      .lt('createdAt', oneHundredTwentyDaysAgo.toISOString());
+      .lt('createdAt', cutoffDate.toISOString());
     
     if (error) throw error;
     return true;

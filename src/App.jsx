@@ -3448,7 +3448,7 @@ function App() {
                                   const createdDate = new Date(payment.createdAt);
                                   const now = new Date();
                                   const daysElapsed = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
-                                  const daysRemaining = 120 - daysElapsed;
+                                  const daysRemaining = 150 - daysElapsed;
                                   
                                   if (daysRemaining <= 30 && daysRemaining > 0) {
                                     return (
@@ -3614,7 +3614,7 @@ function App() {
                                   const createdDate = new Date(payment.createdAt);
                                   const now = new Date();
                                   const daysElapsed = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
-                                  const daysRemaining = 120 - daysElapsed;
+                                  const daysRemaining = 150 - daysElapsed;
                                   
                                   if (daysRemaining <= 30 && daysRemaining > 0) {
                                     return (
