@@ -2380,6 +2380,7 @@ function App() {
                       setUserValidationErrors([]);
                     }
                   }}
+                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('user-phone-input').focus()}
                 />
                 {userName && (
                   <button 
@@ -2404,6 +2405,7 @@ function App() {
                   className="project-input"
                   placeholder="Enter 10-digit phone number"
                   value={userPhone}
+                  id="user-phone-input"
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, ''); // Only digits
                     if (value.length <= 10) {
@@ -2414,6 +2416,7 @@ function App() {
                     }
                   }}
                   maxLength="10"
+                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('user-referral-input').focus()}
                 />
                 {userPhone && (
                   <button 
@@ -2437,7 +2440,9 @@ function App() {
                   className="project-input"
                   placeholder="Enter referral code or name"
                   value={userReferral}
+                  id="user-referral-input"
                   onChange={(e) => setUserReferral(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveUser()}
                 />
                 {userReferral && (
                   <button 
@@ -2557,6 +2562,7 @@ function App() {
                   }}
                   min="0"
                   step="0.01"
+                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('money-purpose-select').focus()}
                 />
                 {moneyAmount && (
                   <button 
@@ -2577,6 +2583,7 @@ function App() {
                 <span className="required-mark">*</span>
               </label>
               <select
+                id="money-purpose-select"
                 className="project-input project-select"
                 value={moneyPurpose}
                 onChange={(e) => {
@@ -2588,6 +2595,7 @@ function App() {
                     setGiveMoneyValidationErrors([]);
                   }
                 }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); moneyPurpose === 'others' ? document.getElementById('custom-purpose-input').focus() : handleSaveTransaction(); } }}
               >
                 <option value="">Select purpose...</option>
                 <option value="fuel">Fuel</option>
@@ -2609,6 +2617,7 @@ function App() {
                   <input
                     type="text"
                     className="project-input"
+                    id="custom-purpose-input"
                     placeholder="Enter purpose"
                     value={customPurpose}
                     onChange={(e) => {
@@ -2617,6 +2626,7 @@ function App() {
                         setGiveMoneyValidationErrors([]);
                       }
                     }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveTransaction()}
                   />
                   {customPurpose && (
                     <button 
@@ -4516,18 +4526,21 @@ function App() {
                 value={editNewAmount}
                 onChange={(e) => setEditNewAmount(e.target.value)}
                 autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && document.getElementById('edit-reason-select').focus()}
               />
             </div>
 
             <div className="project-section">
               <label className="project-label">Reason for Edit <span className="required-mark">*</span></label>
               <select
+                id="edit-reason-select"
                 className="project-input project-select"
                 value={editReasonType}
                 onChange={(e) => {
                   setEditReasonType(e.target.value);
                   setEditReason('');
                 }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); editReasonType === 'other' ? document.getElementById('edit-reason-input').focus() : handleConfirmEditTransaction(); } }}
               >
                 <option value="">Select reason...</option>
                 <option value="Returned Remaining Cash">Returned Remaining Cash</option>
@@ -4543,9 +4556,11 @@ function App() {
                 <input
                   type="text"
                   className="project-input"
+                  id="edit-reason-input"
                   placeholder="Enter reason..."
                   value={editReason}
                   onChange={(e) => setEditReason(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleConfirmEditTransaction()}
                 />
               </div>
             )}
