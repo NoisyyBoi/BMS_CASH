@@ -128,6 +128,10 @@ function App() {
   const [editReason, setEditReason] = useState('');
   const [editReasonType, setEditReasonType] = useState('');
 
+  // PWA install prompt
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
   // OTP and Password Reset states
   const [pendingAdminUsername, setPendingAdminUsername] = useState(null);
   const [otpCode, setOtpCode] = useState('');
@@ -145,6 +149,15 @@ function App() {
 
   useEffect(() => {
     setSavedLists(getSavedLists());
+
+    // Capture PWA install prompt
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', () => setShowInstallBanner(false));
     
     // Check for stored session
     const storedRole = localStorage.getItem('bms_user_role');
@@ -189,6 +202,10 @@ function App() {
         cleanupInactiveUsersOnLoad();
       }
     }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
   }, []);
 
   // Browser back button handler
@@ -759,6 +776,14 @@ function App() {
     setSiteName('');
     setProjectDate(getTodayFormatted());
     navigateToView(VIEWS.PROJECT);
+  };
+
+  const handleInstallApp = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') setShowInstallBanner(false);
+    setInstallPrompt(null);
   };
 
   const startCreateUser = () => {
@@ -1854,6 +1879,36 @@ function App() {
 
   return (
     <div className="app">
+      {/* PWA Install Banner */}
+      {showInstallBanner && installPrompt && (
+        <div style={{
+          position: 'fixed', bottom: '80px', left: '16px', right: '16px',
+          background: '#1565C0', color: '#fff', borderRadius: '12px',
+          padding: '12px 16px', display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', zIndex: 9999,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '24px' }}>📲</span>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '14px' }}>Install BMS Cash</div>
+              <div style={{ fontSize: '12px', opacity: 0.85 }}>Add to home screen for quick access</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => setShowInstallBanner(false)} style={{
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.5)',
+              color: '#fff', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer'
+            }}>Later</button>
+            <button onClick={handleInstallApp} style={{
+              background: '#fff', border: 'none', color: '#1565C0',
+              borderRadius: '8px', padding: '6px 12px', fontSize: '12px',
+              fontWeight: 700, cursor: 'pointer'
+            }}>Install</button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       {view !== VIEWS.HOME && view !== VIEWS.LOGIN && view !== VIEWS.OTP_VERIFY && view !== VIEWS.FORGOT_PASSWORD && view !== VIEWS.RESET_PASSWORD && (
         <header className="header">
