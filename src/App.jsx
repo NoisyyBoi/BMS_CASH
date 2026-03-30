@@ -1391,7 +1391,7 @@ function App() {
       setUserPhone('');
       setUserReferral('');
       setUserValidationErrors([]);
-      navigateToView(VIEWS.HOME);
+      setTimeout(() => navigateToView(VIEWS.HOME), 250);
     } catch (error) {
       console.error('Error saving user:', error);
       
