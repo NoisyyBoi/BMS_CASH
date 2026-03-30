@@ -130,7 +130,9 @@ function App() {
 
   // PWA install prompt
   const [installPrompt, setInstallPrompt] = useState(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const [showInstallBanner, setShowInstallBanner] = useState(isIos && !isInStandaloneMode);
 
   // OTP and Password Reset states
   const [pendingAdminUsername, setPendingAdminUsername] = useState(null);
@@ -1880,32 +1882,54 @@ function App() {
   return (
     <div className="app">
       {/* PWA Install Banner */}
-      {showInstallBanner && installPrompt && (
+      {showInstallBanner && (
         <div style={{
           position: 'fixed', bottom: '80px', left: '16px', right: '16px',
           background: '#1565C0', color: '#fff', borderRadius: '12px',
-          padding: '12px 16px', display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', zIndex: 9999,
+          padding: '12px 16px', zIndex: 9999,
           boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '24px' }}>📲</span>
+          {isIos ? (
+            /* iOS: manual instructions */
             <div>
-              <div style={{ fontWeight: 600, fontSize: '14px' }}>Install BMS Cash</div>
-              <div style={{ fontSize: '12px', opacity: 0.85 }}>Add to home screen for quick access</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '22px' }}>📲</span>
+                  <span style={{ fontWeight: 700, fontSize: '14px' }}>Install BMS Cash</span>
+                </div>
+                <button onClick={() => setShowInstallBanner(false)} style={{
+                  background: 'transparent', border: 'none', color: '#fff',
+                  fontSize: '18px', cursor: 'pointer', lineHeight: 1
+                }}>✕</button>
+              </div>
+              <div style={{ fontSize: '13px', lineHeight: '1.6', opacity: 0.95 }}>
+                Tap <strong>Share</strong> <span style={{ fontSize: '15px' }}>⎙</span> at the bottom of Safari, then tap <strong>"Add to Home Screen"</strong> 
+                <span style={{ fontSize: '15px' }}> ＋</span>
+              </div>
             </div>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setShowInstallBanner(false)} style={{
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.5)',
-              color: '#fff', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer'
-            }}>Later</button>
-            <button onClick={handleInstallApp} style={{
-              background: '#fff', border: 'none', color: '#1565C0',
-              borderRadius: '8px', padding: '6px 12px', fontSize: '12px',
-              fontWeight: 700, cursor: 'pointer'
-            }}>Install</button>
-          </div>
+          ) : (
+            /* Android / Desktop: native prompt */
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '24px' }}>📲</span>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '14px' }}>Install BMS Cash</div>
+                  <div style={{ fontSize: '12px', opacity: 0.85 }}>Add to home screen for quick access</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => setShowInstallBanner(false)} style={{
+                  background: 'transparent', border: '1px solid rgba(255,255,255,0.5)',
+                  color: '#fff', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer'
+                }}>Later</button>
+                <button onClick={handleInstallApp} style={{
+                  background: '#fff', border: 'none', color: '#1565C0',
+                  borderRadius: '8px', padding: '6px 12px', fontSize: '12px',
+                  fontWeight: 700, cursor: 'pointer'
+                }}>Install</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
