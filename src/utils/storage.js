@@ -224,33 +224,22 @@ export const generateUserTransactionsPDF = async (user, transactions, monthlyTot
   // Load and add logo
   try {
     const logoImg = new Image();
-    logoImg.src = '/icons/icon-512.png';
+    logoImg.src = '/logo.png';
     await new Promise((resolve, reject) => {
       logoImg.onload = resolve;
       logoImg.onerror = reject;
       setTimeout(reject, 2000); // Timeout after 2 seconds
     });
     
-    // Add logo (30x30mm)
-    doc.addImage(logoImg, 'PNG', margin, y, 30, 30);
+    // Add logo banner centered (80mm wide, ~15mm tall to match aspect ratio)
+    const logoW = 80;
+    const logoH = 15.5;
+    doc.addImage(logoImg, 'PNG', (pageWidth - logoW) / 2, y, logoW, logoH);
   } catch (error) {
     console.log('Logo not loaded, continuing without it');
   }
   
-  // Company information (to the right of logo)
-  const textX = margin + 35;
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BMS DEISEL SYSTEMS INDIA PVT LTD', textX, y + 5);
-  
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura,', textX, y + 11);
-  doc.text('Bengaluru, Karnataka 560065', textX, y + 16);
-  doc.text('Land: 080 2973 3225, Ph: 9900118148, 9844088148', textX, y + 21);
-  doc.text('Email: bmsdieselsystems@gmail.com', textX, y + 26);
-  
-  y += 35;
+  y += 20;
   
   // Separator line
   doc.setLineWidth(0.5);
@@ -403,32 +392,20 @@ export const generateDailyTransactionsPDF = async (date, transactions, dailyTota
   // Load and add logo
   try {
     const logoImg = new Image();
-    logoImg.src = '/icons/icon-512.png';
+    logoImg.src = '/logo.png';
     await new Promise((resolve, reject) => {
       logoImg.onload = resolve;
       logoImg.onerror = reject;
       setTimeout(reject, 2000);
     });
-    
-    doc.addImage(logoImg, 'PNG', margin, y, 30, 30);
+    const logoW = 80;
+    const logoH = 15.5;
+    doc.addImage(logoImg, 'PNG', (pageWidth - logoW) / 2, y, logoW, logoH);
   } catch (error) {
     console.log('Logo not loaded, continuing without it');
   }
   
-  // Company information
-  const textX = margin + 35;
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BMS DEISEL SYSTEMS INDIA PVT LTD', textX, y + 5);
-  
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura,', textX, y + 11);
-  doc.text('Bengaluru, Karnataka 560065', textX, y + 16);
-  doc.text('Land: 080 2973 3225, Ph: 9900118148, 9844088148', textX, y + 21);
-  doc.text('Email: bmsdieselsystems@gmail.com', textX, y + 26);
-  
-  y += 35;
+  y += 20;
   
   // Separator line
   doc.setLineWidth(0.5);
@@ -630,32 +607,20 @@ export const generateMonthlySummaryPDF = async (monthYear, dailySummaries, month
   // Load and add logo
   try {
     const logoImg = new Image();
-    logoImg.src = '/icons/icon-512.png';
+    logoImg.src = '/logo.png';
     await new Promise((resolve, reject) => {
       logoImg.onload = resolve;
       logoImg.onerror = reject;
       setTimeout(reject, 2000);
     });
-    
-    doc.addImage(logoImg, 'PNG', margin, y, 30, 30);
+    const logoW = 80;
+    const logoH = 15.5;
+    doc.addImage(logoImg, 'PNG', (pageWidth - logoW) / 2, y, logoW, logoH);
   } catch (error) {
     console.log('Logo not loaded, continuing without it');
   }
   
-  // Company information
-  const textX = margin + 35;
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BMS DEISEL SYSTEMS INDIA PVT LTD', textX, y + 5);
-  
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura,', textX, y + 11);
-  doc.text('Bengaluru, Karnataka 560065', textX, y + 16);
-  doc.text('Land: 080 2973 3225, Ph: 9900118148, 9844088148', textX, y + 21);
-  doc.text('Email: bmsdieselsystems@gmail.com', textX, y + 26);
-  
-  y += 35;
+  y += 20;
   
   // Separator line
   doc.setLineWidth(0.5);
@@ -782,23 +747,20 @@ export const generateSalaryHistoryPDF = async (user, salaryPayments, formatCurre
   // Logo
   try {
     const logoImg = new Image();
-    logoImg.src = '/icons/icon-512.png';
+    logoImg.src = '/logo.png';
     await new Promise((resolve, reject) => {
       logoImg.onload = resolve;
       logoImg.onerror = reject;
       setTimeout(reject, 2000);
     });
-    const logoSize = 20;
-    doc.addImage(logoImg, 'PNG', margin, y, logoSize, logoSize);
+    const logoW = 80;
+    const logoH = 15.5;
+    doc.addImage(logoImg, 'PNG', (pageWidth - logoW) / 2, y, logoW, logoH);
   } catch (e) {}
 
-  // Header
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BMS DIESEL SYSTEMS INDIA PVT LTD', pageWidth / 2, y + 8, { align: 'center' });
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text('Salary Payment History', pageWidth / 2, y + 15, { align: 'center' });
+  doc.text('Salary Payment History', pageWidth / 2, y + 19, { align: 'center' });
   y += 28;
 
   // User info
@@ -905,23 +867,22 @@ export const generateAllSalaryPaymentsPDF = async (salaryPayments, formatCurrenc
   // Logo
   try {
     const logoImg = new Image();
-    logoImg.src = '/icons/icon-512.png';
+    logoImg.src = '/logo.png';
     await new Promise((resolve, reject) => {
       logoImg.onload = resolve;
       logoImg.onerror = reject;
       setTimeout(reject, 2000);
     });
-    doc.addImage(logoImg, 'PNG', margin, y, 20, 20);
+    const logoW = 80;
+    const logoH = 15.5;
+    doc.addImage(logoImg, 'PNG', (pageWidth - logoW) / 2, y, logoW, logoH);
   } catch (e) {}
 
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.text('BMS DIESEL SYSTEMS INDIA PVT LTD', pageWidth / 2, y + 8, { align: 'center' });
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text('All Salary Payments', pageWidth / 2, y + 15, { align: 'center' });
+  doc.text('All Salary Payments', pageWidth / 2, y + 19, { align: 'center' });
   doc.setFontSize(9);
-  doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, pageWidth / 2, y + 21, { align: 'center' });
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, pageWidth / 2, y + 24, { align: 'center' });
   y += 30;
 
   doc.setDrawColor(200);
