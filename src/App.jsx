@@ -966,7 +966,7 @@ function App() {
       await saveTransactionToSupabase(transaction);
       await loadTransactions(); // Reload transactions list
       showToast('✓ Transaction saved successfully');
-      navigateToView(VIEWS.HOME);
+      setTimeout(() => navigateToView(VIEWS.HOME), 250);
     } catch (error) {
       console.error('Error saving transaction:', error);
       showToast('⚠️ Error saving transaction');
@@ -1692,7 +1692,7 @@ function App() {
         if (userRole === 'user') {
           handleLogout();
         } else {
-          navigateToView(VIEWS.USER_TOTAL);
+          navigateToView(VIEWS.HOME);
         }
       } else if (view === VIEWS.REVIEW) {
         navigateToView(VIEWS.CATEGORIES);
