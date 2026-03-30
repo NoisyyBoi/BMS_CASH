@@ -240,6 +240,16 @@ export const generateUserTransactionsPDF = async (user, transactions, monthlyTot
   }
   
   y += 20;
+
+  // Address
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80);
+  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura, Bengaluru, Karnataka 560065', pageWidth / 2, y, { align: 'center' });
+  y += 4;
+  doc.text('Land: 080 2973 3225  |  Ph: 9900118148, 9844088148  |  Email: bmsdieselsystems@gmail.com', pageWidth / 2, y, { align: 'center' });
+  doc.setTextColor(0);
+  y += 6;
   
   // Separator line
   doc.setLineWidth(0.5);
@@ -406,6 +416,16 @@ export const generateDailyTransactionsPDF = async (date, transactions, dailyTota
   }
   
   y += 20;
+
+  // Address
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80);
+  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura, Bengaluru, Karnataka 560065', pageWidth / 2, y, { align: 'center' });
+  y += 4;
+  doc.text('Land: 080 2973 3225  |  Ph: 9900118148, 9844088148  |  Email: bmsdieselsystems@gmail.com', pageWidth / 2, y, { align: 'center' });
+  doc.setTextColor(0);
+  y += 6;
   
   // Separator line
   doc.setLineWidth(0.5);
@@ -621,6 +641,16 @@ export const generateMonthlySummaryPDF = async (monthYear, dailySummaries, month
   }
   
   y += 20;
+
+  // Address
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80);
+  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura, Bengaluru, Karnataka 560065', pageWidth / 2, y, { align: 'center' });
+  y += 4;
+  doc.text('Land: 080 2973 3225  |  Ph: 9900118148, 9844088148  |  Email: bmsdieselsystems@gmail.com', pageWidth / 2, y, { align: 'center' });
+  doc.setTextColor(0);
+  y += 6;
   
   // Separator line
   doc.setLineWidth(0.5);
@@ -761,7 +791,12 @@ export const generateSalaryHistoryPDF = async (user, salaryPayments, formatCurre
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.text('Salary Payment History', pageWidth / 2, y + 19, { align: 'center' });
-  y += 28;
+  doc.setFontSize(8);
+  doc.setTextColor(80);
+  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura, Bengaluru, Karnataka 560065', pageWidth / 2, y + 24, { align: 'center' });
+  doc.text('Land: 080 2973 3225  |  Ph: 9900118148, 9844088148  |  Email: bmsdieselsystems@gmail.com', pageWidth / 2, y + 28, { align: 'center' });
+  doc.setTextColor(0);
+  y += 36;
 
   // User info
   doc.setFontSize(10);
@@ -883,7 +918,12 @@ export const generateAllSalaryPaymentsPDF = async (salaryPayments, formatCurrenc
   doc.text('All Salary Payments', pageWidth / 2, y + 19, { align: 'center' });
   doc.setFontSize(9);
   doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, pageWidth / 2, y + 24, { align: 'center' });
-  y += 30;
+  doc.setFontSize(8);
+  doc.setTextColor(80);
+  doc.text('Giridhama Nagar, Doddabettahalli, Vidyaranyapura, Bengaluru, Karnataka 560065', pageWidth / 2, y + 29, { align: 'center' });
+  doc.text('Land: 080 2973 3225  |  Ph: 9900118148, 9844088148  |  Email: bmsdieselsystems@gmail.com', pageWidth / 2, y + 33, { align: 'center' });
+  doc.setTextColor(0);
+  y += 38;
 
   doc.setDrawColor(200);
   doc.line(margin, y, pageWidth - margin, y);
