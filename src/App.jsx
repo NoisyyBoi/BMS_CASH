@@ -2756,7 +2756,7 @@ function App() {
                     <div className="salary-calculator-card">
                       <div className="calculator-header">
                         <span className="calculator-icon">🧮</span>
-                        <span className="calculator-title">Salary & Balance Calculator</span>
+                        <span className="calculator-title">Pay Salary & Show Balance</span>
                       </div>
                       <div className="calculator-input-group">
                         <label className="calculator-label">Monthly Salary (₹)</label>
@@ -2969,7 +2969,7 @@ function App() {
                   <div className="salary-calculator-card">
                     <div className="calculator-header">
                       <span className="calculator-icon">🧮</span>
-                      <span className="calculator-title">Salary & Balance Calculator</span>
+                      <span className="calculator-title">Pay Salary & Show Balance</span>
                     </div>
                     
                     <div className="calculator-input-group">
