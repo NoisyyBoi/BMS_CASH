@@ -4040,3 +4040,13 @@ h3 { font-size: var(--font-size-lg); }
   text-decoration: line-through;
   opacity: 0.8;
 }
+
+/* Remove spinner/scroll buttons from number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
