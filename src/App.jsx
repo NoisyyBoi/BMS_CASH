@@ -772,6 +772,28 @@ function App() {
     navigateToView(VIEWS.CREATE_USER);
   };
 
+  const handlePickFromContacts = async () => {
+    if (!('contacts' in navigator && 'ContactsManager' in window)) {
+      showToast('⚠️ Contacts not supported on this device/browser');
+      return;
+    }
+    try {
+      const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: false });
+      if (!contacts || contacts.length === 0) return;
+      const contact = contacts[0];
+      if (contact.name && contact.name[0]) {
+        setUserName(contact.name[0]);
+      }
+      if (contact.tel && contact.tel[0]) {
+        const phone = contact.tel[0].replace(/\D/g, '').slice(-10);
+        setUserPhone(phone);
+      }
+      setUserValidationErrors([]);
+    } catch (err) {
+      showToast('⚠️ Could not access contacts');
+    }
+  };
+
   const startGiveMoney = () => {
     if (!isAdmin()) {
       showToast('⚠️ Only admins can add transactions');
@@ -2249,6 +2271,18 @@ function App() {
         {/* Create User Screen */}
         {view === VIEWS.CREATE_USER && (
           <div className="project-screen">
+            {/* Pick from Contacts */}
+            {'contacts' in navigator && 'ContactsManager' in window && (
+              <button
+                className="btn btn-secondary"
+                style={{ marginBottom: '16px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                onClick={handlePickFromContacts}
+              >
+                📋 Pick from Contacts
+                <span style={{ fontSize: '12px', opacity: 0.8 }}>ಸಂಪರ್ಕದಿಂದ ಆಯ್ಕೆ</span>
+              </button>
+            )}
+
             <div className="project-section">
               <label className="project-label">
                 <span>Name</span>
