@@ -2465,7 +2465,8 @@ function App() {
               </label>
               <div className="input-container">
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   className="project-input"
                   placeholder="Enter amount"
                   value={moneyAmount}
@@ -2682,13 +2683,12 @@ function App() {
                         <label className="calculator-label">Monthly Salary (₹)</label>
                         <div className="input-container">
                           <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
                             className="calculator-input"
                             placeholder="Enter monthly salary"
                             value={totalSalary}
                             onChange={(e) => setTotalSalary(e.target.value)}
-                            min="0"
-                            step="100"
                           />
                           {totalSalary && (
                             <button className="clear-btn" onClick={() => setTotalSalary('')}>✕</button>
@@ -2897,13 +2897,12 @@ function App() {
                       <label className="calculator-label">Monthly Salary (₹)</label>
                       <div className="input-container">
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
                           className="calculator-input"
                           placeholder="Enter monthly salary"
                           value={totalSalary}
                           onChange={(e) => setTotalSalary(e.target.value)}
-                          min="0"
-                          step="100"
                         />
                         {totalSalary && (
                           <button 
@@ -2970,14 +2969,12 @@ function App() {
                                   <div className="calculator-input-group">
                                     <label className="calculator-label">💵 Cash to Give Employee (₹)</label>
                                     <input
-                                      type="number"
+                                      type="text"
+                                      inputMode="numeric"
                                       className="calculator-input"
                                       placeholder="Amount to give employee for personal expenses"
                                       value={payingNow}
                                       onChange={(e) => setPayingNow(e.target.value)}
-                                      min="0"
-                                      max={salary}
-                                      step="100"
                                     />
                                     <div className="input-helper-text">
                                       Enter how much cash to give the employee for personal expenses. The remaining salary amount will be used to pay back the debt.
@@ -3088,13 +3085,12 @@ function App() {
                                   <div className="calculator-input-group">
                                     <label className="calculator-label">💵 Paying to Employee Now (₹)</label>
                                     <input
-                                      type="number"
+                                      type="text"
+                                      inputMode="numeric"
                                       className="calculator-input"
                                       placeholder="Enter amount to pay this month"
                                       value={payingNow}
                                       onChange={(e) => setPayingNow(e.target.value)}
-                                      min="0"
-                                      step="100"
                                     />
                                     <div className="input-helper-text">
                                       Enter how much to pay. If more than available, employee owes you the difference.
@@ -4312,12 +4308,12 @@ function App() {
                 onChange={(e) => setCustomItemName(e.target.value)}
               />
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 className="custom-item-input"
                 placeholder="Quantity (default: 1)"
                 value={customItemQty}
                 onChange={(e) => setCustomItemQty(e.target.value)}
-                min="1"
               />
               <button 
                 className="btn btn-primary custom-item-submit"
@@ -4434,12 +4430,12 @@ function App() {
             <div className="project-section" style={{ marginTop: '16px' }}>
               <label className="project-label">New Amount (₹)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 className="project-input"
                 placeholder="Enter new amount"
                 value={editNewAmount}
                 onChange={(e) => setEditNewAmount(e.target.value)}
-                min="0"
                 autoFocus
               />
             </div>
