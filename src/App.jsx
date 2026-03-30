@@ -1958,7 +1958,7 @@ function App() {
                   {view === VIEWS.PROJECT && 'New Project'}
                   {view === VIEWS.CREATE_USER && 'Create User'}
                   {view === VIEWS.GIVE_MONEY && 'Give Money'}
-                  {view === VIEWS.USER_TOTAL && 'User Total'}
+                  {view === VIEWS.USER_TOTAL && 'Pay Salary / User Total'}
                   {view === VIEWS.USER_HISTORY && 'User History'}
                   {view === VIEWS.SALARY_PAYMENTS && 'Salary History / Dues'}
                   {view === VIEWS.USER_SALARY_HISTORY && 'Salary History'}
@@ -2307,7 +2307,7 @@ function App() {
               <button className="btn btn-accent" onClick={startUserTotal}>
                 <span className="btn-icon">📊</span>
                 <span className="btn-content">
-                  <span>User Total</span>
+                  <span>Pay Salary / User Total</span>
                   <span className="btn-kannada">ಬಳಕೆದಾರರ ಒಟ್ಟು</span>
                 </span>
               </button>
