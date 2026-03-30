@@ -234,7 +234,7 @@ function App() {
           return;
         }
         
-        setView(event.state.view);
+        setView(event.state.view === VIEWS.USER_HISTORY ? VIEWS.HOME : event.state.view);
       } else {
         // If no state, go to appropriate default view
         if (isAuthenticated) {
