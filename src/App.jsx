@@ -887,16 +887,7 @@ function App() {
   };
 
   const getMonthlyTotal = (transactions) => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    return transactions
-      .filter(t => {
-        const transDate = new Date(t.createdAt);
-        return transDate.getMonth() === currentMonth && transDate.getFullYear() === currentYear;
-      })
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    return transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
   };
 
   const calculateOutstandingBalance = async (userId) => {
@@ -2747,11 +2738,11 @@ function App() {
 
                     <div className="monthly-total-card">
                       <div className="monthly-total-header">
-                        <span className="monthly-total-icon">📅</span>
-                        <span className="monthly-total-month">{monthName}</span>
+                        <span className="monthly-total-icon">�</span>
+                        <span className="monthly-total-month">Total Amount Given</span>
                       </div>
                       <div className="monthly-total-amount">
-                        <span className="monthly-total-label">Total Amount Given:</span>
+                        <span className="monthly-total-label">All Time:</span>
                         <span className="monthly-total-value">{formatIndianCurrency(0)}</span>
                       </div>
                     </div>
@@ -2851,11 +2842,11 @@ function App() {
                   {/* Monthly Total Card - Moved here after user info */}
                   <div className="monthly-total-card">
                     <div className="monthly-total-header">
-                      <span className="monthly-total-icon">📅</span>
-                      <span className="monthly-total-month">{monthName}</span>
+                      <span className="monthly-total-icon">�</span>
+                      <span className="monthly-total-month">Total Amount Given</span>
                     </div>
                     <div className="monthly-total-amount">
-                      <span className="monthly-total-label">Total Amount Given:</span>
+                      <span className="monthly-total-label">All Time:</span>
                       <span className="monthly-total-value">{formatIndianCurrency(monthlyTotal)}</span>
                     </div>
                   </div>
