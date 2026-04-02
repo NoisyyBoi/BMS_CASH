@@ -4180,43 +4180,6 @@ function App() {
 
               return (
                 <>
-                  {/* Current month summary card */}
-                  {dailySummaries.length > 0 && (
-                    <div style={{ marginBottom: 'var(--space-lg)' }}>
-                      <div
-                        style={{
-                          background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%)',
-                          color: 'white', padding: 'var(--space-md)',
-                          borderRadius: 'var(--radius-lg)',
-                          marginBottom: showMonthlySummary ? 'var(--space-md)' : '0',
-                          textAlign: 'center', cursor: 'pointer', transition: 'all 0.3s ease'
-                        }}
-                        onClick={() => setShowMonthlySummary(!showMonthlySummary)}
-                      >
-                        <div style={{ fontSize: 'var(--font-size-sm)', opacity: 0.9 }}>Monthly Summary</div>
-                        <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginTop: 'var(--space-xs)' }}>
-                          {formatIndianCurrency(monthlyTotal)}
-                        </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', opacity: 0.9, marginTop: 'var(--space-xs)' }}>
-                          {currentMonthKey} • {dailySummaries.length} days
-                        </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', marginTop: 'var(--space-xs)', opacity: 0.8 }}>
-                          {showMonthlySummary ? '▲ Hide Options' : '▼ Show Options'}
-                        </div>
-                      </div>
-                      {showMonthlySummary && (
-                        <div className="transaction-actions" style={{ animation: 'slideDown 0.3s ease' }}>
-                          <button className="share-btn whatsapp" onClick={() => handleShareMonthlySummaryWhatsApp(currentMonthKey, dailySummaries, monthlyTotal)}>
-                            📱 Share Summary
-                          </button>
-                          <button className="share-btn pdf" onClick={() => handleDownloadMonthlySummaryPDF(currentMonthKey, dailySummaries, monthlyTotal)}>
-                            📄 Download Summary
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {/* Month groups */}
                   {Object.entries(groupedByMonth).map(([monthKey, monthData]) => (
                     <div key={monthKey} style={{ marginBottom: 'var(--space-md)' }}>
