@@ -4212,6 +4212,29 @@ function App() {
                       {/* Date groups inside month */}
                       {expandedHistoryMonths[monthKey] && (
                         <div style={{ paddingLeft: 'var(--space-sm)' }}>
+                          {/* Monthly share/download buttons */}
+                          <div className="transaction-actions" style={{ marginBottom: 'var(--space-sm)' }}>
+                            <button
+                              className="share-btn whatsapp"
+                              onClick={() => handleShareMonthlySummaryWhatsApp(
+                                monthKey,
+                                Object.entries(monthData.dates).map(([date, d]) => ({ date, total: d.total, count: d.transactions.length })),
+                                monthData.total
+                              )}
+                            >
+                              📱 WhatsApp
+                            </button>
+                            <button
+                              className="share-btn pdf"
+                              onClick={() => handleDownloadMonthlySummaryPDF(
+                                monthKey,
+                                Object.entries(monthData.dates).map(([date, d]) => ({ date, total: d.total, count: d.transactions.length })),
+                                monthData.total
+                              )}
+                            >
+                              📄 Download PDF
+                            </button>
+                          </div>
                           {Object.entries(monthData.dates).map(([date, data]) => (
                             <div key={date} className="history-date-group">
                               <div className="daily-summary" onClick={() => toggleDateExpansion(date)}>
