@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp, generateSalaryHistoryPDF, formatSalaryHistoryForWhatsApp, generateAllSalaryPaymentsPDF, formatAllSalaryPaymentsForWhatsApp } from './utils/storage';
-import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, updateTransactionInSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase, cleanupInactiveUsersFromSupabase } from './utils/supabaseStorage';
+import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, updateTransactionInSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase, deleteOldTransactionsFromSupabase, cleanupInactiveUsersFromSupabase } from './utils/supabaseStorage';
 import { formatIndianCurrency } from './utils/formatCurrency';
 import { supabase } from './supabaseClient';
 
@@ -201,6 +201,7 @@ function App() {
         loadTransactions();
         cleanupOldDeletedTransactions();
         cleanupOldSalaryPayments();
+        cleanupOldTransactions();
         cleanupExpiredOTPsOnLoad();
         cleanupInactiveUsersOnLoad();
       }
@@ -287,6 +288,7 @@ function App() {
       loadTransactions();
       cleanupOldDeletedTransactions();
       cleanupOldSalaryPayments();
+        cleanupOldTransactions();
       cleanupExpiredOTPsOnLoad();
       cleanupInactiveUsersOnLoad();
       showToast('✓ Logged in as Viewer');
@@ -443,6 +445,7 @@ function App() {
         loadTransactions();
         cleanupOldDeletedTransactions();
         cleanupOldSalaryPayments();
+        cleanupOldTransactions();
         cleanupExpiredOTPsOnLoad();
         cleanupInactiveUsersOnLoad();
         showToast('✓ Login successful');
@@ -710,8 +713,15 @@ function App() {
     try {
       await deleteOldSalaryPaymentsFromSupabase();
     } catch (error) {
-      // Silently fail if there's an error
       console.error('Error cleaning up old salary payments:', error);
+    }
+  };
+
+  const cleanupOldTransactions = async () => {
+    try {
+      await deleteOldTransactionsFromSupabase();
+    } catch (error) {
+      console.error('Error cleaning up old transactions:', error);
     }
   };
 

@@ -257,6 +257,24 @@ export const deleteOldSalaryPaymentsFromSupabase = async () => {
   }
 };
 
+export const deleteOldTransactionsFromSupabase = async () => {
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 365);
+
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .lt('createdAt', cutoffDate.toISOString());
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting old transactions:', error);
+    throw error;
+  }
+};
+
 // ===== USER CLEANUP MANAGEMENT =====
 
 export const cleanupInactiveUsersFromSupabase = async (inactiveDays = 180, dryRun = false) => {
