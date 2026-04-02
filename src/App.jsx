@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+what interval time does auto matic data delte is hapeningimport { useState, useEffect } from 'react';
 import { categories, getMaterialsByCategory, getMaterialById, getUnitOptions } from './data/materials';
 import { getSavedLists, saveList, deleteList, getUsedSiteNames, formatListForSharing, shareViaWhatsApp, copyToClipboard, generatePDF, getTodayFormatted, generateUserTransactionsPDF, generateDailyTransactionsPDF, formatUserTransactionsForWhatsApp, formatDailyTransactionsForWhatsApp, generateMonthlySummaryPDF, formatMonthlySummaryForWhatsApp, generateSalaryHistoryPDF, formatSalaryHistoryForWhatsApp, generateAllSalaryPaymentsPDF, formatAllSalaryPaymentsForWhatsApp } from './utils/storage';
 import { getUsersFromSupabase, saveUserToSupabase, getTransactionsFromSupabase, saveTransactionToSupabase, getUserTransactionsFromSupabase, saveSalaryPaymentToSupabase, getSalaryPaymentsFromSupabase, deleteUserTransactionsFromSupabase, deleteSalaryPaymentFromSupabase, deleteTransactionFromSupabase, updateTransactionInSupabase, saveDeletedTransactionToSupabase, getDeletedTransactionsFromSupabase, deleteOldDeletedTransactionsFromSupabase, deleteOldSalaryPaymentsFromSupabase, cleanupInactiveUsersFromSupabase } from './utils/supabaseStorage';
@@ -730,7 +730,7 @@ function App() {
       const today = new Date().toDateString();
       
       if (lastCleanup !== today) {
-        const result = await cleanupInactiveUsersFromSupabase(120, false);
+        const result = await cleanupInactiveUsersFromSupabase(180, false);
         if (result.success && result.count > 0) {
           console.log(`Cleaned up ${result.count} inactive users`);
         }

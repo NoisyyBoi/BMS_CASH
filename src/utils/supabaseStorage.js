@@ -240,9 +240,9 @@ export const deleteOldDeletedTransactionsFromSupabase = async () => {
 
 export const deleteOldSalaryPaymentsFromSupabase = async () => {
   try {
-    // Calculate date 150 days ago
+    // Calculate date 365 days ago
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - 150);
+    cutoffDate.setDate(cutoffDate.getDate() - 365);
     
     const { error } = await supabase
       .from('salary_payments')
@@ -259,7 +259,7 @@ export const deleteOldSalaryPaymentsFromSupabase = async () => {
 
 // ===== USER CLEANUP MANAGEMENT =====
 
-export const cleanupInactiveUsersFromSupabase = async (inactiveDays = 120, dryRun = false) => {
+export const cleanupInactiveUsersFromSupabase = async (inactiveDays = 180, dryRun = false) => {
   try {
     // Call the PostgreSQL function to cleanup inactive users
     const { data, error } = await supabase
