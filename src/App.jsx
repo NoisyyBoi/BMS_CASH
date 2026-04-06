@@ -78,6 +78,7 @@ function App() {
 
   // User creation states
   const [userName, setUserName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [userPhone, setUserPhone] = useState('');
   const [userReferral, setUserReferral] = useState('');
   const [userValidationErrors, setUserValidationErrors] = useState([]);
@@ -807,6 +808,7 @@ function App() {
     setUserName('');
     setUserPhone('');
     setUserReferral('');
+    setIsSaving(false);
     navigateToView(VIEWS.CREATE_USER);
   };
 
@@ -845,6 +847,7 @@ function App() {
     setGiveMoneyValidationErrors([]);
     setShowUserDropdown(true); // Show dropdown by default
     setUserInputActive(false); // Reset input interaction state
+    setIsSaving(false);
     navigateToView(VIEWS.GIVE_MONEY);
   };
 
@@ -949,10 +952,10 @@ function App() {
   };
 
   const handleSaveTransaction = async () => {
-    if (!validateGiveMoneyForm()) {
-      return;
-    }
+    if (isSaving) return;
+    if (!validateGiveMoneyForm()) return;
 
+    setIsSaving(true);
     const transaction = {
       id: Date.now(),
       userId: selectedUser.id,
@@ -960,18 +963,19 @@ function App() {
       userPhone: selectedUser.phone,
       amount: parseFloat(moneyAmount),
       purpose: moneyPurpose === 'others' ? customPurpose.trim() : moneyPurpose,
-      createdBy: userRole, // Track which admin created this
+      createdBy: userRole,
       createdAt: new Date().toISOString(),
     };
 
     try {
       await saveTransactionToSupabase(transaction);
-      await loadTransactions(); // Reload transactions list
+      await loadTransactions();
       showToast('✓ Transaction saved successfully');
       setTimeout(() => navigateToView(VIEWS.HOME), 250);
     } catch (error) {
       console.error('Error saving transaction:', error);
       showToast('⚠️ Error saving transaction');
+      setIsSaving(false);
     }
   };
 
@@ -1373,10 +1377,10 @@ function App() {
   };
 
   const handleSaveUser = async () => {
-    if (!validateUserForm()) {
-      return;
-    }
+    if (isSaving) return;
+    if (!validateUserForm()) return;
 
+    setIsSaving(true);
     const user = {
       id: Date.now(),
       name: userName.trim(),
@@ -1387,7 +1391,7 @@ function App() {
 
     try {
       await saveUserToSupabase(user);
-      await loadUsers(); // Reload users list
+      await loadUsers();
       showToast('✓ User created successfully');
       setUserName('');
       setUserPhone('');
@@ -1396,11 +1400,9 @@ function App() {
       setTimeout(() => navigateToView(VIEWS.HOME), 250);
     } catch (error) {
       console.error('Error saving user:', error);
-      
-      // Show more specific error message
+      setIsSaving(false);
       if (error.message && error.message.includes('relation')) {
         showToast('⚠️ Database tables not set up. Check console.');
-        console.error('Please run the SQL schema in Supabase dashboard. See SUPABASE_SETUP.md');
       } else if (error.message) {
         showToast(`⚠️ Error: ${error.message.substring(0, 50)}`);
       } else {
@@ -2471,8 +2473,9 @@ function App() {
             <button 
               className="btn btn-success project-continue" 
               onClick={handleSaveUser}
+              disabled={isSaving}
             >
-              Save User →
+              {isSaving ? 'Saving...' : 'Save User →'}
               <span className="btn-kannada">ಉಳಿಸಿ</span>
             </button>
           </div>
@@ -2656,8 +2659,9 @@ function App() {
             <button 
               className="btn btn-success project-continue" 
               onClick={handleSaveTransaction}
+              disabled={isSaving}
             >
-              Save Transaction →
+              {isSaving ? 'Saving...' : 'Save Transaction →'}
               <span className="btn-kannada">ಉಳಿಸಿ</span>
             </button>
           </div>
